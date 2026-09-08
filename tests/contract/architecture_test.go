@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	modulePrefix           = "github.com/EpicBlackWolfZ/capagent/"
-	pkgInternalModel       = "internal/model"
-	pkgInternalRequirement = "internal/requirement"
-	pkgCmdPrefix           = "cmd/"
+	modulePrefix            = "github.com/EpicBlackWolfZ/capagent/"
+	pkgInternalModel        = "internal/model"
+	pkgInternalRequirement  = "internal/requirement"
+	pkgInternalCapability   = "internal/capability"
+	pkgCmdPrefix            = "cmd/"
 )
 
 // Rule defines an architectural import restriction for a package path prefix.
@@ -51,7 +52,7 @@ var ArchitectureRules = []Rule{
 			"internal/platform",
 			"internal/host",
 			"internal/runtime",
-			"internal/capability",
+			pkgInternalCapability,
 			"internal/config",
 			"internal/knowledge",
 			"internal/diagnostics",
@@ -60,7 +61,7 @@ var ArchitectureRules = []Rule{
 		Rationale: "internal/requirement encapsulates 3-valued Boolean logic and may only depend on internal/model",
 	},
 	{
-		SourcePrefix: "internal/capability",
+		SourcePrefix: pkgInternalCapability,
 		DisallowedPrefixes: []string{
 			"internal/host",
 			"internal/runtime",
@@ -76,6 +77,25 @@ var ArchitectureRules = []Rule{
 			"internal/diagnostics",
 		},
 		Rationale: "runtime adapters must not depend on CLI or diagnostics packages",
+	},
+	{
+		SourcePrefix: "internal/output",
+		AllowedInternal: []string{
+			pkgInternalModel,
+			"schema/v1",
+		},
+		DisallowedPrefixes: []string{
+			"internal/probe",
+			"internal/platform",
+			"internal/host",
+			"internal/runtime",
+			pkgInternalCapability,
+			"internal/config",
+			"internal/knowledge",
+			"internal/diagnostics",
+			pkgCmdPrefix,
+		},
+		Rationale: "internal/output serializes Schema v1 reports and may only directly import internal/model, schema/v1, and standard library",
 	},
 }
 
@@ -321,7 +341,7 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 		{
 			name: "internal/capability importing internal/host is rejected",
 			imports: PackageImports{
-				"internal/capability": {
+				pkgInternalCapability: {
 					"github.com/EpicBlackWolfZ/capagent/internal/host",
 				},
 			},
@@ -330,7 +350,7 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 		{
 			name: "internal/capability importing internal/runtime is rejected",
 			imports: PackageImports{
-				"internal/capability": {
+				pkgInternalCapability: {
 					"github.com/EpicBlackWolfZ/capagent/internal/runtime",
 				},
 			},
@@ -380,6 +400,34 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 				},
 			},
 			wantViolation: false,
+		},
+		{
+			name: "internal/output importing internal/probe is rejected",
+			imports: PackageImports{
+				"internal/output": {
+					"github.com/EpicBlackWolfZ/capagent/internal/probe",
+				},
+			},
+			wantViolation: true,
+		},
+		{
+			name: "internal/output importing internal/model and schema/v1 is permitted",
+			imports: PackageImports{
+				"internal/output": {
+					"github.com/EpicBlackWolfZ/capagent/" + pkgInternalModel,
+					"github.com/EpicBlackWolfZ/capagent/schema/v1",
+				},
+			},
+			wantViolation: false,
+		},
+		{
+			name: "internal/output importing third-party package is rejected",
+			imports: PackageImports{
+				"internal/output": {
+					"github.com/stretchr/testify/assert",
+				},
+			},
+			wantViolation: true,
 		},
 	}
 

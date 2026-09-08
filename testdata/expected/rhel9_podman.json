@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "context": {
+    "uid": 1001,
+    "gid": 1001,
+    "target_user": "ansible",
+    "is_rootless": true,
+    "in_container": false
+  },
+  "host": {
+    "os": "rhel",
+    "os_version": "9.4",
+    "kernel": "5.14.0-427.13.1.el9_4.x86_64",
+    "architecture": "x86_64",
+    "cgroup_version": "v2",
+    "systemd": true
+  },
+  "runtimes": {
+    "podman": {
+      "installed": true,
+      "version": "5.0.3",
+      "accessible": true,
+      "network_backend": "netavark",
+      "storage_driver": "overlay"
+    }
+  },
+  "capabilities": {
+    "container.lifecycle.systemd_native": {
+      "state": "supported",
+      "confidence": "verified",
+      "evidence": [
+        "cgroups=v2",
+        "quadlet_generator=present",
+        "systemd=252"
+      ]
+    },
+    "container.network.custom_dns": {
+      "state": "supported",
+      "confidence": "verified",
+      "evidence": [
+        "aardvark_dns=present",
+        "backend=netavark"
+      ]
+    }
+  }
+}

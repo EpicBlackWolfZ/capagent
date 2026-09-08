@@ -237,11 +237,70 @@ testdata/
 
 Deterministic serialization guarantees that identical host inputs produce bit-for-bit identical JSON outputs.
 
+### 7.1 Architecture Invariant: Domain Model vs. Wire Contract
+
+`internal/model` represents the authoritative domain model: rich kernel facts, identity execution delegation, evidence trees, and 3-valued Boolean logic. **Schema v1 must never become the domain model.**
+
+`internal/output` defines versioned serialization DTOs (`v1`) that project internal domain types into the external wire format. When future schema versions (`v2`, etc.) are introduced, they will define dedicated DTO projections without mutating or churning the internal domain model.
+
+### 7.2 Context Mapping & Intentional Renaming
+
+The domain model explicitly separates executing identity (`Current`) from target deployment identity (`Target`). The external Schema v1 contract evaluates strictly against target workload identity:
+
+| Schema v1 Field | Domain Expression | Semantics / Fallback |
+| :--- | :--- | :--- |
+| `context.uid` | `evalCtx.Identity.Target.UID` | Target user UID (falls back to `Current.UID` if `Target` is unpopulated) |
+| `context.gid` | `evalCtx.Identity.Target.GID` | Target user GID (falls back to `Current.GID` if `Target` is unpopulated) |
+| `context.target_user` | `evalCtx.Identity.Target.Username` | Target username (falls back to `Current.Username` if `Target` is unpopulated) |
+| `context.is_rootless` | `evalCtx.Identity.IsRootless` | Whether target execution runs under rootless user namespaces |
+| `context.in_container` | `evalCtx.Identity.InContainer` | Whether the evaluation environment runs inside a container |
+| `host.systemd` | `evalCtx.Host.SystemdActive` | Intentional external rename of model-level `SystemdActive` |
+| `capabilities.*.evidence` | `model.EvidenceRef.ID` | Flattening structured `EvidenceRef` references into `[]string` |
+
+### 7.3 Non-Null & Required Collections Guarantee
+
+Schema v1 enforces strict non-null containers:
+- Root `runtimes` and `capabilities` maps are always serialized as objects (`{}`), never `null`.
+- The `evidence` field in capability items is **required** and always serialized as an array (`[]`), never `null` and never omitted.
+- Optional diagnostic strings (e.g. `reason`) omit when empty (`omitempty`).
+
+### 7.4 Non-Mutating Deterministic Serialization
+
+- **Immutability**: `output.Marshal(r)` clones evidence slices before sorting. Serialization never mutates the input `Report`.
+- **Deterministic Key & Slice Ordering**:
+  - Canonical Go struct field declaration order guarantees root key sequencing: `schema_version` $\to$ `context` $\to$ `host` $\to$ `runtimes` $\to$ `capabilities`.
+  - Map keys (`runtimes`, `capabilities`) are sorted lexicographically.
+  - Cloned evidence slices are sorted lexicographically before emission.
+  - Canonical formatting applies standard 2-space indentation (`json.MarshalIndent`) with a trailing newline. `output.MarshalCompact` provides unindented output for stream pipelines.
+
+### 7.5 Additive Evolution & Versioning Rules
+
+Schema v1 adheres to an open additive evolution model (`additionalProperties: true`):
+- **Permitted (Non-Breaking)**:
+  - Adding new optional properties inside existing objects (`context`, `host`, `capabilities.*`).
+  - Introducing new capability IDs or discovered runtimes.
+- **Breaking (Requires Schema v2)**:
+  - Adding new required properties.
+  - Changing an existing property's data type.
+  - Removing or renaming an existing property.
+  - Restricting enum values.
+  - Altering the semantic meaning of an existing property.
+- **Unknown Fields Policy**: Parsers accept and ignore unknown properties during unmarshaling (Policy A), ensuring older clients process newer reports seamlessly.
+
+### 7.6 Synthetic Fixture Provenance
+
+Sample reports in `testdata/expected/` (`minimal_linux.json`, `rhel9_podman.json`, `docker_host.json`) represent **synthetic schema contracts and structural serialization baselines**, rather than authoritative claims about real-world runtime behavior (which are verified by runtime integration suites).
+
+### 7.7 Canonical Schema Definition (`schema/v1/schema.json`)
+
 ```json
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EpicBlackWolfZ/capagent/schema/v1/schema.json",
   "title": "CapagentReportV1",
+  "description": "Authoritative machine-readable report format for container host compatibility evaluations (Schema v1).",
   "type": "object",
+  "additionalProperties": true,
   "required": [
     "schema_version",
     "context",
@@ -250,9 +309,22 @@ Deterministic serialization guarantees that identical host inputs produce bit-fo
     "capabilities"
   ],
   "properties": {
-    "schema_version": { "type": "integer", "const": 1 },
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Canonical schema major version integer (fixed to 1 for Schema v1)."
+    },
     "context": {
       "type": "object",
+      "description": "Evaluation execution context summarizing target user identity and environment boundaries.",
+      "additionalProperties": true,
+      "required": [
+        "uid",
+        "gid",
+        "target_user",
+        "is_rootless",
+        "in_container"
+      ],
       "properties": {
         "uid": { "type": "integer" },
         "gid": { "type": "integer" },
@@ -263,6 +335,16 @@ Deterministic serialization guarantees that identical host inputs produce bit-fo
     },
     "host": {
       "type": "object",
+      "description": "Observed host-level kernel, distribution, cgroup, and init system facts.",
+      "additionalProperties": true,
+      "required": [
+        "os",
+        "os_version",
+        "kernel",
+        "architecture",
+        "cgroup_version",
+        "systemd"
+      ],
       "properties": {
         "os": { "type": "string" },
         "os_version": { "type": "string" },
@@ -274,8 +356,10 @@ Deterministic serialization guarantees that identical host inputs produce bit-fo
     },
     "runtimes": {
       "type": "object",
+      "description": "Observed container runtimes discovered on the host environment.",
       "additionalProperties": {
         "type": "object",
+        "additionalProperties": true,
         "properties": {
           "installed": { "type": "boolean" },
           "version": { "type": "string" },
@@ -287,9 +371,15 @@ Deterministic serialization guarantees that identical host inputs produce bit-fo
     },
     "capabilities": {
       "type": "object",
+      "description": "Evaluated canonical capabilities mapped to operational state, confidence, and evidence.",
       "additionalProperties": {
         "type": "object",
-        "required": ["state", "confidence"],
+        "additionalProperties": true,
+        "required": [
+          "state",
+          "confidence",
+          "evidence"
+        ],
         "properties": {
           "state": { "type": "string", "enum": ["supported", "unsupported", "misconfigured", "unavailable", "unknown"] },
           "confidence": { "type": "string", "enum": ["verified", "derived", "heuristic", "unknown"] },

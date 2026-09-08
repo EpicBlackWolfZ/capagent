@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "context": {
+    "uid": 0,
+    "gid": 0,
+    "target_user": "root",
+    "is_rootless": false,
+    "in_container": false
+  },
+  "host": {
+    "os": "ubuntu",
+    "os_version": "22.04",
+    "kernel": "5.15.0-107-generic",
+    "architecture": "x86_64",
+    "cgroup_version": "v2",
+    "systemd": true
+  },
+  "runtimes": {
+    "docker": {
+      "installed": true,
+      "version": "26.1.1",
+      "accessible": true,
+      "network_backend": "bridge",
+      "storage_driver": "overlay2"
+    }
+  },
+  "capabilities": {
+    "runtime.docker": {
+      "state": "supported",
+      "confidence": "verified",
+      "evidence": [
+        "cgroups=v2",
+        "docker_daemon=active",
+        "version=26.1.1"
+      ]
+    }
+  }
+}
