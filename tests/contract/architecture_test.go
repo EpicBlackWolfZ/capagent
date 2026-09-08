@@ -11,8 +11,10 @@ import (
 )
 
 const (
-	modulePrefix     = "github.com/EpicBlackWolfZ/capagent/"
-	pkgInternalModel = "internal/model"
+	modulePrefix           = "github.com/EpicBlackWolfZ/capagent/"
+	pkgInternalModel       = "internal/model"
+	pkgInternalRequirement = "internal/requirement"
+	pkgCmdPrefix           = "cmd/"
 )
 
 // Rule defines an architectural import restriction for a package path prefix.
@@ -40,7 +42,7 @@ var ArchitectureRules = []Rule{
 		Rationale:           "internal/model must consist of pure domain primitives with zero dependencies on other packages",
 	},
 	{
-		SourcePrefix: "internal/requirement",
+		SourcePrefix: pkgInternalRequirement,
 		AllowedInternal: []string{
 			pkgInternalModel,
 		},
@@ -53,7 +55,7 @@ var ArchitectureRules = []Rule{
 			"internal/config",
 			"internal/knowledge",
 			"internal/diagnostics",
-			"cmd/",
+			pkgCmdPrefix,
 		},
 		Rationale: "internal/requirement encapsulates 3-valued Boolean logic and may only depend on internal/model",
 	},
@@ -63,18 +65,27 @@ var ArchitectureRules = []Rule{
 			"internal/host",
 			"internal/runtime",
 			"internal/probe",
-			"cmd/",
+			pkgCmdPrefix,
 		},
 		Rationale: "internal/capability must evaluate purely over evidence graphs and never execute probes or runtime commands",
 	},
 	{
 		SourcePrefix: "internal/runtime",
 		DisallowedPrefixes: []string{
-			"cmd/",
+			pkgCmdPrefix,
 			"internal/diagnostics",
 		},
 		Rationale: "runtime adapters must not depend on CLI or diagnostics packages",
 	},
+}
+
+// hasPackagePrefix checks if pkg matches prefix or is a subpackage under prefix.
+// It ensures matches occur on path component boundaries, preventing false-positive
+// matches such as "internal/modelicious" matching "internal/model".
+func hasPackagePrefix(pkg, prefix string) bool {
+	cleanPrefix := strings.TrimSuffix(prefix, "/")
+	cleanPkg := strings.TrimSuffix(pkg, "/")
+	return cleanPkg == cleanPrefix || strings.HasPrefix(cleanPkg, cleanPrefix+"/")
 }
 
 // PackageImports maps package relative paths (e.g. "internal/model") to their imported packages.
@@ -86,14 +97,14 @@ func CheckArchitecture(pkgs PackageImports, rules []Rule) []string {
 
 	for pkgPath, imports := range pkgs {
 		for _, rule := range rules {
-			if !strings.HasPrefix(pkgPath, rule.SourcePrefix) {
+			if !hasPackagePrefix(pkgPath, rule.SourcePrefix) {
 				continue
 			}
 
 			for _, imp := range imports {
 				// Normalize module import path to relative repo path if within capagent module
 				relImp := strings.TrimPrefix(imp, modulePrefix)
-				isInternal := strings.HasPrefix(imp, modulePrefix) || strings.HasPrefix(imp, "internal/")
+				isInternal := strings.HasPrefix(imp, modulePrefix) || hasPackagePrefix(imp, "internal")
 
 				// Check StandardLibraryOnly
 				if rule.StandardLibraryOnly {
@@ -111,7 +122,7 @@ func CheckArchitecture(pkgs PackageImports, rules []Rule) []string {
 					if isInternal {
 						allowed := false
 						for _, okPkg := range rule.AllowedInternal {
-							if strings.HasPrefix(relImp, okPkg) {
+							if hasPackagePrefix(relImp, okPkg) {
 								allowed = true
 								break
 							}
@@ -132,7 +143,7 @@ func CheckArchitecture(pkgs PackageImports, rules []Rule) []string {
 
 				// Check DisallowedPrefixes
 				for _, disallowed := range rule.DisallowedPrefixes {
-					if strings.HasPrefix(relImp, disallowed) {
+					if hasPackagePrefix(relImp, disallowed) {
 						violations = append(violations, fmt.Sprintf(
 							"rule violation: %s imports %s which matches disallowed prefix %s (%s)",
 							pkgPath, imp, disallowed, rule.Rationale,
@@ -175,7 +186,7 @@ func collectPackageImports(rootDir string) (PackageImports, error) {
 		}
 
 		// Only inspect internal and cmd packages
-		if !strings.HasPrefix(relPath, "internal") && !strings.HasPrefix(relPath, "cmd") {
+		if !hasPackagePrefix(relPath, "internal") && !hasPackagePrefix(relPath, "cmd") {
 			return nil
 		}
 
@@ -283,7 +294,7 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 		{
 			name: "internal/requirement importing internal/probe is rejected",
 			imports: PackageImports{
-				"internal/requirement": {
+				pkgInternalRequirement: {
 					"github.com/EpicBlackWolfZ/capagent/internal/probe",
 				},
 			},
@@ -292,7 +303,7 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 		{
 			name: "internal/requirement importing internal/model is permitted",
 			imports: PackageImports{
-				"internal/requirement": {
+				pkgInternalRequirement: {
 					"github.com/EpicBlackWolfZ/capagent/" + pkgInternalModel,
 				},
 			},
@@ -301,7 +312,7 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 		{
 			name: "internal/requirement importing third-party package is rejected",
 			imports: PackageImports{
-				"internal/requirement": {
+				pkgInternalRequirement: {
 					"github.com/stretchr/testify/assert",
 				},
 			},
@@ -334,6 +345,42 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 			},
 			wantViolation: true,
 		},
+		{
+			name: "internal/requirement importing internal/modelicious is rejected",
+			imports: PackageImports{
+				pkgInternalRequirement: {
+					"github.com/EpicBlackWolfZ/capagent/internal/modelicious",
+				},
+			},
+			wantViolation: true,
+		},
+		{
+			name: "internal/requirement importing internal/model subpackage is permitted",
+			imports: PackageImports{
+				pkgInternalRequirement: {
+					"github.com/EpicBlackWolfZ/capagent/internal/model/subpkg",
+				},
+			},
+			wantViolation: false,
+		},
+		{
+			name: "internal/requirement_backup is not matched by internal/requirement rule",
+			imports: PackageImports{
+				"internal/requirement_backup": {
+					"github.com/EpicBlackWolfZ/capagent/internal/probe",
+				},
+			},
+			wantViolation: false,
+		},
+		{
+			name: "internal/runtime importing cmdline is not rejected by cmd rule",
+			imports: PackageImports{
+				"internal/runtime/podman": {
+					"github.com/EpicBlackWolfZ/capagent/cmdline",
+				},
+			},
+			wantViolation: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -345,6 +392,37 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 			}
 			if !tt.wantViolation && len(violations) > 0 {
 				t.Errorf("unexpected architecture violation for %s: %v", tt.name, violations)
+			}
+		})
+	}
+}
+
+func TestHasPackagePrefix(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		pkg    string
+		prefix string
+		want   bool
+	}{
+		{pkg: pkgInternalModel, prefix: pkgInternalModel, want: true},
+		{pkg: pkgInternalModel + "/sub", prefix: pkgInternalModel, want: true},
+		{pkg: pkgInternalModel + "/", prefix: pkgInternalModel, want: true},
+		{pkg: pkgInternalModel, prefix: pkgInternalModel + "/", want: true},
+		{pkg: "internal/modelicious", prefix: pkgInternalModel, want: false},
+		{pkg: "internal/requirement_backup", prefix: pkgInternalRequirement, want: false},
+		{pkg: "cmd/capagent", prefix: pkgCmdPrefix, want: true},
+		{pkg: "cmd", prefix: pkgCmdPrefix, want: true},
+		{pkg: "cmdline", prefix: pkgCmdPrefix, want: false},
+		{pkg: "internal/probe", prefix: pkgInternalModel, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("%s_matches_%s", tt.pkg, tt.prefix), func(t *testing.T) {
+			t.Parallel()
+			got := hasPackagePrefix(tt.pkg, tt.prefix)
+			if got != tt.want {
+				t.Errorf("hasPackagePrefix(%q, %q) = %v, want %v", tt.pkg, tt.prefix, got, tt.want)
 			}
 		})
 	}
