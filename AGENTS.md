@@ -69,6 +69,7 @@ cmd/capagent (CLI entrypoint; flag parsing and formatting ONLY; zero business lo
 - `internal/requirement` encapsulates all 3-valued Boolean algebra and requirement AST evaluation.
 - `cmd/capagent` MUST NOT contain probe logic, capability resolution, or requirement evaluation.
 - Runtime adapters (`internal/runtime/*`) MUST NOT depend on the CLI package.
+- **Mechanical AST Boundary Enforcement**: Architectural boundaries MUST be mechanically enforced by automated contract tests (`tests/contract/architecture_test.go`) that parse the Go AST. Restricted packages (`internal/model`, `internal/requirement`) MUST reject all unauthorized internal and third-party imports.
 
 ---
 
@@ -155,21 +156,21 @@ All Go code must pass the `.golangci.yml` baseline with zero warnings:
 - **Line Length (`lll`)**: Keep lines $\le 140$ characters.
 - **Standard Testing**: Use standard library `testing` with table-driven tests (`tests := []struct{ ... }`), subtests `t.Run`, and `t.Parallel()`. Avoid introducing third-party test assertions into core domain packages.
 - **Race Detection**: Always run tests with `go test -race ./...`.
-- **Targeted Coverage**: Maintain $> 95\%$ test coverage on `internal/model` and `internal/requirement`.
+- **Targeted Coverage**: Maintain $> 95\%$ test coverage on `internal/model` and `internal/requirement`. Ensure zero dead-code branches degrade domain coverage metrics.
 
 ---
 
 ## 9. Standard Makefile Targets
 
 - `make test`: Run all unit tests with race detection (`go test -race ./...`).
-- `make coverage`: Run tests, output per-package coverage statistics, and verify coverage $> 95\%$.
+- `make coverage`: Run tests, output per-package coverage statistics, and verify total coverage $> 95\%$ via automated threshold check.
 - `make lint`: Run `golangci-lint run ./...`.
 - `make tidy`: Run `go mod tidy` and `go mod verify`.
 - `make clean`: Remove build artifacts and coverage files.
 
 ---
 
-## 10. Git Branching & Commit Invariants
+## 10. Git Branching, Commit & PR Invariants
 
 - **Never Work Directly on `main`**: All work, regardless of size, must occur on a dedicated branch. Direct commits or work on `main` are strictly prohibited.
 - **Conventional Branch Naming**: Use standard conventional branch prefixes:
@@ -182,3 +183,4 @@ All Go code must pass the `.golangci.yml` baseline with zero warnings:
 - **Conventional Commits**: Every commit message must strictly adhere to the Conventional Commits specification:
   - Format: `<type>(<optional scope>): <description>` (e.g. `feat(model): implement core domain primitives`, `test(requirement): add exhaustive truth table tests`).
   - Imperative mood, concise summary, no trailing period.
+- **Pull Request Automation & Issue Auto-Closing**: Every PR description MUST explicitly enumerate all addressed issues with standard GitHub closing keywords (`Closes #<id>`, `Fixes #<id>`, `Resolves #<id>`) so issues auto-close upon merging to `main`.
