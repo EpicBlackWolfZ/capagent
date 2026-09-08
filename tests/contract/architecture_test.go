@@ -21,8 +21,11 @@ type Rule struct {
 	SourcePrefix string
 	// DisallowedPrefixes is a list of package prefixes that SourcePrefix MUST NOT import.
 	DisallowedPrefixes []string
-	// AllowInternalOnly if set means the package may only import from these specific internal packages.
+	// AllowedInternal if set means the package may only import from these specific internal packages and standard library.
+	// Third-party packages are strictly forbidden unless AllowThirdParty is true.
 	AllowedInternal []string
+	// AllowThirdParty if true permits third-party external dependencies. Defaults to false.
+	AllowThirdParty bool
 	// StandardLibraryOnly if true means the package must have ZERO internal or third-party dependencies.
 	StandardLibraryOnly bool
 	// Rationale documents why the invariant exists.
@@ -103,18 +106,25 @@ func CheckArchitecture(pkgs PackageImports, rules []Rule) []string {
 					continue
 				}
 
-				// Check AllowedInternal
-				if len(rule.AllowedInternal) > 0 && isInternal {
-					allowed := false
-					for _, okPkg := range rule.AllowedInternal {
-						if strings.HasPrefix(relImp, okPkg) {
-							allowed = true
-							break
+				// Check AllowedInternal and third-party restrictions
+				if len(rule.AllowedInternal) > 0 {
+					if isInternal {
+						allowed := false
+						for _, okPkg := range rule.AllowedInternal {
+							if strings.HasPrefix(relImp, okPkg) {
+								allowed = true
+								break
+							}
 						}
-					}
-					if !allowed {
+						if !allowed {
+							violations = append(violations, fmt.Sprintf(
+								"rule violation: %s imports %s but is only permitted to import %v (%s)",
+								pkgPath, imp, rule.AllowedInternal, rule.Rationale,
+							))
+						}
+					} else if !rule.AllowThirdParty && strings.Contains(imp, ".") {
 						violations = append(violations, fmt.Sprintf(
-							"rule violation: %s imports %s but is only permitted to import %v (%s)",
+							"rule violation: %s imports third-party package %s but is only permitted to import %v and standard library (%s)",
 							pkgPath, imp, rule.AllowedInternal, rule.Rationale,
 						))
 					}
@@ -287,6 +297,15 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 				},
 			},
 			wantViolation: false,
+		},
+		{
+			name: "internal/requirement importing third-party package is rejected",
+			imports: PackageImports{
+				"internal/requirement": {
+					"github.com/stretchr/testify/assert",
+				},
+			},
+			wantViolation: true,
 		},
 		{
 			name: "internal/capability importing internal/host is rejected",
