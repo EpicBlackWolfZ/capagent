@@ -12,14 +12,15 @@ GOLANGCI_LINT := $(shell command -v golangci-lint 2> /dev/null)
 
 .PHONY: all build test coverage lint tidy clean help
 
-all: tidy lint test
+all: tidy lint test build
 
 ## help: Display available targets
 help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all        Run tidy, lint, and test"
+	@echo "  all        Run tidy, lint, test, and build"
+	@echo "  build      Compile all packages"
 	@echo "  test       Run unit tests with race detection"
 	@echo "  coverage   Run unit tests with race detection and report code coverage"
 	@echo "  lint       Run golangci-lint (with warning fallback to go vet)"
@@ -31,6 +32,11 @@ tidy:
 	@echo "==> Tidying Go module..."
 	@$(GO) mod tidy
 	@$(GO) mod verify
+
+## build: Compile all packages
+build:
+	@echo "==> Building packages..."
+	@$(GO) build ./...
 
 ## test: Run unit tests with race detector
 test:
