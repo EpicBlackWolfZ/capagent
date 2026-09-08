@@ -1,0 +1,81 @@
+---
+version: "2"
+
+linters:
+  enable:
+    - bodyclose
+    - errcheck
+    - goconst
+    - gocritic
+    - gocyclo
+    - revive
+    - mnd
+    - goprintffuncname
+    - gosec
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - staticcheck
+    - unconvert
+    - unused
+  disable:
+    - dupl
+
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+    gocyclo:
+      min-complexity: 25
+    lll:
+      line-length: 140
+    mnd:
+      ignored-numbers:
+        - '86400'  # Seconds in a day
+        - '0o750'  # Directory permissions
+        - '0o600'  # File permissions
+        - '0o755'  # Executable permissions
+        - '0o644'  # File read permissions
+    goconst:
+      min-occurrences: 5
+      ignore-string-values:
+        - 'CERTIFICATE'
+
+  exclusions:
+    rules:
+      # Test files exclusions
+      - path: _test\.go
+        linters:
+          - gocyclo
+          - errcheck
+          - dupl
+          - gosec
+
+      # Generated code exclusions
+      - path: (\.pb\.go|_gen\.go|mock_.*\.go)
+        linters:
+          - errcheck
+          - lll
+          - revive
+          - gosec
+          - goconst
+          - gocritic
+          - mnd
+          - unused
+
+formatters:
+  settings:
+    gofmt:
+      simplify: true
+
+run:
+  tests: true
+
+output:
+  formats:
+    text:
+      colors: true
+  show-stats: true
