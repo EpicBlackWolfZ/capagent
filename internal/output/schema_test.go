@@ -257,127 +257,134 @@ func TestUnmarshal(t *testing.T) {
 		t.Errorf("expected 1 capability, got %d", len(r.Capabilities))
 	}
 
-	invalidTests := []struct {
-		name    string
-		rawJSON string
+	if _, err := output.Unmarshal([]byte(`{invalid json`)); err == nil {
+		t.Error("expected error for malformed JSON, got nil")
+	}
+}
+
+func TestReport_Validate(t *testing.T) {
+	t.Parallel()
+
+	validReport := func() *output.Report {
+		r := output.NewReport()
+		r.Host = output.Host{
+			OS:            "linux",
+			OSVersion:     "1.0",
+			Kernel:        "6.0",
+			Architecture:  "x86_64",
+			CgroupVersion: "v2",
+			Systemd:       true,
+		}
+		r.Capabilities["test.cap"] = output.CapabilityReport{
+			State:      "supported",
+			Confidence: "verified",
+			Evidence:   []string{"ev=1"},
+		}
+		return r
+	}
+
+	tests := []struct {
+		name      string
+		mutate    func(r *output.Report) *output.Report
+		wantError bool
 	}{
 		{
-			name:    "malformed JSON syntax",
-			rawJSON: `{invalid json`,
+			name: "valid report succeeds",
+			mutate: func(r *output.Report) *output.Report {
+				return r
+			},
+			wantError: false,
 		},
 		{
-			name: "missing schema_version",
-			rawJSON: `{
-				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
-				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
-				"runtimes": {},
-				"capabilities": {}
-			}`,
+			name: "nil report returns error",
+			mutate: func(_ *output.Report) *output.Report {
+				return nil
+			},
+			wantError: true,
 		},
 		{
-			name: "schema_version mismatch",
-			rawJSON: `{
-				"schema_version": 99,
-				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
-				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
-				"runtimes": {},
-				"capabilities": {}
-			}`,
+			name: "schema version mismatch returns error",
+			mutate: func(r *output.Report) *output.Report {
+				r.SchemaVersion = 99
+				return r
+			},
+			wantError: true,
 		},
 		{
-			name: "null runtimes",
-			rawJSON: `{
-				"schema_version": 1,
-				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
-				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
-				"runtimes": null,
-				"capabilities": {}
-			}`,
+			name: "nil runtimes returns error",
+			mutate: func(r *output.Report) *output.Report {
+				r.Runtimes = nil
+				return r
+			},
+			wantError: true,
 		},
 		{
-			name: "missing runtimes",
-			rawJSON: `{
-				"schema_version": 1,
-				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
-				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
-				"capabilities": {}
-			}`,
+			name: "nil capabilities returns error",
+			mutate: func(r *output.Report) *output.Report {
+				r.Capabilities = nil
+				return r
+			},
+			wantError: true,
 		},
 		{
-			name: "null capabilities",
-			rawJSON: `{
-				"schema_version": 1,
-				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
-				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
-				"runtimes": {},
-				"capabilities": null
-			}`,
+			name: "empty host.os returns error",
+			mutate: func(r *output.Report) *output.Report {
+				r.Host.OS = ""
+				return r
+			},
+			wantError: true,
 		},
 		{
-			name: "missing capabilities",
-			rawJSON: `{
-				"schema_version": 1,
-				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
-				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
-				"runtimes": {}
-			}`,
+			name: "invalid cgroup_version returns error",
+			mutate: func(r *output.Report) *output.Report {
+				r.Host.CgroupVersion = "v3"
+				return r
+			},
+			wantError: true,
 		},
 		{
-			name: "capability missing state",
-			rawJSON: `{
-				"schema_version": 1,
-				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
-				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
-				"runtimes": {},
-				"capabilities": {
-					"c1": {"confidence": "verified", "evidence": []}
-				}
-			}`,
+			name: "invalid capability state returns error",
+			mutate: func(r *output.Report) *output.Report {
+				c := r.Capabilities["test.cap"]
+				c.State = "super_supported"
+				r.Capabilities["test.cap"] = c
+				return r
+			},
+			wantError: true,
 		},
 		{
-			name: "capability missing confidence",
-			rawJSON: `{
-				"schema_version": 1,
-				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
-				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
-				"runtimes": {},
-				"capabilities": {
-					"c1": {"state": "supported", "evidence": []}
-				}
-			}`,
+			name: "invalid capability confidence returns error",
+			mutate: func(r *output.Report) *output.Report {
+				c := r.Capabilities["test.cap"]
+				c.Confidence = "super_confident"
+				r.Capabilities["test.cap"] = c
+				return r
+			},
+			wantError: true,
 		},
 		{
-			name: "capability null evidence",
-			rawJSON: `{
-				"schema_version": 1,
-				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
-				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
-				"runtimes": {},
-				"capabilities": {
-					"c1": {"state": "supported", "confidence": "verified", "evidence": null}
-				}
-			}`,
-		},
-		{
-			name: "capability missing evidence",
-			rawJSON: `{
-				"schema_version": 1,
-				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
-				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
-				"runtimes": {},
-				"capabilities": {
-					"c1": {"state": "supported", "confidence": "verified"}
-				}
-			}`,
+			name: "nil capability evidence returns error",
+			mutate: func(r *output.Report) *output.Report {
+				c := r.Capabilities["test.cap"]
+				c.Evidence = nil
+				r.Capabilities["test.cap"] = c
+				return r
+			},
+			wantError: true,
 		},
 	}
 
-	for _, tt := range invalidTests {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			if _, err := output.Unmarshal([]byte(tt.rawJSON)); err == nil {
-				t.Errorf("expected error for %s, got nil", tt.name)
+			rep := tt.mutate(validReport())
+			err := rep.Validate()
+			if tt.wantError && err == nil {
+				t.Errorf("expected validation error for %s, but got nil", tt.name)
+			}
+			if !tt.wantError && err != nil {
+				t.Errorf("unexpected validation error for %s: %v", tt.name, err)
 			}
 		})
 	}

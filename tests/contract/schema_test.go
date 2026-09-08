@@ -124,6 +124,10 @@ func TestSchemaV1_GoldenFixtures(t *testing.T) {
 				t.Fatalf("failed to unmarshal fixture %s into output.Report: %v", fixture, err)
 			}
 
+			if err := report.Validate(); err != nil {
+				t.Fatalf("fixture %s failed report.Validate(): %v", fixture, err)
+			}
+
 			// 3. Re-marshal and verify semantic fidelity on known fields
 			remarshaled, err := output.Marshal(report)
 			if err != nil {
@@ -176,6 +180,10 @@ func TestSchemaV1_MarshalGoStruct(t *testing.T) {
 		Confidence: "verified",
 		Reason:     "systemd native Quadlet generator verified",
 		Evidence:   []string{"quadlet_generator=present", "cgroups=v2"},
+	}
+
+	if err := report.Validate(); err != nil {
+		t.Fatalf("report.Validate failed: %v", err)
 	}
 
 	data, err := output.Marshal(report)

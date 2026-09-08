@@ -197,34 +197,66 @@ func MarshalCompact(r *Report) ([]byte, error) {
 	)
 }
 
-// Unmarshal decodes and validates JSON data into a Report, strictly enforcing Schema v1 wire contracts.
+// Unmarshal decodes JSON data into a Report DTO without validating Schema v1 contract rules.
+// To validate report invariants, call (*Report).Validate().
 func Unmarshal(data []byte) (*Report, error) {
 	var r Report
 	if err := json.Unmarshal(data, &r); err != nil {
 		return nil, err
 	}
+	return &r, nil
+}
 
+// Validate checks whether the Report satisfies Schema v1 structural and semantic invariants.
+func (r *Report) Validate() error {
+	if r == nil {
+		return errors.New("report is nil")
+	}
 	if r.SchemaVersion != CurrentSchemaVersion {
-		return nil, fmt.Errorf("invalid or missing schema_version: %d (expected %d)", r.SchemaVersion, CurrentSchemaVersion)
+		return fmt.Errorf("invalid or missing schema_version: %d (expected %d)", r.SchemaVersion, CurrentSchemaVersion)
 	}
 	if r.Runtimes == nil {
-		return nil, errors.New("invalid report: 'runtimes' field cannot be null or missing")
+		return errors.New("invalid report: 'runtimes' field cannot be nil")
 	}
 	if r.Capabilities == nil {
-		return nil, errors.New("invalid report: 'capabilities' field cannot be null or missing")
+		return errors.New("invalid report: 'capabilities' field cannot be nil")
+	}
+	if r.Host.OS == "" {
+		return errors.New("invalid report: 'host.os' cannot be empty")
+	}
+	if err := validateCgroupVersion(r.Host.CgroupVersion); err != nil {
+		return fmt.Errorf("invalid report: %w", err)
 	}
 
 	for name, c := range r.Capabilities {
-		if c.State == "" {
-			return nil, fmt.Errorf("invalid capability %q: 'state' is required", name)
-		}
-		if c.Confidence == "" {
-			return nil, fmt.Errorf("invalid capability %q: 'confidence' is required", name)
-		}
-		if c.Evidence == nil {
-			return nil, fmt.Errorf("invalid capability %q: 'evidence' field cannot be null or missing", name)
+		if err := c.Validate(name); err != nil {
+			return err
 		}
 	}
 
-	return &r, nil
+	return nil
+}
+
+// Validate checks whether the CapabilityReport satisfies state, confidence, and evidence invariants.
+func (c CapabilityReport) Validate(name string) error {
+	if err := model.CapabilityState(c.State).IsValid(); err != nil {
+		return fmt.Errorf("invalid capability %q: %w", name, err)
+	}
+	if err := model.ConfidenceLevel(c.Confidence).IsValid(); err != nil {
+		return fmt.Errorf("invalid capability %q: %w", name, err)
+	}
+	if c.Evidence == nil {
+		return fmt.Errorf("invalid capability %q: 'evidence' cannot be nil", name)
+	}
+	return nil
+}
+
+// validateCgroupVersion checks that the cgroup_version string is a valid enum value.
+func validateCgroupVersion(v string) error {
+	switch v {
+	case "v1", "v2", "mixed", "unavailable", "unknown":
+		return nil
+	default:
+		return fmt.Errorf("invalid host.cgroup_version: %q", v)
+	}
 }
