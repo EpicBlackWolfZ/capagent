@@ -29,8 +29,11 @@ const (
 
 // CapabilityID represents a canonical, dot-separated capability identifier.
 //
-// Form: <namespace>.<subsystem...>.<name>
-// E.g.: "runtime.podman.network.netavark" or "runtime.docker"
+// Form: <namespace>.[<subsystem...>.]<name>
+// A minimum of two dot-separated segments is required. Valid forms include:
+//   - Two-segment IDs (e.g. "runtime.docker"): Namespace="runtime", Subsystem="", Name="docker".
+//   - Three-segment IDs (e.g. "container.lifecycle.systemd_native"): Namespace="container", Subsystem="lifecycle", Name="systemd_native".
+//   - Multi-segment IDs (e.g. "runtime.podman.network.netavark"): Namespace="runtime", Subsystem="podman.network", Name="netavark".
 type CapabilityID string
 
 // String returns the string representation of the CapabilityID.
@@ -93,6 +96,10 @@ func (id CapabilityID) Validate() error {
 }
 
 // EvidenceRef identifies an authoritative evidence item supporting a capability.
+//
+// At the domain model layer, EvidenceRef is an opaque reference identifier. Relational
+// graph integrity, acyclicity, and dangling reference checks are explicitly deferred to
+// the capability/evidence dependency graph engine (Milestone 8).
 type EvidenceRef struct {
 	ID string `json:"id"`
 }

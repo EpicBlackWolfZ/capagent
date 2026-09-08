@@ -134,11 +134,14 @@ Requirements evaluate to one of three states:
 
 ## 7. Canonical Capability IDs
 
-Canonical capability IDs follow the hierarchy `<namespace>.<subsystem...>.<name>`:
+Canonical capability IDs follow the hierarchy `<namespace>.[<subsystem...>.]<name>`:
+- **Segment Count**: Minimum of two dot-separated segments is required.
 - **Namespace**: First segment ($s_0$), e.g. `host`, `runtime`, `container`, `image`, `network`, `storage`, `systemd`.
 - **Name**: Final segment ($s_{n-1}$).
-- **Subsystem**: Intermediate segments ($s_1 \dots s_{n-2}$, or `""` if two segments total).
-- Validation: All segments must be non-empty and match `^[a-z0-9_]+$`.
+- **Subsystem**: Intermediate segments ($s_1 \dots s_{n-2}$), or `""` if exactly two segments total.
+- **Two-segment IDs**: Valid (e.g. `runtime.docker` $\to$ Namespace: `runtime`, Subsystem: `""`, Name: `docker`).
+- **Multi-segment IDs**: Valid (e.g. `runtime.podman.network.netavark` $\to$ Namespace: `runtime`, Subsystem: `podman.network`, Name: `netavark`).
+- **Validation**: All segments must be non-empty and match `^[a-z0-9_]+$`.
 
 ---
 

@@ -15,6 +15,10 @@ type Fact struct {
 }
 
 // ObservationRef uniquely references an observation produced by a probe.
+//
+// At the domain model layer, ObservationRef is treated as an opaque reference identifier.
+// Relational graph resolution and verification against collected observations are explicitly
+// handled by the evidence and capability graph evaluators in subsequent milestones.
 type ObservationRef struct {
 	ID      string `json:"id"`
 	ProbeID string `json:"probe_id"`

@@ -1,10 +1,14 @@
 package model_test
 
 import (
+	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/EpicBlackWolfZ/capagent/internal/model"
 )
+
+const testRuntimePodman = "podman"
 
 func TestEvaluationContext_ConstructionAndSeparation(t *testing.T) {
 	t.Parallel()
@@ -51,8 +55,8 @@ func TestEvaluationContext_ConstructionAndSeparation(t *testing.T) {
 	}
 
 	runtimeCtx := model.RuntimeContext{
-		ActiveRuntimes: []string{"podman"},
-		DefaultRuntime: "podman",
+		ActiveRuntimes: []string{testRuntimePodman},
+		DefaultRuntime: testRuntimePodman,
 	}
 
 	configCtx := model.ConfigContext{
@@ -82,10 +86,87 @@ func TestEvaluationContext_ConstructionAndSeparation(t *testing.T) {
 	if evalCtx.Host.OS != "rhel" || evalCtx.Host.CgroupVersion != "v2" {
 		t.Errorf("unexpected HostContext: %+v", evalCtx.Host)
 	}
-	if evalCtx.Runtime.DefaultRuntime != "podman" {
+	if evalCtx.Runtime.DefaultRuntime != testRuntimePodman {
 		t.Errorf("unexpected DefaultRuntime: %q", evalCtx.Runtime.DefaultRuntime)
 	}
 	if len(evalCtx.Configuration.SearchPaths) != 2 {
 		t.Errorf("unexpected SearchPaths length: %d", len(evalCtx.Configuration.SearchPaths))
 	}
 }
+
+func TestEvaluationContext_Serialization(t *testing.T) {
+	t.Parallel()
+
+	original := model.EvaluationContext{
+		Host: model.HostContext{
+			OS:            "rhel",
+			OSVersion:     "9.4",
+			Kernel:        "5.14.0-427.el9.x86_64",
+			Architecture:  "x86_64",
+			CgroupVersion: "v2",
+			SystemdActive: true,
+		},
+		Identity: model.IdentityContext{
+			Current: model.UserIdentity{
+				UID:      0,
+				GID:      0,
+				Username: "root",
+				HomeDir:  "/root",
+			},
+			Target: model.UserIdentity{
+				UID:      1000,
+				GID:      1000,
+				Username: "appuser",
+				HomeDir:  "/home/appuser",
+			},
+			IsRootless: true,
+			SubUIDRanges: []model.SubIDRange{
+				{Start: 100000, Length: 65536},
+			},
+			SubGIDRanges: []model.SubIDRange{
+				{Start: 100000, Length: 65536},
+			},
+			XDGRuntimeDir:  "/run/user/1000",
+			HasUserSystemd: true,
+			InContainer:    false,
+		},
+		Runtime: model.RuntimeContext{
+			ActiveRuntimes: []string{testRuntimePodman},
+			DefaultRuntime: testRuntimePodman,
+		},
+		Configuration: model.ConfigContext{
+			SearchPaths: []string{"/etc/containers", "/home/appuser/.config/containers"},
+		},
+	}
+
+	data, err := json.Marshal(original)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var decoded model.EvaluationContext
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("json.Unmarshal failed: %v", err)
+	}
+
+	if !reflect.DeepEqual(original, decoded) {
+		t.Errorf("JSON round-trip mismatch:\ngot  %+v\nwant %+v", decoded, original)
+	}
+
+	// Verify empty context round-trip
+	var empty model.EvaluationContext
+	emptyData, err := json.Marshal(empty)
+	if err != nil {
+		t.Fatalf("empty json.Marshal failed: %v", err)
+	}
+
+	var emptyDecoded model.EvaluationContext
+	if err := json.Unmarshal(emptyData, &emptyDecoded); err != nil {
+		t.Fatalf("empty json.Unmarshal failed: %v", err)
+	}
+
+	if !reflect.DeepEqual(empty, emptyDecoded) {
+		t.Errorf("empty JSON round-trip mismatch:\ngot  %+v\nwant %+v", emptyDecoded, empty)
+	}
+}
+
