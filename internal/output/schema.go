@@ -4,6 +4,7 @@ import (
 	json "encoding/json/v2"
 	"encoding/json/jsontext"
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/EpicBlackWolfZ/capagent/internal/model"
@@ -82,19 +83,15 @@ func NewReportFromModel(evalCtx model.EvaluationContext, runtimes map[string]Run
 	report := NewReport()
 
 	// Identity projection: Target identity takes precedence, falling back to Current if unpopulated.
-	uid := evalCtx.Identity.Target.UID
-	gid := evalCtx.Identity.Target.GID
-	username := evalCtx.Identity.Target.Username
-	if uid == 0 && username == "" && (evalCtx.Identity.Current.UID != 0 || evalCtx.Identity.Current.Username != "") {
-		uid = evalCtx.Identity.Current.UID
-		gid = evalCtx.Identity.Current.GID
-		username = evalCtx.Identity.Current.Username
+	target := evalCtx.Identity.Target
+	if target == (model.UserIdentity{}) {
+		target = evalCtx.Identity.Current
 	}
 
 	report.Context = Context{
-		UID:         uid,
-		GID:         gid,
-		TargetUser:  username,
+		UID:         target.UID,
+		GID:         target.GID,
+		TargetUser:  target.Username,
 		IsRootless:  evalCtx.Identity.IsRootless,
 		InContainer: evalCtx.Identity.InContainer,
 	}
@@ -200,24 +197,32 @@ func MarshalCompact(r *Report) ([]byte, error) {
 	)
 }
 
-// Unmarshal decodes JSON data into a Report, ensuring collections are never nil (Policy A).
+// Unmarshal decodes and validates JSON data into a Report, strictly enforcing Schema v1 wire contracts.
 func Unmarshal(data []byte) (*Report, error) {
 	var r Report
 	if err := json.Unmarshal(data, &r); err != nil {
 		return nil, err
 	}
 
+	if r.SchemaVersion != CurrentSchemaVersion {
+		return nil, fmt.Errorf("invalid or missing schema_version: %d (expected %d)", r.SchemaVersion, CurrentSchemaVersion)
+	}
 	if r.Runtimes == nil {
-		r.Runtimes = make(map[string]RuntimeInfo)
+		return nil, errors.New("invalid report: 'runtimes' field cannot be null or missing")
 	}
 	if r.Capabilities == nil {
-		r.Capabilities = make(map[string]CapabilityReport)
+		return nil, errors.New("invalid report: 'capabilities' field cannot be null or missing")
 	}
 
-	for k, v := range r.Capabilities {
-		if v.Evidence == nil {
-			v.Evidence = []string{}
-			r.Capabilities[k] = v
+	for name, c := range r.Capabilities {
+		if c.State == "" {
+			return nil, fmt.Errorf("invalid capability %q: 'state' is required", name)
+		}
+		if c.Confidence == "" {
+			return nil, fmt.Errorf("invalid capability %q: 'confidence' is required", name)
+		}
+		if c.Evidence == nil {
+			return nil, fmt.Errorf("invalid capability %q: 'evidence' field cannot be null or missing", name)
 		}
 	}
 

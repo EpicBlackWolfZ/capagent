@@ -98,6 +98,21 @@ func TestNewReportFromModel(t *testing.T) {
 			wantRuntimes: 0,
 			wantCaps:     0,
 		},
+		{
+			name: "target identity with only UID is considered populated",
+			evalCtx: model.EvaluationContext{
+				Identity: model.IdentityContext{
+					Current: model.UserIdentity{UID: 2000, GID: 2000, Username: "foo"},
+					Target:  model.UserIdentity{UID: 1000},
+				},
+				Host: model.HostContext{
+					OS: "fedora",
+				},
+			},
+			wantUID:  1000,
+			wantGID:  0,
+			wantUser: "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -224,29 +239,146 @@ func TestUnmarshal(t *testing.T) {
 		"schema_version": 1,
 		"context": {"uid": 1000, "gid": 1000, "target_user": "u", "is_rootless": true, "in_container": false},
 		"host": {"os": "linux", "os_version": "1", "kernel": "6", "architecture": "x86_64", "cgroup_version": "v2", "systemd": true},
-		"runtimes": null,
+		"runtimes": {},
 		"capabilities": {
-			"c1": {"state": "supported", "confidence": "verified", "evidence": null}
+			"c1": {"state": "supported", "confidence": "verified", "evidence": ["e1"]}
 		}
 	}`)
 
 	r, err := output.Unmarshal(validJSON)
 	if err != nil {
-		t.Fatalf("Unmarshal failed: %v", err)
+		t.Fatalf("Unmarshal failed on valid JSON: %v", err)
 	}
 
-	if r.Runtimes == nil {
-		t.Error("expected initialized runtimes map after unmarshal with null, got nil")
+	if r.SchemaVersion != 1 {
+		t.Errorf("expected schema version 1, got %d", r.SchemaVersion)
 	}
-	if r.Capabilities == nil {
-		t.Error("expected initialized capabilities map, got nil")
-	}
-	if r.Capabilities["c1"].Evidence == nil {
-		t.Error("expected initialized evidence slice, got nil")
+	if len(r.Capabilities) != 1 {
+		t.Errorf("expected 1 capability, got %d", len(r.Capabilities))
 	}
 
-	// Test invalid JSON
-	if _, err := output.Unmarshal([]byte(`{invalid json`)); err == nil {
-		t.Error("expected error for malformed JSON, got nil")
+	invalidTests := []struct {
+		name    string
+		rawJSON string
+	}{
+		{
+			name:    "malformed JSON syntax",
+			rawJSON: `{invalid json`,
+		},
+		{
+			name: "missing schema_version",
+			rawJSON: `{
+				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
+				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
+				"runtimes": {},
+				"capabilities": {}
+			}`,
+		},
+		{
+			name: "schema_version mismatch",
+			rawJSON: `{
+				"schema_version": 99,
+				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
+				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
+				"runtimes": {},
+				"capabilities": {}
+			}`,
+		},
+		{
+			name: "null runtimes",
+			rawJSON: `{
+				"schema_version": 1,
+				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
+				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
+				"runtimes": null,
+				"capabilities": {}
+			}`,
+		},
+		{
+			name: "missing runtimes",
+			rawJSON: `{
+				"schema_version": 1,
+				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
+				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
+				"capabilities": {}
+			}`,
+		},
+		{
+			name: "null capabilities",
+			rawJSON: `{
+				"schema_version": 1,
+				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
+				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
+				"runtimes": {},
+				"capabilities": null
+			}`,
+		},
+		{
+			name: "missing capabilities",
+			rawJSON: `{
+				"schema_version": 1,
+				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
+				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
+				"runtimes": {}
+			}`,
+		},
+		{
+			name: "capability missing state",
+			rawJSON: `{
+				"schema_version": 1,
+				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
+				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
+				"runtimes": {},
+				"capabilities": {
+					"c1": {"confidence": "verified", "evidence": []}
+				}
+			}`,
+		},
+		{
+			name: "capability missing confidence",
+			rawJSON: `{
+				"schema_version": 1,
+				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
+				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
+				"runtimes": {},
+				"capabilities": {
+					"c1": {"state": "supported", "evidence": []}
+				}
+			}`,
+		},
+		{
+			name: "capability null evidence",
+			rawJSON: `{
+				"schema_version": 1,
+				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
+				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
+				"runtimes": {},
+				"capabilities": {
+					"c1": {"state": "supported", "confidence": "verified", "evidence": null}
+				}
+			}`,
+		},
+		{
+			name: "capability missing evidence",
+			rawJSON: `{
+				"schema_version": 1,
+				"context": {"uid": 0, "gid": 0, "target_user": "u", "is_rootless": false, "in_container": false},
+				"host": {"os": "l", "os_version": "1", "kernel": "6", "architecture": "x", "cgroup_version": "v2", "systemd": true},
+				"runtimes": {},
+				"capabilities": {
+					"c1": {"state": "supported", "confidence": "verified"}
+				}
+			}`,
+		},
+	}
+
+	for _, tt := range invalidTests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			if _, err := output.Unmarshal([]byte(tt.rawJSON)); err == nil {
+				t.Errorf("expected error for %s, got nil", tt.name)
+			}
+		})
 	}
 }

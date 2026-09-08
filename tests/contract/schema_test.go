@@ -84,8 +84,8 @@ func TestSchemaV1_MetadataAlignment(t *testing.T) {
 	}
 
 	constVal, ok := ver["const"].(float64)
-	if !ok || int(constVal) != 1 {
-		t.Errorf("expected schema_version const to be 1, got %v", ver["const"])
+	if !ok || int(constVal) != output.CurrentSchemaVersion {
+		t.Errorf("expected schema_version const to match output.CurrentSchemaVersion (%d), got %v", output.CurrentSchemaVersion, ver["const"])
 	}
 }
 
