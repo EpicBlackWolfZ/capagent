@@ -139,6 +139,26 @@ func TestLogic_And(t *testing.T) {
 			right: requirement.RequirementIndeterminate,
 			want:  requirement.RequirementIndeterminate,
 		},
+		// 10. Invalid state with SATISFIED yields INDETERMINATE
+		{
+			name:  "invalid and SATISFIED",
+			left:  requirement.RequirementState("garbage"),
+			right: requirement.RequirementSatisfied,
+			want:  requirement.RequirementIndeterminate,
+		},
+		{
+			name:  "SATISFIED and invalid",
+			left:  requirement.RequirementSatisfied,
+			right: requirement.RequirementState("garbage"),
+			want:  requirement.RequirementIndeterminate,
+		},
+		// 11. Definite failure short-circuits even with invalid state
+		{
+			name:  "invalid and UNSATISFIED",
+			left:  requirement.RequirementState("garbage"),
+			right: requirement.RequirementUnsatisfied,
+			want:  requirement.RequirementUnsatisfied,
+		},
 	}
 
 	for _, tt := range tests {
@@ -224,6 +244,26 @@ func TestLogic_Or(t *testing.T) {
 			right: requirement.RequirementIndeterminate,
 			want:  requirement.RequirementIndeterminate,
 		},
+		// 10. Definite satisfaction short-circuits even with invalid state
+		{
+			name:  "invalid or SATISFIED",
+			left:  requirement.RequirementState("garbage"),
+			right: requirement.RequirementSatisfied,
+			want:  requirement.RequirementSatisfied,
+		},
+		// 11. Invalid state with non-satisfied yields INDETERMINATE
+		{
+			name:  "invalid or UNSATISFIED",
+			left:  requirement.RequirementState("garbage"),
+			right: requirement.RequirementUnsatisfied,
+			want:  requirement.RequirementIndeterminate,
+		},
+		{
+			name:  "UNSATISFIED or invalid",
+			left:  requirement.RequirementUnsatisfied,
+			right: requirement.RequirementState("garbage"),
+			want:  requirement.RequirementIndeterminate,
+		},
 	}
 
 	for _, tt := range tests {
@@ -258,6 +298,11 @@ func TestLogic_Not(t *testing.T) {
 		{
 			name:  "NOT INDETERMINATE = INDETERMINATE",
 			state: requirement.RequirementIndeterminate,
+			want:  requirement.RequirementIndeterminate,
+		},
+		{
+			name:  "NOT invalid = INDETERMINATE",
+			state: requirement.RequirementState("garbage"),
 			want:  requirement.RequirementIndeterminate,
 		},
 	}

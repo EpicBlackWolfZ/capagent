@@ -9,7 +9,7 @@ func And(a, b RequirementState) RequirementState {
 	if a == RequirementUnsatisfied || b == RequirementUnsatisfied {
 		return RequirementUnsatisfied
 	}
-	if a == RequirementIndeterminate || b == RequirementIndeterminate {
+	if a.IsValid() != nil || b.IsValid() != nil || a == RequirementIndeterminate || b == RequirementIndeterminate {
 		return RequirementIndeterminate
 	}
 	return RequirementSatisfied
@@ -20,11 +20,12 @@ func And(a, b RequirementState) RequirementState {
 // In accordance with capagent truth tables (architecture.md §3.2):
 // - Short-circuits definite satisfaction (SATISFIED).
 // - Preserves INDETERMINATE when alternative branches have failed or remain unknown.
+// - Returns INDETERMINATE if an operand is invalid and not short-circuited by SATISFIED.
 func Or(a, b RequirementState) RequirementState {
 	if a == RequirementSatisfied || b == RequirementSatisfied {
 		return RequirementSatisfied
 	}
-	if a == RequirementIndeterminate || b == RequirementIndeterminate {
+	if a.IsValid() != nil || b.IsValid() != nil || a == RequirementIndeterminate || b == RequirementIndeterminate {
 		return RequirementIndeterminate
 	}
 	return RequirementUnsatisfied
