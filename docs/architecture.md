@@ -264,14 +264,15 @@ Schema v1 enforces strict non-null containers:
 - The `evidence` field in capability items is **required** and always serialized as an array (`[]`), never `null` and never omitted.
 - Optional diagnostic strings (e.g. `reason`) omit when empty (`omitempty`).
 
-### 7.4 Non-Mutating Deterministic Serialization
+### 7.4 Modern & Non-Mutating Deterministic Serialization (`encoding/json/v2`)
 
+- **Standard Library `encoding/json/v2`**: All JSON processing exclusively uses `encoding/json/v2` and `encoding/json/jsontext`. Legacy `encoding/json` (v1) is strictly forbidden across the codebase and mechanically prevented by AST contract tests.
 - **Immutability**: `output.Marshal(r)` clones evidence slices before sorting. Serialization never mutates the input `Report`.
 - **Deterministic Key & Slice Ordering**:
   - Canonical Go struct field declaration order guarantees root key sequencing: `schema_version` $\to$ `context` $\to$ `host` $\to$ `runtimes` $\to$ `capabilities`.
-  - Map keys (`runtimes`, `capabilities`) are sorted lexicographically.
+  - Built-in `json.Deterministic(true)` ensures map keys (`runtimes`, `capabilities`) are sorted lexicographically.
   - Cloned evidence slices are sorted lexicographically before emission.
-  - Canonical formatting applies standard 2-space indentation (`json.MarshalIndent`) with a trailing newline. `output.MarshalCompact` provides unindented output for stream pipelines.
+  - Canonical formatting applies standard 2-space indentation via `jsontext.WithIndent("  ")` with a trailing newline. `output.MarshalCompact` provides unindented output for stream pipelines.
 
 ### 7.5 Additive Evolution & Versioning Rules
 

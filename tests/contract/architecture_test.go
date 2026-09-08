@@ -475,3 +475,61 @@ func TestHasPackagePrefix(t *testing.T) {
 		})
 	}
 }
+
+// TestArchitecture_ForbidLegacyEncodingJSON mechanically enforces that no Go file across the entire repository
+// imports legacy "encoding/json". "encoding/json/v2" is strictly required for all JSON processing.
+func TestArchitecture_ForbidLegacyEncodingJSON(t *testing.T) {
+	t.Parallel()
+
+	rootDir := findRepoRoot(t)
+	fset := token.NewFileSet()
+	var violations []string
+
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			base := info.Name()
+			if strings.HasPrefix(base, ".") || base == "vendor" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+
+		node, err := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
+		if err != nil {
+			return fmt.Errorf("failed to parse %s: %w", path, err)
+		}
+
+		relPath, err := filepath.Rel(rootDir, path)
+		if err != nil {
+			return err
+		}
+
+		for _, imp := range node.Imports {
+			impPath := strings.Trim(imp.Path.Value, `"`)
+			if impPath == "encoding/json" {
+				violations = append(violations, fmt.Sprintf(
+					"%s imports legacy 'encoding/json'; encoding/json/v2 must always be used instead",
+					relPath,
+				))
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		t.Fatalf("failed to scan repository: %v", err)
+	}
+
+	if len(violations) > 0 {
+		t.Errorf("Found forbidden legacy encoding/json imports:\n%s", strings.Join(violations, "\n"))
+	}
+}

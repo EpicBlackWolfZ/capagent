@@ -157,6 +157,7 @@ All Go code must pass the `.golangci.yml` baseline with zero warnings:
 - **Standard Testing**: Use standard library `testing` with table-driven tests (`tests := []struct{ ... }`), subtests `t.Run`, and `t.Parallel()`. Avoid introducing third-party test assertions into core domain packages.
 - **Race Detection**: Always run tests with `go test -race ./...`.
 - **Targeted Coverage**: Maintain $> 95\%$ test coverage on `internal/model` and `internal/requirement`. Ensure zero dead-code branches degrade domain coverage metrics.
+- **Modern JSON Serialization (`encoding/json/v2`)**: `encoding/json/v2` (aliased as `json "encoding/json/v2"`) and `encoding/json/jsontext` MUST always be preferred and used for all JSON encoding, decoding, marshaling, and unmarshaling. Legacy `encoding/json` (v1) is strictly forbidden across all production and test code, mechanically enforced by AST contract tests.
 
 ---
 

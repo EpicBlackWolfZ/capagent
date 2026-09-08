@@ -1,8 +1,8 @@
 package output
 
 import (
-	"bytes"
-	"encoding/json"
+	json "encoding/json/v2"
+	"encoding/json/jsontext"
 	"errors"
 	"slices"
 
@@ -172,16 +172,16 @@ func Marshal(r *Report) ([]byte, error) {
 
 	clone := prepareForSerialization(r)
 
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	enc.SetIndent("", jsonIndent)
-	enc.SetEscapeHTML(false)
-
-	if err := enc.Encode(clone); err != nil {
+	data, err := json.Marshal(clone,
+		jsontext.WithIndent(jsonIndent),
+		jsontext.EscapeForHTML(false),
+		json.Deterministic(true),
+	)
+	if err != nil {
 		return nil, err
 	}
 
-	return buf.Bytes(), nil
+	return append(data, '\n'), nil
 }
 
 // MarshalCompact encodes a Report into compact JSON without indentation or trailing newline.
@@ -194,15 +194,10 @@ func MarshalCompact(r *Report) ([]byte, error) {
 
 	clone := prepareForSerialization(r)
 
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	enc.SetEscapeHTML(false)
-
-	if err := enc.Encode(clone); err != nil {
-		return nil, err
-	}
-
-	return bytes.TrimRight(buf.Bytes(), "\n"), nil
+	return json.Marshal(clone,
+		jsontext.EscapeForHTML(false),
+		json.Deterministic(true),
+	)
 }
 
 // Unmarshal decodes JSON data into a Report, ensuring collections are never nil (Policy A).
