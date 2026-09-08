@@ -44,18 +44,12 @@ func (id CapabilityID) String() string {
 // Namespace returns the first segment of the CapabilityID.
 func (id CapabilityID) Namespace() string {
 	segments := strings.Split(string(id), ".")
-	if len(segments) == 0 {
-		return ""
-	}
 	return segments[0]
 }
 
 // Name returns the final segment of the CapabilityID.
 func (id CapabilityID) Name() string {
 	segments := strings.Split(string(id), ".")
-	if len(segments) == 0 {
-		return ""
-	}
 	return segments[len(segments)-1]
 }
 

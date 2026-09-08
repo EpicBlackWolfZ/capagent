@@ -155,14 +155,14 @@ All Go code must pass the `.golangci.yml` baseline with zero warnings:
 - **Line Length (`lll`)**: Keep lines $\le 140$ characters.
 - **Standard Testing**: Use standard library `testing` with table-driven tests (`tests := []struct{ ... }`), subtests `t.Run`, and `t.Parallel()`. Avoid introducing third-party test assertions into core domain packages.
 - **Race Detection**: Always run tests with `go test -race ./...`.
-- **Targeted Coverage**: Maintain $\ge 90\%$ test coverage on `internal/model` and `internal/requirement`.
+- **Targeted Coverage**: Maintain $> 95\%$ test coverage on `internal/model` and `internal/requirement`.
 
 ---
 
 ## 9. Standard Makefile Targets
 
 - `make test`: Run all unit tests with race detection (`go test -race ./...`).
-- `make coverage`: Run tests and output per-package coverage statistics.
+- `make coverage`: Run tests, output per-package coverage statistics, and verify coverage $> 95\%$.
 - `make lint`: Run `golangci-lint run ./...`.
 - `make tidy`: Run `go mod tidy` and `go mod verify`.
 - `make clean`: Remove build artifacts and coverage files.
