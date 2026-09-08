@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	modulePrefix           = "github.com/EpicBlackWolfZ/capagent/"
-	pkgInternalModel       = "internal/model"
-	pkgInternalRequirement = "internal/requirement"
-	pkgCmdPrefix           = "cmd/"
+	modulePrefix            = "github.com/EpicBlackWolfZ/capagent/"
+	pkgInternalModel        = "internal/model"
+	pkgInternalRequirement  = "internal/requirement"
+	pkgInternalCapability   = "internal/capability"
+	pkgCmdPrefix            = "cmd/"
 )
 
 // Rule defines an architectural import restriction for a package path prefix.
@@ -51,7 +52,7 @@ var ArchitectureRules = []Rule{
 			"internal/platform",
 			"internal/host",
 			"internal/runtime",
-			"internal/capability",
+			pkgInternalCapability,
 			"internal/config",
 			"internal/knowledge",
 			"internal/diagnostics",
@@ -60,7 +61,7 @@ var ArchitectureRules = []Rule{
 		Rationale: "internal/requirement encapsulates 3-valued Boolean logic and may only depend on internal/model",
 	},
 	{
-		SourcePrefix: "internal/capability",
+		SourcePrefix: pkgInternalCapability,
 		DisallowedPrefixes: []string{
 			"internal/host",
 			"internal/runtime",
@@ -76,6 +77,25 @@ var ArchitectureRules = []Rule{
 			"internal/diagnostics",
 		},
 		Rationale: "runtime adapters must not depend on CLI or diagnostics packages",
+	},
+	{
+		SourcePrefix: "internal/output",
+		AllowedInternal: []string{
+			pkgInternalModel,
+			"schema/v1",
+		},
+		DisallowedPrefixes: []string{
+			"internal/probe",
+			"internal/platform",
+			"internal/host",
+			"internal/runtime",
+			pkgInternalCapability,
+			"internal/config",
+			"internal/knowledge",
+			"internal/diagnostics",
+			pkgCmdPrefix,
+		},
+		Rationale: "internal/output serializes Schema v1 reports and may only directly import internal/model, schema/v1, and standard library",
 	},
 }
 
@@ -321,7 +341,7 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 		{
 			name: "internal/capability importing internal/host is rejected",
 			imports: PackageImports{
-				"internal/capability": {
+				pkgInternalCapability: {
 					"github.com/EpicBlackWolfZ/capagent/internal/host",
 				},
 			},
@@ -330,7 +350,7 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 		{
 			name: "internal/capability importing internal/runtime is rejected",
 			imports: PackageImports{
-				"internal/capability": {
+				pkgInternalCapability: {
 					"github.com/EpicBlackWolfZ/capagent/internal/runtime",
 				},
 			},
@@ -381,6 +401,34 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 			},
 			wantViolation: false,
 		},
+		{
+			name: "internal/output importing internal/probe is rejected",
+			imports: PackageImports{
+				"internal/output": {
+					"github.com/EpicBlackWolfZ/capagent/internal/probe",
+				},
+			},
+			wantViolation: true,
+		},
+		{
+			name: "internal/output importing internal/model and schema/v1 is permitted",
+			imports: PackageImports{
+				"internal/output": {
+					"github.com/EpicBlackWolfZ/capagent/" + pkgInternalModel,
+					"github.com/EpicBlackWolfZ/capagent/schema/v1",
+				},
+			},
+			wantViolation: false,
+		},
+		{
+			name: "internal/output importing third-party package is rejected",
+			imports: PackageImports{
+				"internal/output": {
+					"github.com/stretchr/testify/assert",
+				},
+			},
+			wantViolation: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -425,5 +473,63 @@ func TestHasPackagePrefix(t *testing.T) {
 				t.Errorf("hasPackagePrefix(%q, %q) = %v, want %v", tt.pkg, tt.prefix, got, tt.want)
 			}
 		})
+	}
+}
+
+// TestArchitecture_ForbidLegacyEncodingJSON mechanically enforces that no Go file across the entire repository
+// imports legacy "encoding/json". "encoding/json/v2" is strictly required for all JSON processing.
+func TestArchitecture_ForbidLegacyEncodingJSON(t *testing.T) {
+	t.Parallel()
+
+	rootDir := findRepoRoot(t)
+	fset := token.NewFileSet()
+	var violations []string
+
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			base := info.Name()
+			if strings.HasPrefix(base, ".") || base == "vendor" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+
+		node, err := parser.ParseFile(fset, path, nil, parser.ImportsOnly)
+		if err != nil {
+			return fmt.Errorf("failed to parse %s: %w", path, err)
+		}
+
+		relPath, err := filepath.Rel(rootDir, path)
+		if err != nil {
+			return err
+		}
+
+		for _, imp := range node.Imports {
+			impPath := strings.Trim(imp.Path.Value, `"`)
+			if impPath == "encoding/json" {
+				violations = append(violations, fmt.Sprintf(
+					"%s imports legacy 'encoding/json'; encoding/json/v2 must always be used instead",
+					relPath,
+				))
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		t.Fatalf("failed to scan repository: %v", err)
+	}
+
+	if len(violations) > 0 {
+		t.Errorf("Found forbidden legacy encoding/json imports:\n%s", strings.Join(violations, "\n"))
 	}
 }

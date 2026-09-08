@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/EpicBlackWolfZ/capagent/schema/v1/schema.json",
+  "title": "CapagentReportV1",
+  "description": "Authoritative machine-readable report format for container host compatibility evaluations (Schema v1).",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "context",
+    "host",
+    "runtimes",
+    "capabilities"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Canonical schema major version integer (fixed to 1 for Schema v1)."
+    },
+    "context": {
+      "type": "object",
+      "description": "Evaluation execution context summarizing target user identity and environment boundaries.",
+      "additionalProperties": true,
+      "required": [
+        "uid",
+        "gid",
+        "target_user",
+        "is_rootless",
+        "in_container"
+      ],
+      "properties": {
+        "uid": {
+          "type": "integer",
+          "description": "Target Linux User ID (UID) under which capability evaluations are assessed."
+        },
+        "gid": {
+          "type": "integer",
+          "description": "Target Linux Group ID (GID) under which capability evaluations are assessed."
+        },
+        "target_user": {
+          "type": "string",
+          "description": "Target Linux username for deployment."
+        },
+        "is_rootless": {
+          "type": "boolean",
+          "description": "Whether evaluations execute under non-root unprivileged namespace constraints."
+        },
+        "in_container": {
+          "type": "boolean",
+          "description": "Whether the evaluation environment is itself running within an outer container."
+        }
+      }
+    },
+    "host": {
+      "type": "object",
+      "description": "Observed host-level kernel, distribution, cgroup, and init system facts.",
+      "additionalProperties": true,
+      "required": [
+        "os",
+        "os_version",
+        "kernel",
+        "architecture",
+        "cgroup_version",
+        "systemd"
+      ],
+      "properties": {
+        "os": {
+          "type": "string",
+          "description": "Normalized operating system ID (e.g. rhel, fedora, ubuntu, debian, alpine)."
+        },
+        "os_version": {
+          "type": "string",
+          "description": "Operating system release version string."
+        },
+        "kernel": {
+          "type": "string",
+          "description": "Operating system kernel release string (uname -r)."
+        },
+        "architecture": {
+          "type": "string",
+          "description": "Host hardware architecture (e.g. x86_64, aarch64, arm64)."
+        },
+        "cgroup_version": {
+          "type": "string",
+          "enum": [
+            "v1",
+            "v2",
+            "mixed",
+            "unavailable",
+            "unknown"
+          ],
+          "description": "Cgroup hierarchy operational mode on the host."
+        },
+        "systemd": {
+          "type": "boolean",
+          "description": "Whether systemd init is active as PID 1 on the host."
+        }
+      }
+    },
+    "runtimes": {
+      "type": "object",
+      "description": "Observed container runtimes discovered on the host environment.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "installed": {
+            "type": "boolean",
+            "description": "Whether the runtime executable exists on host PATH or standard locations."
+          },
+          "version": {
+            "type": "string",
+            "description": "Reported version string of the runtime."
+          },
+          "accessible": {
+            "type": "boolean",
+            "description": "Whether the runtime service or socket is accessible by the target identity."
+          },
+          "network_backend": {
+            "type": "string",
+            "description": "Configured network backend driver (e.g. netavark, cni)."
+          },
+          "storage_driver": {
+            "type": "string",
+            "description": "Active graph/storage driver (e.g. overlay, overlay2, vfs, btrfs, zfs)."
+          }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "description": "Evaluated canonical capabilities mapped to operational state, confidence, and evidence.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "state",
+          "confidence",
+          "evidence"
+        ],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "supported",
+              "unsupported",
+              "misconfigured",
+              "unavailable",
+              "unknown"
+            ],
+            "description": "Authoritative operational capability state."
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "derived",
+              "heuristic",
+              "unknown"
+            ],
+            "description": "Degree of confidence in capability determination based on evidence hierarchy."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Human-readable diagnostic reason explaining determination or root cause."
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Deterministic list of supporting evidence identifiers."
+          }
+        }
+      }
+    }
+  }
+}
