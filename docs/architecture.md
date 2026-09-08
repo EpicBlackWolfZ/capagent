@@ -1,0 +1,371 @@
+# Container Capability Engine Architecture
+
+This document defines the architectural boundaries, domain model, evaluation semantics, package structure, and contract specifications for `capagent`.
+
+---
+
+## 1. Architectural Overview
+
+`capagent` transforms raw system facts into authoritative, context-aware capability declarations and deterministic requirement evaluations.
+
+### 1.1 Conceptual Pipeline
+
+```text
+Facts
+  │  (Raw kernel, filesystem, and binary inspection)
+  ▼
+Observations
+  │  (Structured outputs from isolated probes)
+  ▼
+Evidence
+  │  (Normalized, verified claims contextualized by identity)
+  ▼
+Capabilities
+  │  (Canonical, high-level operational features with states & confidence)
+  ▼
+Requirements
+  │  (3-valued Boolean expressions evaluated against capabilities)
+  ▼
+Deployment Decision
+     (Actionable verdicts: SATISFIED, UNSATISFIED, INDETERMINATE)
+```
+
+### 1.2 System Component Topology
+
+```text
+                         Deployment Requirements
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │ Requirement      │
+                         │ Evaluator        │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │ Capability       │
+                         │ Engine           │
+                         └────────┬─────────┘
+                                  │
+                 ┌────────────────┼────────────────┐
+                 │                │                │
+                 ▼                ▼                ▼
+           Host Evidence    Runtime Evidence   Config Evidence
+                 │                │                │
+                 └────────────────┼────────────────┘
+                                  │
+                                  ▼
+                         ┌──────────────────┐
+                         │ Evaluation       │
+                         │ Context          │
+                         └────────┬─────────┘
+                                  │
+                 ┌────────────────┼─────────────────┐
+                 ▼                ▼                 ▼
+                root          target user       container
+```
+
+---
+
+## 2. Core Domain Model & Terminology
+
+| Term | Definition |
+| :--- | :--- |
+| **Fact** | A raw, uninterpreted measurement directly retrieved from the host environment (e.g. file content in `/proc/sys/kernel/osrelease`, stat bits on a path, stdout of a command). |
+| **Observation** | A structured datum produced by an individual `Probe` summarizing a specific aspect of the environment. |
+| **Evidence** | An authoritative claim supported by one or more observations, categorized by source (live probe, runtime state, configuration, historical knowledge, or heuristic). |
+| **Capability** | A canonical, high-level feature (e.g. `container.lifecycle.systemd_native`) associated with an operational state (`supported`, `unsupported`, `misconfigured`, `unavailable`, `unknown`) and a confidence level. |
+| **Requirement** | A composite expression (using `AND`, `OR`, `NOT`) declaring the capabilities necessary for a workload to run. Evaluates to `SATISFIED`, `UNSATISFIED`, or `INDETERMINATE`. |
+| **EvaluationContext** | The complete execution identity and containerization environment under which capabilities are evaluated (UID, GID, subuid/subgid allocations, `XDG_RUNTIME_DIR`, user systemd manager, namespace isolation). |
+| **ConfigurationState** | The effective configuration resulting from precedence evaluation across vendor defaults, system overrides, drop-ins, and user configuration. |
+| **Diagnostic** | Detailed explanatory metadata attached to a capability or requirement verdict explaining the *why*, root cause, and dependency chain. |
+
+---
+
+## 3. Requirement Evaluation Logic & Truth Tables
+
+Requirements evaluate to one of three states:
+- **`SATISFIED`**
+- **`UNSATISFIED`**
+- **`INDETERMINATE`**
+
+### 3.1 Logical AND
+
+| Left | Right | Result | Rationale |
+| :--- | :--- | :--- | :--- |
+| `SATISFIED` | `SATISFIED` | **`SATISFIED`** | Both required capabilities are supported. |
+| `SATISFIED` | `UNSATISFIED` | **`UNSATISFIED`** | A required dependency is missing or misconfigured. |
+| `SATISFIED` | `INDETERMINATE` | **`INDETERMINATE`** | Cannot confirm if the complete requirement is satisfied. |
+| `UNSATISFIED` | *anything* | **`UNSATISFIED`** | Short-circuit: a required condition has definitely failed. |
+| `INDETERMINATE` | `SATISFIED` | **`INDETERMINATE`** | One satisfied branch cannot clear the unknown status of another. |
+| `INDETERMINATE` | `UNSATISFIED` | **`UNSATISFIED`** | A definite failure overrides indeterminate state. |
+| `INDETERMINATE` | `INDETERMINATE` | **`INDETERMINATE`** | Outcome remains unknown. |
+
+### 3.2 Logical OR
+
+| Left | Right | Result | Rationale |
+| :--- | :--- | :--- | :--- |
+| `SATISFIED` | *anything* | **`SATISFIED`** | Short-circuit: at least one branch is fully satisfied. |
+| `UNSATISFIED` | `SATISFIED` | **`SATISFIED`** | Alternative branch satisfies requirement. |
+| `UNSATISFIED` | `UNSATISFIED` | **`UNSATISFIED`** | All alternatives have failed. |
+| `UNSATISFIED` | `INDETERMINATE` | **`INDETERMINATE`** | Unknown whether the alternative branch could succeed. |
+| `INDETERMINATE` | `SATISFIED` | **`SATISFIED`** | Short-circuit: confirmed satisfied branch wins. |
+| `INDETERMINATE` | `UNSATISFIED` | **`INDETERMINATE`** | Unknown whether the indeterminate branch could succeed. |
+| `INDETERMINATE` | `INDETERMINATE` | **`INDETERMINATE`** | Outcome remains unknown. |
+
+### 3.3 Logical NOT (Predicate Negation)
+
+Arbitrary inversion of operational states is prohibited (e.g. `NOT(unknown)` does not equal `supported`). Negation applies strictly to requirement evaluation predicates:
+
+- `NOT(SATISFIED)` ──▶ **`UNSATISFIED`**
+- `NOT(UNSATISFIED)` ──▶ **`SATISFIED`**
+- `NOT(INDETERMINATE)` ──▶ **`INDETERMINATE`**
+
+---
+
+## 4. Evidence Precedence Hierarchy
+
+When conflicting claims exist regarding a capability, resolution strictly follows the authoritative precedence order:
+
+```text
+1. Direct Live Evidence            (Kernel syscalls, /proc, /sys, live disk checks)
+         ▲
+         │ (overrides)
+2. Runtime Effective State         (`podman info --format json`, Docker info)
+         ▲
+         │ (overrides)
+3. Configuration File Evidence     (Parsed registries.conf, storage.conf, drop-ins)
+         ▲
+         │ (overrides)
+4. Historical Version Knowledge    (Documented release features, deprecation tables)
+         ▲
+         │ (overrides)
+5. Heuristics                      (OS release conventions, fallback assumptions)
+```
+
+---
+
+## 5. Execution Context (`EvaluationContext`)
+
+Capabilities are evaluated relative to an explicit context:
+
+```go
+type EvaluationContext struct {
+    Host          HostContext
+    Identity      IdentityContext
+    Runtime       RuntimeContext
+    Configuration ConfigContext
+}
+
+type IdentityContext struct {
+    CurrentUID    uint32
+    CurrentGID    uint32
+    TargetUID     uint32
+    TargetUser    string
+    HomeDir       string
+    XDGRuntimeDir string
+    IsRootless    bool
+    SubUIDRanges  []SubIDRange
+    SubGIDRanges  []SubIDRange
+    HasUserSystemd bool
+    InContainer   bool
+}
+```
+
+Capabilities such as rootless storage, rootless port forwarding, and user-level Quadlet generation evaluate against `IdentityContext` rather than system-wide root permissions.
+
+---
+
+## 6. Target Source Tree & Package Boundaries
+
+```text
+cmd/
+  capagent/
+    main.go                 # CLI entry point; handles flags, output formatting, exit codes.
+                            # MUST NOT contain capability or probe business logic.
+
+internal/
+  model/                    # Core domain primitives: Facts, Observations, Evidence,
+                            # Capabilities, Requirements, EvaluationContext, States.
+  probe/                    # Probe interface, registry, runner, timeout & concurrency orchestration.
+  platform/                 # OS abstractions: PlatformReader, ProcfsReader, SysfsReader,
+                            # CommandRunner, syscall wrappers (statfs, uname).
+  host/                     # Host probes: os-release, kernel, systemd, cgroups, namespaces,
+                            # security (SELinux, AppArmor, seccomp), network, DNS, storage.
+  runtime/                  # Runtime adapter interfaces, discovery, and runtime implementations:
+    podman/
+    docker/
+    containerd/
+    crio/
+    nerdctl/
+  config/                   # Configuration source resolution, drop-in discovery, precedence models.
+  knowledge/                # Declarative historical version rules and source provenance.
+  capability/               # Canonical capability registry, dependency DAG, evidence evaluation.
+  requirement/              # Requirement parser, 3-valued logic engine, diagnostic explainers.
+  diagnostics/              # Human-readable output renderers, doctor inspection, evidence trees.
+  output/                   # Deterministic JSON serializer and Schema v1 definitions.
+
+tests/
+  unit/                     # Level 1: Fast tests of parsers, models, and truth tables.
+  probe/                    # Level 2: Probe contract tests using mock readers.
+  contract/                 # Interface contracts and serialization round-trip tests.
+  fixture/                  # Level 3: Simulation fixtures of historical runtimes & broken environments.
+  integration/              # Level 3: Real runtime integration tests (Podman, Docker).
+  compatibility/            # Level 4: Real OS compatibility matrix verification.
+  e2e/                      # End-to-end CLI workflow tests.
+
+testdata/
+  hosts/                    # Simulated /etc/os-release and host files
+  proc/                     # Simulated /proc hierarchies
+  sys/                      # Simulated /sys hierarchies
+  podman/                   # podman version, podman info golden files
+  docker/                   # docker version, docker info golden files
+  containerd/               # containerd configs and socket mocks
+  configs/                  # registries.conf, storage.conf, containers.conf variations
+  expected/                 # Golden output JSON files
+```
+
+### Architectural Boundaries
+1. **CLI does not contain business logic**: `cmd/capagent` only parses flags, calls the runner, and writes to stdout/stderr.
+2. **Runtime adapters do not depend on CLI**: `internal/runtime/*` only consume `platform.CommandRunner` and `platform.PlatformReader`.
+3. **Capability engine does not execute commands**: `internal/capability` evaluates purely over `Evidence` graphs.
+4. **Requirement engine does not execute host probes**: `internal/requirement` evaluates strictly against `Capability` outputs.
+
+---
+
+## 7. JSON Schema v1 Specification
+
+Deterministic serialization guarantees that identical host inputs produce bit-for-bit identical JSON outputs.
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CapagentReportV1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "context",
+    "host",
+    "runtimes",
+    "capabilities"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "context": {
+      "type": "object",
+      "properties": {
+        "uid": { "type": "integer" },
+        "gid": { "type": "integer" },
+        "target_user": { "type": "string" },
+        "is_rootless": { "type": "boolean" },
+        "in_container": { "type": "boolean" }
+      }
+    },
+    "host": {
+      "type": "object",
+      "properties": {
+        "os": { "type": "string" },
+        "os_version": { "type": "string" },
+        "kernel": { "type": "string" },
+        "architecture": { "type": "string" },
+        "cgroup_version": { "type": "string", "enum": ["v1", "v2", "mixed", "unavailable", "unknown"] },
+        "systemd": { "type": "boolean" }
+      }
+    },
+    "runtimes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "installed": { "type": "boolean" },
+          "version": { "type": "string" },
+          "accessible": { "type": "boolean" },
+          "network_backend": { "type": "string" },
+          "storage_driver": { "type": "string" }
+        }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["state", "confidence"],
+        "properties": {
+          "state": { "type": "string", "enum": ["supported", "unsupported", "misconfigured", "unavailable", "unknown"] },
+          "confidence": { "type": "string", "enum": ["verified", "derived", "heuristic", "unknown"] },
+          "reason": { "type": "string" },
+          "evidence": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+## 8. Evaluation Examples
+
+### 8.1 Example: Success Case
+On a modern RHEL 9 host running Podman 5.x with cgroup v2, systemd 252, and Netavark:
+
+```json
+{
+  "schema_version": 1,
+  "context": { "uid": 1000, "is_rootless": true },
+  "host": { "os": "rhel", "os_version": "9.4", "cgroup_version": "v2", "systemd": true },
+  "capabilities": {
+    "container.lifecycle.systemd_native": {
+      "state": "supported",
+      "confidence": "verified",
+      "evidence": ["systemd=252", "quadlet_generator=present", "cgroups=v2"]
+    },
+    "container.network.custom_dns": {
+      "state": "supported",
+      "confidence": "verified",
+      "evidence": ["backend=netavark", "aardvark_dns=present"]
+    }
+  }
+}
+```
+**Requirement:**
+```yaml
+all:
+  - container.lifecycle.systemd_native
+  - container.network.custom_dns
+```
+**Verdict:** `SATISFIED`
+
+### 8.2 Example: Actionable Failure Case
+On an older host where Podman 4.9 is installed but cgroup v1 is active:
+
+```json
+{
+  "capabilities": {
+    "container.lifecycle.systemd_native": {
+      "state": "unsupported",
+      "confidence": "verified",
+      "reason": "cgroup v1 prevents required systemd-native Quadlet execution",
+      "evidence": ["systemd=250", "quadlet_generator=present", "cgroups=v1"]
+    }
+  }
+}
+```
+**Verdict:** `UNSATISFIED` (Root cause immediately obvious; avoids misleading `quadlet: false`).
+
+### 8.3 Example: Unknown / Indeterminate Case
+Podman binary is installed, but permissions prevent the user from accessing the podman service socket:
+
+```json
+{
+  "capabilities": {
+    "runtime.podman.available": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "permission denied accessing /run/user/1000/podman/podman.sock",
+      "evidence": ["binary_exists=true", "socket_connect=permission_denied"]
+    }
+  }
+}
+```
+**Verdict:** `INDETERMINATE` (Automation can fail-closed safely without falsely claiming Podman is missing).
