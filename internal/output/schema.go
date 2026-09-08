@@ -63,7 +63,11 @@ type Report struct {
 	Capabilities  map[string]CapabilityReport `json:"capabilities"`
 }
 
-// NewReport constructs an empty Schema v1 report with initialized non-nil maps.
+// NewReport constructs an empty Schema v1 report with initialized non-nil maps and
+// SchemaVersion set to CurrentSchemaVersion.
+//
+// Note: NewReport serves as a mutable builder/skeleton. Zero-valued fields (such as
+// Host.CgroupVersion) will fail Validate() until properly populated.
 func NewReport() *Report {
 	return &Report{
 		SchemaVersion: CurrentSchemaVersion,
@@ -161,7 +165,10 @@ func prepareForSerialization(r *Report) *Report {
 
 // Marshal encodes a Report into canonically sorted, 2-space indented JSON with a trailing newline.
 //
-// Invariant: Marshal is non-mutating and safe for concurrent execution.
+// Identical inputs produce canonical byte-identical output for a given build.
+//
+// Invariant: Marshal is non-mutating and safe for concurrent execution. It serializes the report
+// without calling Validate(); callers desiring contract validation should invoke r.Validate() first.
 func Marshal(r *Report) ([]byte, error) {
 	if r == nil {
 		return nil, errors.New("cannot marshal nil report")
@@ -183,7 +190,10 @@ func Marshal(r *Report) ([]byte, error) {
 
 // MarshalCompact encodes a Report into compact JSON without indentation or trailing newline.
 //
-// Invariant: MarshalCompact is non-mutating and safe for concurrent execution.
+// Identical inputs produce canonical byte-identical output for a given build.
+//
+// Invariant: MarshalCompact is non-mutating and safe for concurrent execution. It serializes the report
+// without calling Validate(); callers desiring contract validation should invoke r.Validate() first.
 func MarshalCompact(r *Report) ([]byte, error) {
 	if r == nil {
 		return nil, errors.New("cannot marshal nil report")
@@ -207,7 +217,12 @@ func Unmarshal(data []byte) (*Report, error) {
 	return &r, nil
 }
 
-// Validate checks whether the Report satisfies Schema v1 structural and semantic invariants.
+// Validate checks report-level invariants not guaranteed by Go's type system.
+//
+// It verifies schema version alignment, non-nil collections, valid cgroup enum values,
+// valid capability state/confidence enums, and non-nil capability evidence slices.
+// Note: Validate is not a full JSON Schema validator; authoritative wire-contract
+// validation is performed by the JSON Schema test suite.
 func (r *Report) Validate() error {
 	if r == nil {
 		return errors.New("report is nil")

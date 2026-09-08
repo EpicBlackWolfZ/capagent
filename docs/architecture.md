@@ -235,7 +235,7 @@ testdata/
 
 ## 7. JSON Schema v1 Specification
 
-Deterministic serialization guarantees that identical host inputs produce bit-for-bit identical JSON outputs.
+Deterministic serialization guarantees that identical inputs produce canonical byte-identical output for a given build.
 
 ### 7.1 Architecture Invariant: Domain Model vs. Wire Contract
 
@@ -273,6 +273,12 @@ Schema v1 enforces strict non-null containers:
   - Built-in `json.Deterministic(true)` ensures map keys (`runtimes`, `capabilities`) are sorted lexicographically.
   - Cloned evidence slices are sorted lexicographically before emission.
   - Canonical formatting applies standard 2-space indentation via `jsontext.WithIndent("  ")` with a trailing newline. `output.MarshalCompact` provides unindented output for stream pipelines.
+  - Precision of determinism guarantee: `json.Deterministic(true)` guarantees byte-identical output across instances of the same binary for a given build.
+- **API Lifecycle & Separation of Concerns**:
+  - `NewReport()`: Mutable builder/skeleton with initialized non-nil maps and `SchemaVersion = 1`.
+  - `NewReportFromModel(...)`: Direct domain-to-report projection.
+  - `(*Report).Validate()`: Verifies report-level invariants not guaranteed by Go's type system (schema version, non-nil collections, valid cgroup/capability enums, non-nil evidence). It is intentionally distinct from the full JSON Schema wire validator.
+  - `output.Marshal(r)`: Serializes without implicitly validating; callers assembling reports manually should invoke `r.Validate()` prior to serialization.
 
 ### 7.5 Additive Evolution & Versioning Rules
 
