@@ -55,9 +55,6 @@ builds:
       - -X github.com/EpicBlackWolfZ/capagent/internal/version.Vendor=EpicBlackWolfZ
       - -X github.com/EpicBlackWolfZ/capagent/internal/version.OS={{.Os}}
       - -X github.com/EpicBlackWolfZ/capagent/internal/version.Arch={{.Arch}}
-    hooks:
-      post:
-        - cmd: ./scripts/bundle-fat.sh {{ if .IsSnapshot }}full{{ else }}minimal{{ end }}
 
 archives:
   - id: capagent-linux-amd64

@@ -59,7 +59,9 @@ tidy:
 build: deps-microfat
 	@echo "==> Building capagent via GoReleaser snapshot mode..."
 ifdef GORELEASER
-	@goreleaser release --snapshot --clean --skip=publish,sign,announce,sbom
+	@goreleaser build --snapshot --clean
+	@echo "==> Assembling universal fat binaries..."
+	@./scripts/bundle-fat.sh full
 	@mkdir -p $(BIN_DIR)
 	@cp $(DIST_DIR)/fat/$(HOST_ARCH)/capagent $(BIN_DIR)/capagent
 	@echo "✔ Successfully built capagent [$(VERSION)] (microfat universal binary) -> $(BIN_DIR)/capagent"

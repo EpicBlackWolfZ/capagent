@@ -58,14 +58,27 @@ jobs:
       - name: Install Syft (SBOM Generation)
         uses: anchore/sbom-action/download-syft@v0.24.2
 
-      - name: Ensure microfat Tooling
-        run: ./scripts/ensure-microfat.sh
-
-      - name: Run GoReleaser (Compile Variants, Bundle Fat Binaries, Syft SBOMs, Cosign Signatures & Publish)
+      - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v7.2.3
         with:
           distribution: goreleaser
           version: 'v2.18.0'
-          args: release --clean
+          install-only: true
+
+      - name: Ensure microfat Tooling
+        run: ./scripts/ensure-microfat.sh
+
+      - name: Compile All Microarchitecture Variants
+        run: goreleaser build --clean
+
+      - name: Bundle Universal Fat Binaries (Minimal Stub)
+        run: ./scripts/bundle-fat.sh minimal
+
+      - name: Release (Archive, Checksum, SBOM, Sign & Publish)
+        uses: goreleaser/goreleaser-action@v7.2.3
+        with:
+          distribution: goreleaser
+          version: 'v2.18.0'
+          args: release --skip=build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

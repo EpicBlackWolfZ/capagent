@@ -123,7 +123,10 @@ func TestBinary_StaticLinking(t *testing.T) {
 
 	// 2. Verify that no imported dynamic libraries exist
 	libs, err := f.ImportedLibraries()
-	if err == nil && len(libs) > 0 {
+	if err != nil {
+		t.Fatalf("failed to inspect imported libraries of %s: %v", binPath, err)
+	}
+	if len(libs) > 0 {
 		t.Errorf("binary %s has dynamic library dependencies: %v", binPath, libs)
 	}
 

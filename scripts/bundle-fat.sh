@@ -3,6 +3,9 @@ set -euo pipefail
 
 # ==============================================================================
 # scripts/bundle-fat.sh — Assemble universal microfat binaries for capagent
+#
+# This script runs AFTER all GoReleaser builds have completed. All variant
+# binaries must already exist in dist/ — any missing variant is a fatal error.
 # ==============================================================================
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -30,7 +33,9 @@ else
     echo "==> Using FULL stub (testing and debugging mode)"
 fi
 
-# Helper to assert that a required file exists, failing hard if missing
+# Helper to assert that a required file exists, failing hard if missing.
+# This script is called AFTER all builds complete; missing files indicate
+# a build failure, not a timing issue. Never silently skip.
 require_file() {
     local path="$1"
     local desc="${2:-"artifact"}"
@@ -41,31 +46,14 @@ require_file() {
     fi
 }
 
-# Helper to resolve variant path with retry/wait for concurrent GoReleaser builds
-resolve_variant_with_wait() {
-    local timeout=60
-    local elapsed=0
-    while [[ $elapsed -lt $timeout ]]; do
-        for p in "$@"; do
-            if [[ -f "$p" ]]; then
-                echo "$p"
-                return 0
-            fi
-        done
-        sleep 0.5
-        elapsed=$((elapsed + 1))
-    done
-    echo ""
-}
-
 echo "==> Starting microfat universal fat binary assembly..."
 
 # 2. Assemble AMD64 Universal Fat Binary (v1, v2, v3, v4)
-echo "==> Resolving required AMD64 variant artifacts..."
-V1=$(resolve_variant_with_wait "${DIST_DIR}/capagent-amd64_linux_amd64_v1/capagent")
-V2=$(resolve_variant_with_wait "${DIST_DIR}/capagent-amd64_linux_amd64_v2/capagent")
-V3=$(resolve_variant_with_wait "${DIST_DIR}/capagent-amd64_linux_amd64_v3/capagent")
-V4=$(resolve_variant_with_wait "${DIST_DIR}/capagent-amd64_linux_amd64_v4/capagent")
+echo "==> Verifying required AMD64 variant artifacts..."
+V1="${DIST_DIR}/capagent-amd64_linux_amd64_v1/capagent"
+V2="${DIST_DIR}/capagent-amd64_linux_amd64_v2/capagent"
+V3="${DIST_DIR}/capagent-amd64_linux_amd64_v3/capagent"
+V4="${DIST_DIR}/capagent-amd64_linux_amd64_v4/capagent"
 
 require_file "${STUB_AMD64}" "AMD64 launcher stub (${STUB_MODE})"
 require_file "${V1}" "AMD64 v1 variant binary"
@@ -101,10 +89,10 @@ fi
 echo "✔ capagent AMD64 universal fat binary successfully bundled: ${OUT_AMD64}"
 
 # 3. Assemble ARM64 Universal Fat Binary (v8.0, v8.2, v9.0)
-echo "==> Resolving required ARM64 variant artifacts..."
-ARM_V80=$(resolve_variant_with_wait "${DIST_DIR}/capagent-arm64_linux_arm64_v8.0/capagent")
-ARM_V82=$(resolve_variant_with_wait "${DIST_DIR}/capagent-arm64_linux_arm64_v8.2/capagent")
-ARM_V90=$(resolve_variant_with_wait "${DIST_DIR}/capagent-arm64_linux_arm64_v9.0/capagent")
+echo "==> Verifying required ARM64 variant artifacts..."
+ARM_V80="${DIST_DIR}/capagent-arm64_linux_arm64_v8.0/capagent"
+ARM_V82="${DIST_DIR}/capagent-arm64_linux_arm64_v8.2/capagent"
+ARM_V90="${DIST_DIR}/capagent-arm64_linux_arm64_v9.0/capagent"
 
 require_file "${STUB_ARM64}" "ARM64 launcher stub (${STUB_MODE})"
 require_file "${ARM_V80}" "ARM64 v8.0 variant binary"
