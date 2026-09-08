@@ -1,0 +1,122 @@
+# GoReleaser configuration for capagent
+# Multi-microarchitecture universal fat binary builds via microfat
+version: 2
+
+project_name: capagent
+
+builds:
+  - id: capagent-amd64
+    main: ./cmd/capagent
+    binary: capagent
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+    goamd64:
+      - v1
+      - v2
+      - v3
+      - v4
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.Version={{.Version}}
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.Commit={{.Commit}}
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.Date={{.Date}}
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.BuiltBy=goreleaser
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.Vendor=EpicBlackWolfZ
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.OS={{.Os}}
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.Arch={{.Arch}}
+
+  - id: capagent-arm64
+    main: ./cmd/capagent
+    binary: capagent
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - arm64
+    goarm64:
+      - v8.0
+      - v8.2
+      - v9.0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.Version={{.Version}}
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.Commit={{.Commit}}
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.Date={{.Date}}
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.BuiltBy=goreleaser
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.Vendor=EpicBlackWolfZ
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.OS={{.Os}}
+      - -X github.com/EpicBlackWolfZ/capagent/internal/version.Arch={{.Arch}}
+
+archives:
+  - id: capagent-linux-amd64
+    meta: true
+    name_template: "capagent_{{ .Version }}_linux_amd64"
+    formats:
+      - tar.gz
+    files:
+      - src: dist/fat/amd64/capagent
+        dst: .
+        strip_parent: true
+      - README.md
+      - LICENSE
+      - docs/*
+
+  - id: capagent-linux-arm64
+    meta: true
+    name_template: "capagent_{{ .Version }}_linux_arm64"
+    formats:
+      - tar.gz
+    files:
+      - src: dist/fat/arm64/capagent
+        dst: .
+        strip_parent: true
+      - README.md
+      - LICENSE
+      - docs/*
+
+sboms:
+  - id: spdx
+    artifacts: archive
+    documents:
+      - "${artifact}.spdx.json"
+  - id: cyclonedx
+    artifacts: archive
+    documents:
+      - "${artifact}.cyclonedx.json"
+
+signs:
+  - artifacts: checksum
+    cmd: cosign
+    args:
+      - "sign-blob"
+      - "--yes"
+      - "--bundle=${signature}"
+      - "${artifact}"
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-SNAPSHOT-{{ .ShortCommit }}"
+
+release:
+  github:
+    owner: EpicBlackWolfZ
+    name: capagent
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
