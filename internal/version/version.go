@@ -9,6 +9,12 @@ import (
 )
 
 // Build-time metadata injected via -ldflags.
+//
+// Note on OS and Arch semantics:
+// In the context of microfat universal fat binaries, OS and Arch represent the target platform
+// and architecture family (e.g. "linux" and "amd64" or "arm64") under which the process executes.
+// They do NOT represent the CPU microarchitecture feature level (e.g. v1–v4, v8.0–v9.0), which is
+// dynamically evaluated and dispatched at runtime by the launcher stub or inspected via microfat.
 var (
 	Version = "dev"
 	Commit  = "none"

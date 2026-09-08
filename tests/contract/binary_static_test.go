@@ -67,6 +67,10 @@ func TestArchitecture_NoCGOImports(t *testing.T) {
 
 // TestBinary_StaticLinking verifies that binaries compiled with CGO_ENABLED=0 have zero
 // dynamic library dependencies or PT_INTERP headers.
+//
+// By default, it builds a fresh, deterministic test binary in an isolated temporary directory
+// to prevent testing stale local files. When CAPAGENT_BINARY_PATH is set (e.g. in CI or release verification),
+// it inspects that exact specified artifact.
 func TestBinary_StaticLinking(t *testing.T) {
 	t.Parallel()
 
@@ -75,10 +79,22 @@ func TestBinary_StaticLinking(t *testing.T) {
 	}
 
 	rootDir := findRepoRoot(t)
-	binPath := filepath.Join(rootDir, "bin", "capagent")
+	binPath := os.Getenv("CAPAGENT_BINARY_PATH")
 
-	// If binary does not exist, compile a temporary test binary with CGO_ENABLED=0
-	if _, err := os.Stat(binPath); err != nil {
+	if binPath != "" {
+		if !filepath.IsAbs(binPath) {
+			if _, err := os.Stat(binPath); err != nil {
+				candidate := filepath.Join(rootDir, binPath)
+				if _, err := os.Stat(candidate); err == nil {
+					binPath = candidate
+				}
+			}
+		}
+		if _, err := os.Stat(binPath); err != nil {
+			t.Fatalf("CAPAGENT_BINARY_PATH was specified but file not found: %s", binPath)
+		}
+	} else {
+		// Build fresh, deterministic test binary in an isolated temp directory
 		tmpDir := t.TempDir()
 		binPath = filepath.Join(tmpDir, "capagent")
 
@@ -86,13 +102,13 @@ func TestBinary_StaticLinking(t *testing.T) {
 		cmd.Dir = rootDir
 		cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 		if out, err := cmd.CombinedOutput(); err != nil {
-			t.Fatalf("failed to build test binary with CGO_ENABLED=0: %v\nOutput: %s", err, string(out))
+			t.Fatalf("failed to build fresh test binary with CGO_ENABLED=0: %v\nOutput: %s", err, string(out))
 		}
 	}
 
 	f, err := elf.Open(binPath)
 	if err != nil {
-		t.Fatalf("failed to open binary with debug/elf: %v", err)
+		t.Fatalf("failed to open binary %s with debug/elf: %v", binPath, err)
 	}
 	defer func() {
 		_ = f.Close()

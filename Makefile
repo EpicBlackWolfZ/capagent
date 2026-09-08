@@ -28,7 +28,7 @@ GOLANGCI_LINT := $(shell command -v golangci-lint 2> /dev/null)
 GOVULNCHECK := $(shell command -v govulncheck 2> /dev/null)
 GORELEASER := $(shell command -v goreleaser 2> /dev/null)
 
-.PHONY: all help build test coverage lint vuln deps-microfat snapshot tidy clean
+.PHONY: all help build test coverage lint vuln vuln-optional deps-microfat snapshot tidy clean
 
 all: tidy lint vuln test coverage build ## Run complete verification pipeline (tidy, lint, vuln, test, coverage gate, build)
 
@@ -40,9 +40,10 @@ help:
 	@echo "  all            Run tidy, lint, vuln, test, coverage, and build"
 	@echo "  build          Compile universal fat binary for host arch via GoReleaser snapshot"
 	@echo "  test           Run unit tests with race detection"
-	@echo "  coverage       Run unit tests with race detection and verify coverage (> 95%)"
+	@echo "  coverage       Run unit tests with race detection and verify coverage (>= 95.0%)"
 	@echo "  lint           Run golangci-lint (with warning fallback to go vet)"
-	@echo "  vuln           Run govulncheck vulnerability scanner"
+	@echo "  vuln           Run govulncheck vulnerability scanner (strict; fails if missing)"
+	@echo "  vuln-optional  Run govulncheck vulnerability scanner (warning fallback if missing)"
 	@echo "  deps-microfat  Ensure microfat CLI and architecture stubs are present"
 	@echo "  snapshot       Run GoReleaser snapshot build and fat binary packaging"
 	@echo "  tidy           Run go mod tidy and go mod verify"
@@ -77,7 +78,7 @@ else
 	@$(GO) test -race ./...
 endif
 
-## coverage: Run tests with coverage profile, output metrics, and verify threshold (> 95%)
+## coverage: Run tests with coverage profile, output metrics, and verify threshold (>= 95.0%)
 coverage:
 	@echo "==> Running tests with coverage..."
 ifdef GOTESTSUM
@@ -87,9 +88,9 @@ else
 endif
 	@echo "==> Coverage summary:"
 	@$(GO) tool cover -func=$(COVERAGE_FILE)
-	@echo "==> Verifying code coverage threshold (> $(COVERAGE_THRESHOLD)%)..."
+	@echo "==> Verifying code coverage threshold (>= $(COVERAGE_THRESHOLD)%)..."
 	@TOTAL_COVERAGE=$$($(GO) tool cover -func=$(COVERAGE_FILE) | grep "total:" | awk '{print substr($$3, 1, length($$3)-1)}'); \
-	echo "$${TOTAL_COVERAGE} $(COVERAGE_THRESHOLD)" | awk '{if ($$1 <= $$2) { printf "❌ Coverage %s%% is not above target $(COVERAGE_THRESHOLD)%%\n", $$1; exit 1 } else { printf "✅ Total coverage %s%% satisfies target > $(COVERAGE_THRESHOLD)%%\n", $$1 }}'
+	echo "$${TOTAL_COVERAGE} $(COVERAGE_THRESHOLD)" | awk '{if ($$1 < $$2) { printf "❌ Coverage %s%% is below target $(COVERAGE_THRESHOLD)%%\n", $$1; exit 1 } else { printf "✅ Total coverage %s%% satisfies target >= $(COVERAGE_THRESHOLD)%%\n", $$1 }}'
 
 ## lint: Run strict golangci-lint check
 lint:
@@ -103,14 +104,24 @@ else
 	@$(GO) vet ./...
 endif
 
-## vuln: Run govulncheck vulnerability scanner
+## vuln: Run govulncheck vulnerability scanner (fails if tool missing)
 vuln:
 	@echo "==> Running vulnerability check..."
 ifdef GOVULNCHECK
 	@govulncheck ./...
 else
-	@echo "⚠️  WARNING: govulncheck not found in PATH."
-	@echo "⚠️  Install govulncheck via: go install golang.org/x/vuln/cmd/govulncheck@latest"
+	@echo "❌ Error: 'govulncheck' not found in PATH."
+	@echo "   Install govulncheck via: go install golang.org/x/vuln/cmd/govulncheck@latest"
+	@exit 1
+endif
+
+## vuln-optional: Run govulncheck if installed; warn and continue if missing
+vuln-optional:
+	@echo "==> Running vulnerability check (optional)..."
+ifdef GOVULNCHECK
+	@govulncheck ./...
+else
+	@echo "⚠️  WARNING: govulncheck not found in PATH; skipping check."
 endif
 
 ## deps-microfat: Ensure microfat CLI and architecture stubs are present

@@ -193,3 +193,8 @@ jobs:
           ./bin/capagent --help
           ./bin/microfat inspect ./bin/capagent
           ./bin/microfat verify ./bin/capagent
+
+      - name: Structural Verification of Bundled ARM64 Fat Binary
+        run: |
+          ./bin/microfat inspect ./dist/fat/arm64/capagent
+          ./bin/microfat verify ./dist/fat/arm64/capagent
