@@ -25,7 +25,7 @@ The deployment system should not need to know *why* a capability exists:
 ```yaml
 # Declarative, decoupled capability assertion
 when:
-  - host_capabilities.capabilities.container.lifecycle.systemd_native.state == "supported"
+  - host_capabilities['capabilities']['container.lifecycle.systemd_native']['state'] == "supported"
 ```
 
 instead of fragile version and heuristic checks:
@@ -176,6 +176,7 @@ All evaluations take an explicit `EvaluationContext`.
 ### 2.9 Minimal Dependencies
 
 - Target: **Go 1.27.1**
+- Execution baseline: **Linux 5.6+ with working `openat2` confinement**. Unsupported kernels or blocked confinement fail explicitly; no insecure fallback.
 - Build requirement: **`CGO_ENABLED=0`** (strictly static binaries).
 - Standard library first.
 - Limited low-level dependencies (e.g. `golang.org/x/sys/unix`) for direct Linux syscalls.
@@ -186,7 +187,7 @@ All evaluations take an explicit `EvaluationContext`.
 To guarantee reliability on minimal, stripped-down systems:
 - Query `/proc`, `/sys`, `statfs`, `prctl`, `uname`, and filesystem paths directly.
 - Avoid spawning external shells (`sh`, `bash`) or userland utilities (`grep`, `stat`, `awk`).
-- Subprocess execution is reserved strictly for interrogating runtime binaries (`podman`, `docker`, `containerd`).
+- Subprocess execution is reserved for bounded, explicitly authorized read-only runtime or system metadata interrogation (for example `podman --version` or `systemctl --version`) through the platform command policy. Arbitrary shells and general host utilities remain prohibited. A command that initializes or mutates host state is not passive merely because it is named `info`.
 
 ---
 
@@ -209,7 +210,7 @@ To guarantee reliability on minimal, stripped-down systems:
 15. **Every capability starts with a failing test.** True TDD is non-negotiable.
 16. **Every supported runtime gets fixtures and real integration tests.** Simulation must reflect reality.
 17. **The public JSON contract evolves additively.** Backward compatibility is guaranteed.
-18. **Ansible is validated early, not at the end.** Design for the consumer from milestone 10 onward.
+18. **Ansible is validated early, not at the end.** Exercise a minimal consumer in M1.2; expand the full role and real playbooks in M10.
 19. **Minimal dependencies are a design constraint.** Static CGO-free Go binary.
 20. **v1.0 promises a stable model, not universal runtime coverage.** Robust semantics over broad half-baked runtime adapters.
 

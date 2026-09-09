@@ -191,3 +191,11 @@ All Go code must pass the `.golangci.yml` baseline with zero warnings:
   - Format: `<type>(<optional scope>): <description>` (e.g. `feat(model): implement core domain primitives`, `test(requirement): add exhaustive truth table tests`).
   - Imperative mood, concise summary, no trailing period.
 - **Pull Request Automation & Issue Auto-Closing**: Every PR description MUST explicitly enumerate all addressed issues with standard GitHub closing keywords (`Closes #<id>`, `Fixes #<id>`, `Resolves #<id>`) so issues auto-close upon merging to `main`.
+
+---
+
+## 11. Documentation & Local Working Material
+
+- `docs/` is reserved for durable reader-facing documentation, including public architecture, roadmap, usage, and support contracts.
+- Put internal audits, implementation plans, raw evidence, reconciliation logs, and machine-specific benchmark reports in the git-ignored `.work/` directory.
+- Do not force-add `.work/` content or make public documentation depend on local working files. Keep actionable delivery requirements in GitHub issues and permanent regression fixtures/tests in their normal repository locations.
