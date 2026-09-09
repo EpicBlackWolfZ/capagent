@@ -20,7 +20,26 @@ Host files, `/proc`, `/sys`, `/etc`, user configuration and runtime paths are in
 
 The OS scoped reader interprets absolute symlink targets relative to its configured root. `Readlink` inspects a link's stored target; returning that target does not authorize following it. `/proc/self` resolves through its textual PID target, unlike the special descriptor/executable magic links. Embedded NUL bytes are rejected, not silently truncated into a different Go pathname.
 
-Containment limits path resolution; it is not a general sandbox or a guarantee that reading every contained file is harmless. File kinds, ownership, privilege bits, resource limits and mount policy need separate treatment. Follow-up work remains open for adapter path semantics, OS/memory conformance, faithful metadata, close-on-exec and bounded file/directory reads: [#30](https://github.com/EpicBlackWolfZ/capagent/issues/30), [#33](https://github.com/EpicBlackWolfZ/capagent/issues/33), [#56](https://github.com/EpicBlackWolfZ/capagent/issues/56), [#57](https://github.com/EpicBlackWolfZ/capagent/issues/57), [#58](https://github.com/EpicBlackWolfZ/capagent/issues/58).
+Procfs/sysfs adapters derive their root from the scoped reader. They reject
+invalid original subpaths before I/O and forward valid paths without cleaning
+away symlink or trailing-slash semantics. `.` is the explicit root alias; empty
+strings and `/` are rejected. `ReadSelf` prefixes a validated argument with
+`self/`; its security boundary remains the proc root, not a distinct self subtree.
+
+Directory reads return sorted, eagerly captured metadata that remains usable
+after the reader closes. A disappearing child (`ENOENT`) may be skipped; other
+metadata failures return an error and no entries. These reads are not atomic
+filesystem snapshots. The memory fixture reader traverses intermediate links,
+but deliberately retains stricter containment and backing-tree absolute targets
+rather than emulating every `RESOLVE_IN_ROOT` behavior. It does not emulate Linux
+magic links.
+
+Containment limits path resolution; it is not a general sandbox or a guarantee
+that reading every contained file is harmless. File kinds, ownership, privilege
+bits, resource limits and mount policy need separate treatment. Follow-up work
+remains open for faithful metadata and bounded file/directory reads:
+[#57](https://github.com/EpicBlackWolfZ/capagent/issues/57),
+[#58](https://github.com/EpicBlackWolfZ/capagent/issues/58).
 
 ## Executables, environment and target identity
 

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"path/filepath"
 	"strings"
 )
 
@@ -99,51 +98,40 @@ func (e CgroupEntry) IsUnified() bool {
 // host semantics.
 //
 // Path containment is delegated to the supplied ScopedReader. The reader
-// is the security boundary; ProcfsReader does not re-validate subpaths.
+// is the security boundary; adapters also reject malformed input before I/O.
 type ProcfsReader struct {
 	reader ScopedReader
-	root   string
 }
 
 // NewProcfsReader constructs a ProcfsReader bound to the given ScopedReader.
-// An empty root defaults to "/proc".
-func NewProcfsReader(r ScopedReader, root string) *ProcfsReader {
+// The supplied reader is the sole authority for the root.
+func NewProcfsReader(r ScopedReader) *ProcfsReader {
 	if r == nil {
 		return nil
 	}
-	if root == "" {
-		root = defaultProcRoot
-	}
-	return &ProcfsReader{reader: r, root: root}
+	return &ProcfsReader{reader: r}
 }
 
 // Root returns the configured procfs root path.
 func (p *ProcfsReader) Root() string {
-	return p.root
-}
-
-// joinRoot canonicalizes the subpath for forwarding to the underlying
-// ScopedReader. Because the ScopedReader already operates relative to
-// its declared root, the join is logical, not textual: the cleaned
-// subpath is passed through verbatim. The root is encoded into the
-// ScopedReader at construction; this helper exists only to keep the
-// historical "." / "/" → "." normalization for the empty/root case.
-func (p *ProcfsReader) joinRoot(subpath string) string {
-	cleanSub := filepath.Clean(subpath)
-	if cleanSub == "/" {
-		return "."
-	}
-	return cleanSub
+	return p.reader.Root()
 }
 
 // ReadProcFile reads raw bytes at the supplied procfs-relative subpath.
 func (p *ProcfsReader) ReadProcFile(subpath string) ([]byte, error) {
-	return p.reader.ReadFile(p.joinRoot(subpath))
+	if err := ValidateSubpath(subpath); err != nil {
+		return nil, err
+	}
+	return p.reader.ReadFile(subpath)
 }
 
-// ReadSelf reads raw bytes at /proc/self/<subpath>.
+// ReadSelf prefixes a validated subpath with self/ without cleaning it.
+// Containment is the proc reader root, not a separate self subtree.
 func (p *ProcfsReader) ReadSelf(subpath string) ([]byte, error) {
-	return p.reader.ReadFile(p.joinRoot(filepath.Join(selfSubpath, subpath)))
+	if err := ValidateSubpath(subpath); err != nil {
+		return nil, err
+	}
+	return p.reader.ReadFile(selfSubpath + "/" + subpath)
 }
 
 // Mounts parses /proc/self/mountinfo into structured entries.

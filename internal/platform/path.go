@@ -16,8 +16,8 @@ var (
 	ErrEmptySubpath = errors.New("platform: empty subpath")
 
 	// ErrPathContainsNUL is returned when subpath contains a NUL byte.
-	// Linux syscalls treat NUL as a string terminator, so a path containing
-	// NUL would silently truncate to whatever bytes precede it.
+	// Go rejects embedded NUL in syscall path arguments. This sentinel
+	// rejects it consistently before any I/O.
 	ErrPathContainsNUL = errors.New("platform: path contains NUL byte")
 
 	// ErrAbsoluteSubpath is returned when subpath begins with a path
@@ -48,8 +48,8 @@ var (
 //	filepath.Clean(subpath) == ".." ||
 //	  strings.HasPrefix(filepath.Clean(subpath), "../") -> ErrSubpathEscape
 //
-// The function does not require knowledge of the scoped root; the rules
-// above are sufficient to keep the joined path inside any non-empty root.
+// The function does not require knowledge of the scoped root. Lexical
+// validation cannot prove containment when symbolic links are present.
 // The kernel's RESOLVE_IN_ROOT is a second layer of containment; the lexical
 // check exists to make call-site intent unambiguous (the kernel never sees
 // absolute-looking subpaths) and to fail fast on malformed input.

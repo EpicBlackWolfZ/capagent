@@ -15,8 +15,8 @@ func TestNewEnvironment_PreservesComponents(t *testing.T) {
 	mem := platform.NewMemPlatformReader()
 	procScoped := platform.NewScopedMemReader("/proc", mem)
 	sysScoped := platform.NewScopedMemReader("/sys", mem)
-	procfs := platform.NewProcfsReader(procScoped, "/proc")
-	sysfs := platform.NewSysfsReader(sysScoped, "/sys")
+	procfs := platform.NewProcfsReader(procScoped)
+	sysfs := platform.NewSysfsReader(sysScoped)
 	runner := platform.NewFakeCommandRunner()
 
 	env := platform.NewEnvironment(mem, procfs, sysfs, runner)
@@ -47,7 +47,9 @@ func TestNewTestEnvironment_WithMemReader(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
+	fixtureParents(mem, "/proc/version")
 	mem.AddFile("/proc/version", []byte("Linux 6.0.0"), 0o644)
+	fixtureParents(mem, "/sys/fs/cgroup/cgroup.controllers")
 	mem.AddFile("/sys/fs/cgroup/cgroup.controllers", []byte("cpu memory\n"), 0o644)
 
 	runner := platform.NewFakeCommandRunner()
@@ -169,8 +171,11 @@ func TestMemDirEntry_Accessors(t *testing.T) {
 
 	mem := platform.NewMemPlatformReader()
 	mem.AddDir("/d", 0o755)
+	fixtureParents(mem, "/d/file")
 	mem.AddFile("/d/file", []byte("x"), 0o644)
+	fixtureParents(mem, "/d/sub")
 	mem.AddDir("/d/sub", 0o755)
+	fixtureParents(mem, "/d/link")
 	mem.AddSymlink("/d/link", "file")
 
 	entries, err := mem.ReadDir("/d")
@@ -198,9 +203,9 @@ func TestMemDirEntry_Accessors(t *testing.T) {
 		if e.Type() != want.mode {
 			t.Errorf("%s Type() = %v, want %v", e.Name(), e.Type(), want.mode)
 		}
-		// Info() is intentionally not supported (returns error).
-		if _, err := e.Info(); err == nil {
-			t.Errorf("Info() for %q returned nil error", e.Name())
+		// Info() is an eager snapshot.
+		if _, err := e.Info(); err != nil {
+			t.Errorf("Info() for %q returned error: %v", e.Name(), err)
 		}
 	}
 }
@@ -278,6 +283,7 @@ func TestMemPlatformReader_StatSelfLoop(t *testing.T) {
 	mem := platform.NewMemPlatformReader()
 	mem.AddDir("/c", 0o755)
 	// Direct self-loop: link -> link.
+	fixtureParents(mem, "/c/loop")
 	mem.AddSymlink("/c/loop", "loop")
 
 	if _, err := mem.Stat("/c/loop"); err == nil {

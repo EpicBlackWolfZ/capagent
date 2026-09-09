@@ -128,7 +128,7 @@ func runConcurrentLifecycleContract(t *testing.T, build func(*probe.Registry) (c
 			t.Errorf("owner close: %v", err)
 		}
 	}()
-	env := platform.NewEnvironment(mem, platform.NewProcfsReader(scoped, "/proc"), nil, nil)
+	env := platform.NewEnvironment(mem, platform.NewProcfsReader(scoped), nil, nil)
 	registry := probe.NewRegistry()
 	for _, id := range []string{"a", "b"} {
 		if err := registry.Register(&fakeProbe{id: id, run: func(gotCtx context.Context, gotEnv platform.Environment) (model.Observation, error) {

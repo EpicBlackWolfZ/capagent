@@ -34,41 +34,28 @@ const selinuxEnforcing = "1"
 // Path containment is delegated to the supplied ScopedReader.
 type SysfsReader struct {
 	reader ScopedReader
-	root   string
 }
 
 // NewSysfsReader constructs a SysfsReader bound to the given ScopedReader.
-// An empty root defaults to "/sys".
-func NewSysfsReader(r ScopedReader, root string) *SysfsReader {
+// The supplied reader is the sole authority for the root.
+func NewSysfsReader(r ScopedReader) *SysfsReader {
 	if r == nil {
 		return nil
 	}
-	if root == "" {
-		root = defaultSysRoot
-	}
-	return &SysfsReader{reader: r, root: root}
+	return &SysfsReader{reader: r}
 }
 
 // Root returns the configured sysfs root path.
 func (s *SysfsReader) Root() string {
-	return s.root
-}
-
-// joinRoot canonicalizes the subpath for forwarding to the underlying
-// ScopedReader. The ScopedReader operates relative to its declared root;
-// the helper normalizes "/" / "." to "." and passes the cleaned relative
-// subpath through verbatim.
-func (s *SysfsReader) joinRoot(subpath string) string {
-	cleanSub := filepath.Clean(subpath)
-	if cleanSub == "/" {
-		return "."
-	}
-	return cleanSub
+	return s.reader.Root()
 }
 
 // ReadSysFile reads raw bytes at the supplied sysfs-relative subpath.
 func (s *SysfsReader) ReadSysFile(subpath string) ([]byte, error) {
-	return s.reader.ReadFile(s.joinRoot(subpath))
+	if err := ValidateSubpath(subpath); err != nil {
+		return nil, err
+	}
+	return s.reader.ReadFile(subpath)
 }
 
 // ReadCgroupController reads the cgroup v2 controller file at
@@ -83,7 +70,7 @@ func (s *SysfsReader) ReadCgroupController(controller string) ([]byte, error) {
 	if err := validateCgroupController(controller); err != nil {
 		return nil, err
 	}
-	return s.reader.ReadFile(s.joinRoot(cgroupBasePath + "/" + controller))
+	return s.ReadSysFile(cgroupBasePath + "/" + controller)
 }
 
 // validateCgroupController enforces that controller is a single cgroup v2
@@ -124,7 +111,7 @@ func (s *SysfsReader) CgroupControllers() ([]string, error) {
 // SELinuxPresent reports whether /sys/fs/selinux exists in sysfs. Missing
 // files return (false, nil); I/O errors are surfaced as-is.
 func (s *SysfsReader) SELinuxPresent() (bool, error) {
-	if _, err := s.reader.Stat(s.joinRoot(filepath.Dir(selinuxEnforcePath))); err != nil {
+	if _, err := s.reader.Stat(filepath.Dir(selinuxEnforcePath)); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return false, nil
 		}
@@ -165,7 +152,7 @@ func (s *SysfsReader) IsSELinuxEnforcing() (bool, error) {
 
 // AppArmorPresent reports whether /sys/kernel/security/apparmor exists.
 func (s *SysfsReader) AppArmorPresent() (bool, error) {
-	if _, err := s.reader.Stat(s.joinRoot(apparmorPath)); err != nil {
+	if _, err := s.reader.Stat(apparmorPath); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return false, nil
 		}
