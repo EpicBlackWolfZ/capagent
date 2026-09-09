@@ -109,21 +109,21 @@ func TestMemPlatformReader_SymlinkVariations(t *testing.T) {
 		{
 			name: "relative symlink to regular file",
 			setup: func(m *platform.MemPlatformReader) {
-				m.AddFile("/dir/real", []byte("payload"), 0o644)
+				m.AddFile("/dir/real", []byte(testPayload), 0o644)
 				m.AddSymlink("/dir/link", "real")
 			},
 			path:     "/dir/link",
-			readFile: "payload",
+			readFile: testPayload,
 			readlink: "real",
 		},
 		{
 			name: "absolute symlink to regular file",
 			setup: func(m *platform.MemPlatformReader) {
-				m.AddFile("/elsewhere/real", []byte("payload"), 0o644)
+				m.AddFile("/elsewhere/real", []byte(testPayload), 0o644)
 				m.AddSymlink(symlinkTestPath, "/elsewhere/real")
 			},
 			path:     symlinkTestPath,
-			readFile: "payload",
+			readFile: testPayload,
 			readlink: "/elsewhere/real",
 		},
 		{
