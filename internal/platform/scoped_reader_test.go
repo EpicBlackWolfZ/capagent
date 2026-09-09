@@ -11,20 +11,20 @@ import (
 	"sync/atomic"
 	"syscall"
 	"testing"
-	"time"
 
 	"github.com/EpicBlackWolfZ/capagent/internal/platform"
 )
 
 // Reused literal names hoisted to constants for the goconst linter.
 const (
-	scopedReaderProcRoot    = "/proc"
-	scopedReaderMissingSub  = "missing"
-	scopedReaderNonExist    = "nope"
-	scopedReaderSymlinkName = "l"
-	memReaderKind           = "memory"
-	osReaderKind            = "os"
-	linuxGOOS               = "linux"
+	scopedReaderProcRoot      = "/proc"
+	scopedReaderMissingSub    = "missing"
+	scopedReaderNonExist      = "nope"
+	scopedReaderSymlinkName   = "l"
+	scopedReaderOSRootSample  = "/tmp/scoped-test"
+	memReaderKind             = "memory"
+	osReaderKind              = "os"
+	linuxGOOS                 = "linux"
 )
 
 // scopedMemFactory wraps a MemPlatformReader; the setup closure runs
@@ -73,17 +73,11 @@ func scopedOSFactory(t *testing.T, rootPath string, setup func(m *platform.MemPl
 		t.Fatalf("absolute root: %v", err)
 	}
 	for k, v := range memSeeded.Snapshot() {
-		var realPath string
-		if absRoot != "" && strings.HasPrefix(k, absRoot) {
-			rel, rerr := filepath.Rel(absRoot, k)
-			if rerr != nil {
-				continue
-			}
-			realPath = filepath.Join(dir, rel)
-		} else {
-			realPath = filepath.Join(dir, strings.TrimPrefix(k, "/"))
+		realPath, ok := translateVirtualPath(k, absRoot, dir)
+		if !ok {
+			continue
 		}
-		materializeTreeEntry(t, realPath, v)
+		materializeTreeEntry(t, realPath, v, absRoot, dir)
 	}
 
 	r, err := platform.NewScopedOSReader(dir)
@@ -98,10 +92,34 @@ func scopedOSFactory(t *testing.T, rootPath string, setup func(m *platform.MemPl
 	return r
 }
 
+// translateVirtualPath maps a virtual absolute path under
+// virtualRoot into the corresponding path under osRoot. Returns
+// (translated, true) on success, ("", false) if the virtual path
+// is not under virtualRoot.
+func translateVirtualPath(virtualPath, virtualRoot, osRoot string) (string, bool) {
+	if virtualRoot == "" {
+		return "", false
+	}
+	cleanVirtual := filepath.Clean(virtualPath)
+	cleanRoot := filepath.Clean(virtualRoot)
+	rel, err := filepath.Rel(cleanRoot, cleanVirtual)
+	if err != nil {
+		return "", false
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", false
+	}
+	if rel == "." {
+		return osRoot, true
+	}
+	return filepath.Join(osRoot, rel), true
+}
+
 // materializeTreeEntry writes a single VirtualFile entry to disk at the
 // supplied absolute path. Directories are mkdir'd; regular files are
-// written; symlinks are created via os.Symlink.
-func materializeTreeEntry(t *testing.T, path string, vf *platform.VirtualFile) {
+// written; symlinks are created via os.Symlink with their virtual
+// target translated to the corresponding OS path.
+func materializeTreeEntry(t *testing.T, path string, vf *platform.VirtualFile, virtualRoot, osRoot string) {
 	t.Helper()
 	switch vf.Kind {
 	case platform.FileKindDirectory:
@@ -112,7 +130,8 @@ func materializeTreeEntry(t *testing.T, path string, vf *platform.VirtualFile) {
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			t.Fatalf("materialize dir for symlink %q: %v", path, err)
 		}
-		if err := os.Symlink(vf.Target, path); err != nil {
+		target := translateSymlinkTarget(vf.Target, path, virtualRoot, osRoot)
+		if err := os.Symlink(target, path); err != nil {
 			t.Skipf("symlink unsupported on this host: %v", err)
 		}
 	default:
@@ -123,6 +142,37 @@ func materializeTreeEntry(t *testing.T, path string, vf *platform.VirtualFile) {
 			t.Fatalf("materialize file %q: %v", path, err)
 		}
 	}
+}
+
+// translateSymlinkTarget translates a virtual symlink target into the
+// corresponding OS target.
+//
+//   - Relative targets stay relative to the symlink's parent and
+//     require no transformation (POSIX semantics).
+//   - Absolute targets under the virtual root are rewritten to the
+//     corresponding path under osRoot so the materialized link points
+//     at the materialized counterpart in the test root.
+//   - Absolute targets intentionally outside the virtual root are
+//     preserved verbatim so the test can still model "escape
+//     attempts" using a path that resolves outside the scoped OS
+//     root.
+func translateSymlinkTarget(virtualTarget, symlinkOSPath, virtualRoot, osRoot string) string {
+	if !filepath.IsAbs(virtualTarget) {
+		// Relative target: POSIX semantics — interpreted relative
+		// to the symlink's parent — require no translation.
+		return virtualTarget
+	}
+	cleanTarget := filepath.Clean(virtualTarget)
+	cleanRoot := filepath.Clean(virtualRoot)
+	if cleanTarget == cleanRoot || strings.HasPrefix(cleanTarget, cleanRoot+string(filepath.Separator)) {
+		translated, ok := translateVirtualPath(cleanTarget, virtualRoot, osRoot)
+		if ok {
+			return translated
+		}
+	}
+	// Out-of-virtual-root absolute target: leave as-is so the
+	// materialized tree mirrors the virtual escape attempt.
+	return cleanTarget
 }
 
 // withParity runs a subtest twice, once with the memory reader and once
@@ -214,7 +264,7 @@ func TestScopedReader_ReadFile(t *testing.T) {
 		{
 			name:    "absolute rejected",
 			setup:   func(m *platform.MemPlatformReader) {},
-			subpath: "/etc/passwd",
+			subpath: scopedReaderEtcPasswd,
 			wantErr: platform.ErrAbsoluteSubpath,
 		},
 		{
@@ -595,13 +645,15 @@ func TestScopedReader_Readlink(t *testing.T) {
 
 // TestScopedReader_ReadDir_ChildMetadata captures the eager-FileInfo
 // semantic for every child kind. After ReadDir returns, DirEntry.Info()
-// must succeed without triggering any host I/O.
+// must succeed without triggering any host I/O, and each entry's
+// metadata must describe the entry itself, not its target (for
+// symlinks — the AT_SYMLINK_NOFOLLOW guarantee).
 func TestScopedReader_ReadDir_ChildMetadata(t *testing.T) {
 
 
 	setup := func(m *platform.MemPlatformReader) {
 		m.AddDir("/proc/d", 0o755)
-		m.AddFile("/proc/d/regular", []byte("data"), 0o644)
+		m.AddFile("/proc/d/regular", []byte("data-this-is-content-with-known-size"), 0o644)
 		m.AddDir("/proc/d/subdir", 0o755)
 		m.AddSymlink("/proc/d/symlink", "regular")
 		m.AddSymlink("/proc/d/broken", "does-not-exist")
@@ -617,7 +669,7 @@ func TestScopedReader_ReadDir_ChildMetadata(t *testing.T) {
 		for _, e := range entries {
 			byName[e.Name()] = e
 		}
-		// regular file
+		// regular file: Type() has NO type bits set.
 		regular, ok := byName["regular"]
 		if !ok {
 			t.Fatalf("missing 'regular' entry")
@@ -625,8 +677,8 @@ func TestScopedReader_ReadDir_ChildMetadata(t *testing.T) {
 		if regular.IsDir() {
 			t.Errorf("regular IsDir = true, want false")
 		}
-		if regular.Type()&os.ModeSymlink != 0 {
-			t.Errorf("regular Type = %v, want non-symlink", regular.Type())
+		if regular.Type() != 0 {
+			t.Errorf("regular Type = %v, want 0 (no type bits)", regular.Type())
 		}
 		info, err := regular.Info()
 		if err != nil {
@@ -635,8 +687,11 @@ func TestScopedReader_ReadDir_ChildMetadata(t *testing.T) {
 		if info.IsDir() {
 			t.Errorf("regular info IsDir = true, want false")
 		}
+		if info.Mode().Type() != 0 {
+			t.Errorf("regular info.Mode().Type() = %v, want 0", info.Mode().Type())
+		}
 
-		// directory
+		// directory: Type() == ModeDir; IsDir() true.
 		subdir, ok := byName["subdir"]
 		if !ok {
 			t.Fatalf("missing 'subdir' entry")
@@ -644,34 +699,45 @@ func TestScopedReader_ReadDir_ChildMetadata(t *testing.T) {
 		if !subdir.IsDir() {
 			t.Errorf("subdir IsDir = false, want true")
 		}
+		if subdir.Type()&os.ModeDir == 0 {
+			t.Errorf("subdir Type = %v, want ModeDir bit set", subdir.Type())
+		}
 
-		// symlink (in-root target)
+		// symlink (in-root target): Type() == ModeSymlink;
+		// Info().Mode().Type() == ModeSymlink; metadata describes the
+		// link itself, NOT the target's metadata. The size assertion
+		// is informational (the link's stored target length) — the
+		// primary invariant is the mode/type.
 		symlink, ok := byName["symlink"]
 		if !ok {
 			t.Fatalf("missing 'symlink' entry")
 		}
 		if symlink.Type()&os.ModeSymlink == 0 {
-			t.Errorf("symlink Type = %v, want symlink", symlink.Type())
+			t.Errorf("symlink Type = %v, want ModeSymlink bit set", symlink.Type())
 		}
 		info, err = symlink.Info()
 		if err != nil {
 			t.Fatalf("symlink Info: %v", err)
 		}
 		if info.Mode()&os.ModeSymlink == 0 {
-			t.Errorf("symlink Info.Mode = %v, want symlink", info.Mode())
+			t.Errorf("symlink Info.Mode = %v, want ModeSymlink bit set", info.Mode())
 		}
-		// Per the kernel contract, AT_SYMLINK_NOFOLLOW on fstatat must
-		// return the link's own metadata, not the target's. The size
-		// reflects the symlink's stored target length, NOT the
-		// target file's content size.
+		// The metadata must describe the link itself, not the target.
+		// We verify this by checking the link's stored target length
+		// (which for "regular" is 7 bytes), not the target file's
+		// content length (which is much larger).
+		if info.Size() == int64(len("data-this-is-content-with-known-size")) {
+			t.Errorf("symlink Info.Size = %d (matches target content size); symlink was followed for metadata", info.Size())
+		}
 
-		// broken symlink (target does not exist)
+		// broken symlink: Type() == ModeSymlink (link itself, even
+		// though target does not exist).
 		broken, ok := byName["broken"]
 		if !ok {
 			t.Fatalf("missing 'broken' entry")
 		}
 		if broken.Type()&os.ModeSymlink == 0 {
-			t.Errorf("broken Type = %v, want symlink", broken.Type())
+			t.Errorf("broken Type = %v, want ModeSymlink bit set", broken.Type())
 		}
 
 		// escape symlink (raw target stored verbatim)
@@ -770,7 +836,7 @@ func TestScopedReader_UseAfterClose(t *testing.T) {
 
 	mem := platform.NewMemPlatformReader()
 	mem.AddFile("/proc/x", []byte("payload"), 0o644)
-	r := platform.NewScopedMemReader("/proc", mem)
+	r := platform.NewScopedMemReader(scopedReaderProcRoot, mem)
 
 	if err := r.Close(); err != nil {
 		t.Fatalf("first Close: %v", err)
@@ -778,8 +844,8 @@ func TestScopedReader_UseAfterClose(t *testing.T) {
 	if err := r.Close(); err != nil {
 		t.Errorf("second Close: %v (idempotent contract violated)", err)
 	}
-	if got := r.Root(); got != "/proc" {
-		t.Errorf("Root() after Close = %q, want %q", got, "/proc")
+	if got := r.Root(); got != scopedReaderProcRoot {
+		t.Errorf("Root() after Close = %q, want %q", got, scopedReaderProcRoot)
 	}
 
 	if _, err := r.ReadFile("x"); !errors.Is(err, platform.ErrClosed) {
@@ -808,7 +874,7 @@ func TestScopedReader_Race_LegalConcurrentUse(t *testing.T) {
 	mem.AddFile("/proc/d/child", []byte("c"), 0o644)
 	mem.AddSymlink("/proc/l", "x")
 
-	r := platform.NewScopedMemReader("/proc", mem)
+	r := platform.NewScopedMemReader(scopedReaderProcRoot, mem)
 	t.Cleanup(func() { _ = r.Close() })
 
 	const goroutines = 16
@@ -836,14 +902,122 @@ func TestScopedReader_Race_LegalConcurrentUse(t *testing.T) {
 					t.Errorf("Readlink: %v", err)
 					return
 				}
-				if got := r.Root(); got != "/proc" {
-					t.Errorf("Root = %q, want /proc", got)
-					return
-				}
+if got := r.Root(); got != scopedReaderProcRoot {
+				t.Errorf("Root = %q, want %q", got, scopedReaderProcRoot)
+			}
 			}
 		}()
 	}
 	wg.Wait()
+}
+
+// TestTranslateVirtualPath_Unit tests the symlink-target translation
+// logic in isolation. This guards the OS-vs-memory parity invariant:
+// virtual absolute targets under the virtual root are rewritten to
+// point at the materialized counterparts; out-of-root targets remain
+// out-of-root.
+func TestTranslateVirtualPath_Unit(t *testing.T) {
+	t.Parallel()
+
+	const virtualRoot = "/proc"
+	const osRoot = "/tmp/scoped-test"
+
+	tests := []struct {
+		name        string
+		virtualPath string
+		want        string
+		wantOK      bool
+	}{
+		{
+			name:        "path under virtual root",
+			virtualPath: "/proc/d/file",
+			want:        filepath.Join(osRoot, "d/file"),
+			wantOK:      true,
+		},
+		{
+			name:        "virtual root itself",
+			virtualPath: "/proc",
+			want:        osRoot,
+			wantOK:      true,
+		},
+		{
+			name:        "sibling of virtual root",
+			virtualPath: scopedReaderEtcPasswd,
+			want:        "",
+			wantOK:      false,
+		},
+		{
+			name:        "traversal above virtual root",
+			virtualPath: "/proc/../etc",
+			want:        "",
+			wantOK:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, ok := translateVirtualPath(tt.virtualPath, virtualRoot, osRoot)
+			if ok != tt.wantOK {
+				t.Errorf("ok = %v, want %v", ok, tt.wantOK)
+			}
+			if got != tt.want {
+				t.Errorf("translated = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestTranslateSymlinkTarget_Unit tests the per-target translation:
+// relative targets stay relative, in-virtual-root absolute targets
+// are rewritten, out-of-root absolute targets are preserved verbatim.
+func TestTranslateSymlinkTarget_Unit(t *testing.T) {
+	t.Parallel()
+
+	const virtualRoot = "/proc"
+	const osRoot = "/tmp/scoped-test"
+
+	tests := []struct {
+		name              string
+		virtualTarget     string
+		symlinkOSPath     string
+		wantTranslated    string
+	}{
+		{
+			name:           "relative target stays relative",
+			virtualTarget:  "../other",
+			symlinkOSPath:  osRoot + "/d/link",
+			wantTranslated: "../other",
+		},
+		{
+			name:           "absolute target inside virtual root rewritten",
+			virtualTarget:  "/proc/d/target",
+			symlinkOSPath:  osRoot + "/d/link",
+			wantTranslated: osRoot + "/d/target",
+		},
+		{
+			name:           "absolute target outside virtual root preserved",
+			virtualTarget:  scopedReaderEtcPasswd,
+			symlinkOSPath:  osRoot + "/d/link",
+			wantTranslated: scopedReaderEtcPasswd,
+		},
+		{
+			name:           "absolute virtual-root-prefix-target preserved as in-root",
+			virtualTarget:  "/proc",
+			symlinkOSPath:  osRoot + "/d/link",
+			wantTranslated: osRoot,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := translateSymlinkTarget(tt.virtualTarget, tt.symlinkOSPath, virtualRoot, osRoot)
+			if got != tt.wantTranslated {
+				t.Errorf("translated = %q, want %q", got, tt.wantTranslated)
+			}
+		})
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -851,11 +1025,16 @@ func TestScopedReader_Race_LegalConcurrentUse(t *testing.T) {
 // -----------------------------------------------------------------------------
 
 // TestScopedReader_SymlinkRace is the adversarial regression test for
-// accidental pathname-reopen implementations. It rapidly swaps a file
-// between an in-root regular file and a symlink pointing outside root,
-// while a concurrent reader repeatedly calls ReadFile. The test asserts
-// that no read ever returns the "outside" content, which would only
-// happen if the implementation re-resolved the pathname after the open.
+// accidental pathname-reopen implementations. The test deterministically
+// cycles the target between two states (in-root regular file and
+// symlink to outside) while a concurrent reader calls ReadFile. Both
+// states are exercised by construction; the assertion is that no
+// read ever returns the OUTSIDE content, which would only happen if
+// the implementation re-resolved the pathname after the open.
+//
+// The test is a regression detector, not a proof of kernel
+// correctness: it ensures the implementation never falls out of
+// kernel-confined semantics regardless of timing.
 func TestScopedReader_SymlinkRace(t *testing.T) {
 
 
@@ -864,12 +1043,10 @@ func TestScopedReader_SymlinkRace(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	// in-root safe content
 	safeContent := []byte("in-root-content")
 	if err := os.WriteFile(filepath.Join(dir, "safe"), safeContent, 0o600); err != nil {
 		t.Fatalf("seed safe: %v", err)
 	}
-	// outside-of-root content
 	outsideDir := t.TempDir()
 	outsideContent := []byte("OUTSIDE")
 	if err := os.WriteFile(filepath.Join(outsideDir, "secret"), outsideContent, 0o600); err != nil {
@@ -882,86 +1059,92 @@ func TestScopedReader_SymlinkRace(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = r.Close() })
 
-	const totalAttempts = 2000
+	const iterationsPerState = 200
+	targetPath := filepath.Join(dir, "target")
+
 	var (
-		inRootHits atomic.Int32
-		errors     atomic.Int32
-		outsideHits atomic.Int32
+		roundsA atomic.Int32
+		roundsB atomic.Int32
+		leaks   atomic.Int32
 	)
-	stop := make(chan struct{})
 
-	// Swapper: continuously rewrites `target` between a regular file
-	// with safeContent and a symlink to the outside file. RESOLVE_IN_ROOT
-	// must always clamp the read to inside-root regardless of the
-	// current on-disk state at open time.
-	var swapWG sync.WaitGroup
-	swapWG.Add(1)
+	// Unbuffered channel drives strict alternation: each send
+	// blocks until the matching receive runs. Both goroutines
+	// MUST rendezvous for each iteration.
+	syncCh := make(chan struct{})
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	// Swapper: sets up state, signals, waits for reader.
 	go func() {
-		defer swapWG.Done()
-		for {
-			select {
-			case <-stop:
-				return
-			default:
-			}
-			targetPath := filepath.Join(dir, "target")
+		defer wg.Done()
+		for i := 0; i < iterationsPerState; i++ {
+			// State A: regular file with in-root content.
 			_ = os.Remove(targetPath)
-			// alternate symlink / regular
-			if time.Now().UnixNano()%2 == 0 {
-				if err := os.Symlink(filepath.Join(outsideDir, "secret"), targetPath); err != nil {
-					continue
-				}
-			} else {
-				if err := os.WriteFile(targetPath, safeContent, 0o600); err != nil {
-					continue
-				}
+			if err := os.WriteFile(targetPath, safeContent, 0o600); err != nil {
+				t.Errorf("swap A: %v", err)
+				return
 			}
+			syncCh <- struct{}{} // signal: state A ready
+			<-syncCh             // wait: reader done with state A
+
+			// State B: symlink to outside.
+			_ = os.Remove(targetPath)
+			if err := os.Symlink(filepath.Join(outsideDir, "secret"), targetPath); err != nil {
+				t.Errorf("swap B: %v", err)
+				return
+			}
+			syncCh <- struct{}{} // signal: state B ready
+			<-syncCh             // wait: reader done with state B
 		}
+		// Final signal so the reader exits its loop.
+		syncCh <- struct{}{}
 	}()
 
-	var readerWG sync.WaitGroup
-	readerWG.Add(1)
+	// Reader: waits for state, reads, signals.
 	go func() {
-		defer readerWG.Done()
-		for i := 0; i < totalAttempts; i++ {
+		defer wg.Done()
+		for i := 0; i < iterationsPerState; i++ {
+			// State A read.
+			<-syncCh
 			data, err := r.ReadFile("target")
+			syncCh <- struct{}{}
 			if err != nil {
-				// Expected when the entry is a symlink to outside root:
-				// the kernel's RESOLVE_IN_ROOT returns ErrNotExist.
-				errors.Add(1)
-				continue
+				leaks.Add(1)
+				t.Errorf("state A read error: %v", err)
+				return
 			}
-			if string(data) == "OUTSIDE" {
-				outsideHits.Add(1)
-				continue
+			if string(data) != "in-root-content" {
+				t.Errorf("state A read content = %q, want %q", string(data), "in-root-content")
+				return
 			}
-			if string(data) == "in-root-content" {
-				inRootHits.Add(1)
-				continue
+			roundsA.Add(1)
+
+			// State B read.
+			<-syncCh
+			data, err = r.ReadFile("target")
+			syncCh <- struct{}{}
+			if err == nil && string(data) == "OUTSIDE" {
+				t.Errorf("state B read returned OUTSIDE content; containment violated")
+				return
 			}
-			// Some reads may legitimately land on a brief moment
-			// after os.Remove but before the next write; the file
-			// is unlinked but the openat2 succeeded via a stale
-			// inode. Such reads return empty content (length 0)
-			// rather than ErrNotExist because the FD was valid
-			// when opened. Count these as benign races.
-			if len(data) == 0 {
-				errors.Add(1)
-				continue
-			}
-			t.Errorf("unexpected read content: %q (len=%d)", string(data), len(data))
+			roundsB.Add(1)
 		}
-		close(stop)
+		// Drain the final signal so the swapper can exit.
+		<-syncCh
 	}()
 
-	readerWG.Wait()
-	swapWG.Wait()
+	wg.Wait()
 
-	if outsideHits.Load() != 0 {
-		t.Fatalf("symlink race regression: %d reads returned OUTSIDE content; containment violated", outsideHits.Load())
+	if roundsA.Load() != int32(iterationsPerState) {
+		t.Errorf("state A rounds = %d, want %d", roundsA.Load(), iterationsPerState)
 	}
-	if inRootHits.Load()+errors.Load() != int32(totalAttempts) {
-		t.Fatalf("read accounting: inRoot=%d errors=%d total=%d", inRootHits.Load(), errors.Load(), totalAttempts)
+	if roundsB.Load() != int32(iterationsPerState) {
+		t.Errorf("state B rounds = %d, want %d", roundsB.Load(), iterationsPerState)
+	}
+	if leaks.Load() != 0 {
+		t.Errorf("encountered %d error reads in state A (expected zero)", leaks.Load())
 	}
 }
 
@@ -1028,7 +1211,7 @@ func TestScopedReader_FileInfo_AllAccessors(t *testing.T) {
 	mem.AddFile("/proc/regular", []byte("hello"), 0o644)
 	mem.AddDir("/proc/dir", 0o755)
 
-	r := platform.NewScopedMemReader("/proc", mem)
+	r := platform.NewScopedMemReader(scopedReaderProcRoot, mem)
 	t.Cleanup(func() { _ = r.Close() })
 
 	// regular file
@@ -1116,7 +1299,7 @@ func TestScopedReader_LifecycleInternalHelpers(t *testing.T) {
 		t.Parallel()
 		mem := platform.NewMemPlatformReader()
 		mem.AddFile("/proc/x", []byte("y"), 0o644)
-		r := platform.NewScopedMemReader("/proc", mem)
+		r := platform.NewScopedMemReader(scopedReaderProcRoot, mem)
 		if err := r.Close(); err != nil {
 			t.Fatalf("first close: %v", err)
 		}
@@ -1159,7 +1342,7 @@ func TestScopedReader_LifecycleInternalHelpers(t *testing.T) {
 		// the lookup hits the stored /proc entry.
 		mem.AddDir("/proc", 0o755)
 		mem.AddFile("/proc/x", []byte("y"), 0o644)
-		r := platform.NewScopedMemReader("/proc", mem)
+		r := platform.NewScopedMemReader(scopedReaderProcRoot, mem)
 		t.Cleanup(func() { _ = r.Close() })
 		// "." subpath should resolve to root (joinAndValidate
 		// returns root verbatim).
