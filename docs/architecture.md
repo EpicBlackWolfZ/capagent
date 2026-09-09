@@ -231,6 +231,48 @@ testdata/
 3. **Capability engine does not execute commands**: `internal/capability` evaluates purely over `Evidence` graphs.
 4. **Requirement engine does not execute host probes**: `internal/requirement` evaluates strictly against `Capability` outputs.
 
+### `internal/probe` Contract
+The probe package is the dynamic-dependency orchestrator that materializes a
+canonical execution plan from a static DAG.
+
+**Layer position.** Sits between `internal/platform` (low-level OS abstractions)
+and `internal/host` / `internal/runtime` (which are *consumers* of probe
+infrastructure in later milestones). May import `internal/model` and
+`internal/platform` only — never engine, configuration, knowledge, diagnostics,
+or CLI packages.
+
+**Surface.** Two exported types drive all probe execution:
+
+- `Probe` (`internal/probe/probe.go`): declares `ID()`, `Dependencies()`, and
+  `Run(ctx, env) → (model.Observation, error)`. Probes are stateless; all
+  execution state lives in the orchestrator.
+- `Registry` (`internal/probe/registry.go`): owns the canonical DAG. State
+  machine is `Open → Resolved → immutable`; subsequent `Register()` calls
+  after `Resolve()` return `ErrRegistryResolved`.
+
+**Scheduling invariants.**
+
+- Topological order is computed via Kahn's algorithm with a **registration-order
+  tie-breaker** — when multiple roots are simultaneously runnable, they execute
+  in the order they were registered, guaranteeing deterministic output across
+  runs and platforms.
+- A dependent becomes runnable **only** after all its declared prerequisites
+  finish with `ProbeSucceeded`. Prerequisite `ProbeFailed`, `ProbeCancelled`,
+  or `ProbeSkipped` cascades to transitive dependents as `ProbeSkipped` with
+  `ErrDependencyFailed`.
+- Concurrency cap is configurable via `WithMaxConcurrency(n ≥ 1)`. Effective
+  worker pool is `min(maxConcurrency, runnableProbes)`. Empty registries
+  return an empty slice without spawning goroutines.
+- Output is canonically sorted by `ResolvedPlan()` order regardless of
+  completion timing — concurrent execution never perturbs result order.
+
+**Environment injection.** All probe `Run` invocations receive a
+`platform.Environment` value containing a `PlatformReader`, `ProcfsReader`,
+`SysfsReader`, and `CommandRunner`. The environment is immutable; probes MUST
+NOT mutate any reader state. Test doubles (`MemPlatformReader`,
+`FakeCommandRunner`) are the canonical way to make probe behavior fully
+deterministic in unit tests.
+
 ---
 
 ## 7. JSON Schema v1 Specification
