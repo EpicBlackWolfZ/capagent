@@ -66,6 +66,15 @@ linters:
           - mnd
           - unused
 
+      # AST rule fixtures: deliberately use unused / denylisted
+      # primitives to demonstrate the rule. Lints must not flag the
+      # fixture symbols themselves.
+      - path: tests/contract/fixtures/
+        linters:
+          - unused
+          - ineffassign
+          - goconst
+
 formatters:
   settings:
     gofmt:
