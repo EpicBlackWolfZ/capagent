@@ -57,11 +57,11 @@ type ProbeResult struct {
 // Orchestrator executes a resolved Registry's probes under a configurable
 // concurrency cap with strict dependency-aware scheduling.
 //
-// Orchestrator holds an internal reference to its Registry. Constructing an
+// Orchestrator holds an immutable execution snapshot. Constructing an
 // Orchestrator triggers Registry.Resolve; cycles, missing dependencies, and
 // invalid configuration are reported as construction errors.
 type Orchestrator struct {
-	registry       *Registry
+	plan           *executionPlan
 	maxConcurrency int
 }
 
@@ -89,7 +89,6 @@ func NewOrchestrator(registry *Registry, opts ...OrchestratorOption) (*Orchestra
 	}
 
 	o := &Orchestrator{
-		registry:       registry,
 		maxConcurrency: runtime.NumCPU(),
 	}
 	for _, opt := range opts {
@@ -101,6 +100,11 @@ func NewOrchestrator(registry *Registry, opts ...OrchestratorOption) (*Orchestra
 	if err := registry.Resolve(); err != nil {
 		return nil, err
 	}
+	plan, err := registry.execution()
+	if err != nil {
+		return nil, err
+	}
+	o.plan = plan
 	return o, nil
 }
 
@@ -181,18 +185,20 @@ func (q *runQueue) close() {
 
 // schedulerContext bundles per-Run mutable state.
 type schedulerContext struct {
-	plan       []string
-	states     map[string]*probeState
-	dependents map[string][]string
-	queue      *runQueue
-	stateMu    sync.Mutex
-	finalized  atomic.Int32
-	allDone    chan struct{}
+	plan      *executionPlan
+	states    []probeState
+	queue     *runQueue
+	stateMu   sync.Mutex
+	finalized atomic.Int32
+	allDone   chan struct{}
 }
 
 // Run executes every registered probe respecting the dependency DAG and the
 // configured concurrency limit. The returned slice is canonically ordered
-// by registry.ResolvedPlan() regardless of execution completion order.
+// by registration order regardless of execution completion order. The
+// topological ResolvedPlan is separate from this output order. Concurrent
+// runs require reentrant shared probes and concurrent-safe environment services.
+// Run joins all its workers and never closes caller-owned environment services.
 //
 // An empty registry yields an empty result without spawning goroutines.
 //
@@ -208,29 +214,16 @@ type schedulerContext struct {
 //   - Returning ctx.Err() (or any error that wraps it via fmt.Errorf("%w", ...)
 //     or errors.Is) is classified as ProbeCancelled by the orchestrator.
 func (o *Orchestrator) Run(ctx context.Context, env platform.Environment) []ProbeResult {
-	plan, err := o.registry.ResolvedPlan()
-	if err != nil || len(plan) == 0 {
+	n := len(o.plan.nodes)
+	if n == 0 {
 		return []ProbeResult{}
 	}
-	n := len(plan)
-
-	states := make(map[string]*probeState, n)
-	dependents := make(map[string][]string, n)
-	for _, id := range plan {
-		p, _ := o.registry.Get(id)
-		states[id] = &probeState{remainingDeps: len(p.Dependencies())}
-	}
-	for _, id := range plan {
-		p, _ := o.registry.Get(id)
-		for _, dep := range p.Dependencies() {
-			dependents[dep] = append(dependents[dep], id)
-		}
-	}
-
+	states := make([]probeState, n)
 	queue := newRunQueue()
-	for _, id := range plan {
-		if states[id].remainingDeps == 0 {
-			queue.push(id)
+	for i, node := range o.plan.nodes {
+		states[i].remainingDeps = len(node.dependencies)
+		if states[i].remainingDeps == 0 {
+			queue.push(node.id)
 		}
 	}
 
@@ -240,11 +233,10 @@ func (o *Orchestrator) Run(ctx context.Context, env platform.Environment) []Prob
 	}
 
 	sc := &schedulerContext{
-		plan:       plan,
-		states:     states,
-		dependents: dependents,
-		queue:      queue,
-		allDone:    make(chan struct{}),
+		plan:    o.plan,
+		states:  states,
+		queue:   queue,
+		allDone: make(chan struct{}),
 	}
 
 	var wg sync.WaitGroup
@@ -257,7 +249,7 @@ func (o *Orchestrator) Run(ctx context.Context, env platform.Environment) []Prob
 				if !ok {
 					return
 				}
-				o.processProbe(ctx, sc, id, env)
+				o.processProbe(ctx, sc, o.plan.indices[id], env)
 			}
 		}()
 	}
@@ -267,8 +259,8 @@ func (o *Orchestrator) Run(ctx context.Context, env platform.Environment) []Prob
 	wg.Wait()
 
 	out := make([]ProbeResult, 0, n)
-	for _, id := range plan {
-		s := states[id]
+	for i, node := range o.plan.nodes {
+		s := states[i]
 		if s.finalized {
 			out = append(out, s.result)
 			continue
@@ -276,7 +268,7 @@ func (o *Orchestrator) Run(ctx context.Context, env platform.Environment) []Prob
 		// Defensive fallback; should be unreachable because allDone
 		// fires only when every probe has been finalized.
 		out = append(out, ProbeResult{
-			ProbeID: id,
+			ProbeID: node.id,
 			Status:  ProbeSkipped,
 			Err:     ErrDependencyFailed,
 		})
@@ -292,17 +284,16 @@ func (o *Orchestrator) Run(ctx context.Context, env platform.Environment) []Prob
 func (o *Orchestrator) processProbe(
 	ctx context.Context,
 	sc *schedulerContext,
-	id string,
+	id int,
 	env platform.Environment,
 ) {
 	//nolint:gosec // G115: registry probe counts are bounded by realistic CLI usage and cannot exceed int32.
-	totalProbes := int32(len(sc.plan))
+	totalProbes := int32(len(sc.plan.nodes))
 
 	// Fast path: skip if already finalized by another cascade path.
 	sc.stateMu.Lock()
 	if sc.states[id].finalized {
 		sc.stateMu.Unlock()
-		o.signalCompletion(sc, totalProbes)
 		return
 	}
 	sc.stateMu.Unlock()
@@ -310,22 +301,14 @@ func (o *Orchestrator) processProbe(
 	// If ctx is already cancelled, skip execution and mark directly as cancelled.
 	if ctxErr := ctx.Err(); ctxErr != nil {
 		o.recordFinal(sc, id, ProbeResult{
-			ProbeID: id,
+			ProbeID: sc.plan.nodes[id].id,
 			Status:  ProbeCancelled,
 			Err:     ctxErr,
 		}, totalProbes)
 		return
 	}
 
-	p, ok := o.registry.Get(id)
-	if !ok {
-		o.recordFinal(sc, id, ProbeResult{
-			ProbeID: id,
-			Status:  ProbeFailed,
-			Err:     fmt.Errorf("probe %q not found in registry", id),
-		}, totalProbes)
-		return
-	}
+	p := sc.plan.nodes[id].probe
 
 	// Execute the probe.
 	start := time.Now()
@@ -333,12 +316,12 @@ func (o *Orchestrator) processProbe(
 	duration := time.Since(start)
 
 	var result ProbeResult
-	result.ProbeID = id
+	result.ProbeID = sc.plan.nodes[id].id
 	result.Duration = duration
+	result.Observation = obs
 	switch {
 	case runErr == nil:
 		result.Status = ProbeSucceeded
-		result.Observation = obs
 	case ctx.Err() != nil && (runErr == ctx.Err() || errors.Is(runErr, ctx.Err())):
 		result.Status = ProbeCancelled
 		result.Err = ctx.Err()
@@ -353,29 +336,28 @@ func (o *Orchestrator) processProbe(
 // recordFinal atomically finalizes probe id with the given outcome. It
 // cascades the outcome to dependents, queues newly-runnable probes for
 // execution, and signals completion when the last probe finalizes.
-func (o *Orchestrator) recordFinal(sc *schedulerContext, id string, result ProbeResult, totalProbes int32) {
-	var newlyRunnable []string
+func (o *Orchestrator) recordFinal(sc *schedulerContext, id int, result ProbeResult, totalProbes int32) {
+	var newlyRunnable []int
 	var cascadeCount int32
 
 	sc.stateMu.Lock()
-	s := sc.states[id]
+	s := &sc.states[id]
 	if s.finalized {
 		sc.stateMu.Unlock()
-		o.signalCompletion(sc, totalProbes)
 		return
 	}
 	s.finalized = true
 	s.result = result
 
 	if result.Status == ProbeSucceeded {
-		for _, dep := range sc.dependents[id] {
+		for _, dep := range sc.plan.nodes[id].downstream {
 			sc.states[dep].remainingDeps--
 			if sc.states[dep].remainingDeps == 0 {
 				newlyRunnable = append(newlyRunnable, dep)
 			}
 		}
 	} else {
-		cascadeCount = cascadeSkipLocked(sc, sc.dependents[id])
+		cascadeCount = cascadeSkipLocked(sc, sc.plan.nodes[id].downstream)
 	}
 	sc.stateMu.Unlock()
 
@@ -389,7 +371,7 @@ func (o *Orchestrator) recordFinal(sc *schedulerContext, id string, result Probe
 	// Enqueue newly runnable probes outside the critical section. push()
 	// broadcasts a wakeup so any blocked consumer re-checks the queue.
 	for _, dep := range newlyRunnable {
-		sc.queue.push(dep)
+		sc.queue.push(sc.plan.nodes[dep].id)
 	}
 
 	o.signalCompletion(sc, totalProbes)
@@ -411,25 +393,25 @@ func (o *Orchestrator) signalCompletion(sc *schedulerContext, totalProbes int32)
 // ProbeSkipped with ErrDependencyFailed. Caller must hold sc.stateMu.
 // Returns the number of probes newly finalized by this cascade (excluding
 // already-finalized probes).
-func cascadeSkipLocked(sc *schedulerContext, seeds []string) int32 {
+func cascadeSkipLocked(sc *schedulerContext, seeds []int) int32 {
 	var count int32
-	stack := make([]string, 0, len(seeds))
+	stack := make([]int, 0, len(seeds))
 	stack = append(stack, seeds...)
 	for len(stack) > 0 {
 		id := stack[len(stack)-1]
 		stack = stack[:len(stack)-1]
-		s := sc.states[id]
+		s := &sc.states[id]
 		if s.finalized {
 			continue
 		}
 		s.finalized = true
 		s.result = ProbeResult{
-			ProbeID: id,
+			ProbeID: sc.plan.nodes[id].id,
 			Status:  ProbeSkipped,
 			Err:     ErrDependencyFailed,
 		}
 		count++
-		for _, dep := range sc.dependents[id] {
+		for _, dep := range sc.plan.nodes[id].downstream {
 			if !sc.states[dep].finalized {
 				stack = append(stack, dep)
 			}

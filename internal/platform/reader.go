@@ -209,7 +209,7 @@ func normalize(path string) (string, error) {
 	return filepath.Clean(path), nil
 }
 
-// AddFile inserts a regular file at path with the provided content and mode.
+// AddFile inserts a regular file at path with a copy of content and the provided mode.
 func (m *MemPlatformReader) AddFile(path string, content []byte, mode os.FileMode) {
 	clean, err := normalize(path)
 	if err != nil {
@@ -219,7 +219,7 @@ func (m *MemPlatformReader) AddFile(path string, content []byte, mode os.FileMod
 	defer m.mu.Unlock()
 	m.files[clean] = &VirtualFile{
 		Kind:    FileKindRegular,
-		Content: content,
+		Content: append([]byte(nil), content...),
 		Mode:    mode.Perm(),
 	}
 }

@@ -14,8 +14,10 @@ import (
 //	[Open]  --Register()-->  [Open]
 //	[Open]  --Resolve()-->   [Resolved]
 //	[Resolved]  --Register()-->  ErrRegistryResolved
-//	[Resolved]  --Resolve()-->   no-op (idempotent)
+//	[Resolved]  --Resolve()-->   cached outcome (success or original error)
 //
+// Resolve seals the registry even on validation failure. The original error
+// is retained by every retry, plan access, and orchestrator constructor.
 // Once a registry has reached Resolved, its execution plan MUST NOT change.
 // The plan returned by ResolvedPlan() is byte-identical across calls for
 // the lifetime of the resolved registry; subsequent Register calls are
@@ -31,8 +33,10 @@ type Registry struct {
 	orderedIDs []string
 	regIndex   map[string]int
 
+	resolveErr   error
 	resolved     bool
 	resolvedPlan []string
+	compiled     *executionPlan
 }
 
 // NewRegistry constructs an empty probe registry.
@@ -88,35 +92,45 @@ func (r *Registry) Resolve() error {
 	defer r.mu.Unlock()
 
 	if r.resolved {
-		return nil
+		return r.resolveErr
+	}
+
+	// Capture declarations once; validation and execution use this same copy.
+	dependencies := make(map[string][]string, len(r.orderedIDs))
+	for _, id := range r.orderedIDs {
+		dependencies[id] = append([]string(nil), r.probes[id].Dependencies()...)
 	}
 
 	// Validate that every declared dependency refers to a known probe.
 	for _, id := range r.orderedIDs {
-		deps := r.probes[id].Dependencies()
+		deps := dependencies[id]
 		for _, dep := range deps {
 			if dep == id {
 				r.resolved = true
 				r.resolvedPlan = nil
-				return fmt.Errorf("%w: probe %q depends on itself", ErrCycleDetected, id)
+				r.resolveErr = fmt.Errorf("%w: probe %q depends on itself", ErrCycleDetected, id)
+				return r.resolveErr
 			}
 			if _, ok := r.probes[dep]; !ok {
 				r.resolved = true
 				r.resolvedPlan = nil
-				return fmt.Errorf("probe %q declares unknown dependency %q", id, dep)
+				r.resolveErr = fmt.Errorf("probe %q declares unknown dependency %q", id, dep)
+				return r.resolveErr
 			}
 		}
 	}
 
-	plan, err := kahnTopoSort(r.orderedIDs, r.probes, r.regIndex)
+	plan, err := kahnTopoSort(r.orderedIDs, dependencies, r.regIndex)
 	if err != nil {
 		r.resolved = true
 		r.resolvedPlan = nil
-		return err
+		r.resolveErr = err
+		return r.resolveErr
 	}
 
 	r.resolved = true
 	r.resolvedPlan = plan
+	r.compiled = compilePlan(r.orderedIDs, r.probes, dependencies, r.regIndex)
 	return nil
 }
 
@@ -149,8 +163,8 @@ func (r *Registry) ResolvedPlan() ([]string, error) {
 	if !r.resolved {
 		return nil, fmt.Errorf("registry has not been resolved")
 	}
-	if r.resolvedPlan == nil {
-		return nil, fmt.Errorf("registry resolved in error state")
+	if r.resolveErr != nil {
+		return nil, r.resolveErr
 	}
 	out := make([]string, len(r.resolvedPlan))
 	copy(out, r.resolvedPlan)
@@ -163,7 +177,7 @@ func (r *Registry) ResolvedPlan() ([]string, error) {
 //
 // Returns ErrCycleDetected when the resulting plan contains fewer nodes
 // than the input set, indicating that at least one cycle remains.
-func kahnTopoSort(ids []string, probes map[string]Probe, regIndex map[string]int) ([]string, error) {
+func kahnTopoSort(ids []string, dependencies map[string][]string, regIndex map[string]int) ([]string, error) {
 	// Build in-degree map: in-degree of node X = number of declared
 	// dependencies pointing to X. We also build a reverse adjacency map
 	// (dependents of X) to decrement in-degrees as nodes are emitted.
@@ -174,7 +188,7 @@ func kahnTopoSort(ids []string, probes map[string]Probe, regIndex map[string]int
 		inDegree[id] = 0
 	}
 	for _, id := range ids {
-		for _, dep := range probes[id].Dependencies() {
+		for _, dep := range dependencies[id] {
 			inDegree[id]++
 			dependents[dep] = append(dependents[dep], id)
 		}
@@ -230,4 +244,45 @@ func (h *regOrderHeap) Pop() any {
 	x := old[n-1]
 	*h = old[:n-1]
 	return x
+}
+
+// executionPlan owns immutable registration-order nodes and captured adjacency.
+// No backing slices or maps are exposed outside the probe package.
+type executionPlan struct {
+	nodes   []executionNode
+	indices map[string]int
+}
+type executionNode struct {
+	id           string
+	probe        Probe
+	dependencies []int
+	downstream   []int
+}
+
+func compilePlan(ids []string, probes map[string]Probe, deps map[string][]string, indices map[string]int) *executionPlan {
+	plan := &executionPlan{nodes: make([]executionNode, len(ids)), indices: make(map[string]int, len(ids))}
+	for i, id := range ids {
+		plan.indices[id] = i
+		plan.nodes[i].id = id
+		plan.nodes[i].probe = probes[id]
+		for _, dep := range deps[id] {
+			parent := indices[dep]
+			plan.nodes[i].dependencies = append(plan.nodes[i].dependencies, parent)
+			plan.nodes[parent].downstream = append(plan.nodes[parent].downstream, i)
+		}
+	}
+	return plan
+}
+
+// execution returns only a successfully published immutable snapshot.
+func (r *Registry) execution() (*executionPlan, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if !r.resolved {
+		return nil, fmt.Errorf("registry has not been resolved")
+	}
+	if r.resolveErr != nil {
+		return nil, r.resolveErr
+	}
+	return r.compiled, nil
 }

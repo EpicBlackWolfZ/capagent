@@ -87,12 +87,7 @@ func (s *stubProbe) Run(ctx context.Context, env platform.Environment) (model.Ob
 
 func newEnv() platform.Environment {
 	mem := platform.NewMemPlatformReader()
-	return platform.Environment{
-		Reader: mem,
-		Procfs: platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem), "/proc"),
-		Sysfs:  platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys"),
-		Runner: platform.NewFakeCommandRunner(),
-	}
+	return platform.NewTestEnvironment(mem, platform.NewFakeCommandRunner())
 }
 
 // Probe IDs used repeatedly across orchestrator tests; declared as named
@@ -248,7 +243,7 @@ func TestRegistry_UnknownDependencyRejected(t *testing.T) {
 	t.Parallel()
 
 	r := probe.NewRegistry()
-	if err := r.Register(&stubProbe{id: "a", deps: []string{"missing"}}); err != nil {
+	if err := r.Register(&stubProbe{id: "a", deps: []string{snapshotMissing}}); err != nil {
 		t.Fatalf("Register: %v", err)
 	}
 	if err := r.Resolve(); err == nil {
@@ -980,7 +975,7 @@ func TestRegistry_ResolvedPlanAfterFailedResolve(t *testing.T) {
 	t.Parallel()
 
 	r := probe.NewRegistry()
-	if err := r.Register(&stubProbe{id: "a", deps: []string{"missing"}}); err != nil {
+	if err := r.Register(&stubProbe{id: "a", deps: []string{snapshotMissing}}); err != nil {
 		t.Fatalf("Register: %v", err)
 	}
 
@@ -999,7 +994,7 @@ func TestOrchestrator_EmptyPlanDoesNotPanic(t *testing.T) {
 	t.Parallel()
 
 	r := probe.NewRegistry()
-	if err := r.Register(&stubProbe{id: "a", deps: []string{"missing"}}); err != nil {
+	if err := r.Register(&stubProbe{id: "a", deps: []string{snapshotMissing}}); err != nil {
 		t.Fatalf("Register: %v", err)
 	}
 

@@ -11,5 +11,5 @@ import (
 // readSecretLegitimately routes through the platform abstraction so
 // no host-IO primitive appears in the AST. The denylist permits this.
 func readSecretLegitimately(env platform.Environment) ([]byte, error) {
-	return env.Reader.ReadFile("/etc/passwd")
+	return env.Reader().ReadFile("/etc/passwd")
 }

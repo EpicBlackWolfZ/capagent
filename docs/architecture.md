@@ -255,13 +255,17 @@ or CLI packages.
   in the orchestrator; probe-local mutation follows the concurrency contract below.
 - `Registry` (`internal/probe/registry.go`): owns the canonical DAG. State
   machine is `Open → Resolved → immutable`; subsequent `Register()` calls
-  after `Resolve()` return `ErrRegistryResolved`.
+  after `Resolve()` return `ErrRegistryResolved`. Failure also seals the registry;
+  retries, plan access, and constructor retries retain the original error identity.
+  A valid empty registry resolves successfully.
 
 **Scheduling invariants.**
 
 - Topological order is computed via Kahn's algorithm with a **registration-order
-  tie-breaker** for the resolved plan and output. Concurrent probe start and
-  completion order are not guaranteed; output remains ordered by the plan.
+  tie-breaker** for `ResolvedPlan()`. `Resolve` captures and copies dependency
+  declarations once, validates that snapshot, and compiles private adjacency
+  indices and probe references. Runs never call dependency methods again.
+  Callers must not mutate declarations concurrently with snapshot capture.
 - A dependent becomes runnable **only** after all its declared prerequisites
   finish with `ProbeSucceeded`. Prerequisite `ProbeFailed`, `ProbeCancelled`,
   or `ProbeSkipped` cascades to transitive dependents as `ProbeSkipped` with
@@ -272,8 +276,11 @@ or CLI packages.
   Workers block while no probe is currently runnable and wake when work
   becomes available. Empty registries return an empty slice without
   spawning goroutines.
-- Output is canonically sorted by `ResolvedPlan()` order regardless of
-  completion timing — concurrent execution never perturbs result order.
+- Output follows registration order, including when a dependent was registered
+  before its prerequisite. This differs from topological `ResolvedPlan()` order.
+  Concurrent probe start and completion order are not guaranteed.
+- Returned observations survive errors and cooperative cancellation. Only a
+  successful status satisfies prerequisites; partial measurements do not.
 
 **Cancellation responsibilities.** Cancellation is split between the
 orchestrator and each probe:
@@ -293,10 +300,10 @@ orchestrator and each probe:
 executed at most once per `Orchestrator.Run`. Sibling probes may execute
 concurrently with one another, so the `platform.Environment` and its
 dependencies may be accessed concurrently from multiple probe goroutines.
-Probes MAY mutate their own internal state freely, but they MUST NOT
-mutate shared dependencies (e.g. `platform.Environment` fields) unless
-those dependencies explicitly document that they are safe for concurrent
-mutation.
+Sequential runs permit probe-local mutation. Callers sharing an instance across
+concurrent runs, including different registries, must provide safely reentrant
+probes. The orchestrator isolates per-run scheduler state; it does not serialize
+shared probe instances. It joins workers and never closes owner-held services.
 
 A directly cancelled probe is recorded as `ProbeCancelled`; transitive
 dependents of a cancelled, failed, or skipped probe are recorded as
@@ -304,14 +311,18 @@ dependents of a cancelled, failed, or skipped probe are recorded as
 `ProbeCancelled`; only direct cancellation propagates that status.
 
 **Environment injection.** All probe `Run` invocations receive a
-`platform.Environment` value containing a `PlatformReader`, `ProcfsReader`,
-`SysfsReader`, and `CommandRunner`. The Environment value itself is not
-deeply immutable: its fields are reference-typed pointers and interfaces
-that may be observed by sibling probes executed concurrently. Probes MUST
-NOT mutate shared dependencies unless those dependencies explicitly
-document that they are safe for concurrent mutation. Test doubles
-(`MemPlatformReader`, `ScopedMemReader`, `FakeCommandRunner`) are the canonical way to make
-probe behavior fully deterministic in unit tests.
+`platform.Environment` value with read-only `Reader()`, `Procfs()`, `Sysfs()`,
+and `Runner()` accessors. Private forwarding values hide concrete setup and
+close handles, including mutable procfs/sysfs wrapper pointers. Nil services
+remain nil. This is ordinary type/API prevention, verified by surface-contract
+and shared-reader race tests; it is not a sandbox against reflection or unsafe.
+Owners configure services before runs and close them after all runs join.
+Providers must support concurrent operations and return caller-owned measurement
+buffers. Custom providers must honor this contract. Synchronized operational
+state, such as fake command call recording, may change during a run.
+`MemPlatformReader` copies inserted content; `FakeCommandRunner` copies registered
+and returned stdout/stderr. Test owners retain their concrete handles to seed
+fixtures, while probes receive only the measurement interfaces.
 
 **`internal/platform` CommandRunner process-group lifecycle.**
 `OSCommandRunner` creates each subprocess in its own process group via
