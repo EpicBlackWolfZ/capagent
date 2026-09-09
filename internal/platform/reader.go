@@ -436,3 +436,21 @@ var (
 	_ PlatformReader = (*MemPlatformReader)(nil)
 	_ fs.FileInfo    = (*memFileInfo)(nil)
 )
+
+// Snapshot returns a copy of the in-memory file tree. The returned map is
+// safe for the caller to mutate without affecting the underlying state.
+// Tests use this to materialize the tree onto a temporary directory for
+// the OS-backed ScopedReader parity path.
+func (m *MemPlatformReader) Snapshot() map[string]*VirtualFile {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	out := make(map[string]*VirtualFile, len(m.files))
+	for k, v := range m.files {
+		copyVF := *v
+		if v.Content != nil {
+			copyVF.Content = append([]byte(nil), v.Content...)
+		}
+		out[k] = &copyVF
+	}
+	return out
+}

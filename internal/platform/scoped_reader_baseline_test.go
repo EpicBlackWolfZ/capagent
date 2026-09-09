@@ -483,7 +483,7 @@ func TestScopedOSReader_StatMode_SymlinkLink(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewScopedOSReader: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "target"), []byte("payload"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "target"), []byte(testPayload), 0o644); err != nil {
 		t.Fatalf("seed target: %v", err)
 	}
 	if err := os.Symlink("target", filepath.Join(dir, "l")); err != nil {
@@ -586,7 +586,7 @@ func TestScopedMemReader_ReadDir_MissingAndNonDirectory(t *testing.T) {
 func TestScopedMemReader_ReadFile_MissingAndRelativeRoot(t *testing.T) {
 	t.Parallel()
 	mem := platform.NewMemPlatformReader()
-	mem.AddFile("/proc/f", []byte("payload"), 0o644)
+	mem.AddFile("/proc/f", []byte(testPayload), 0o644)
 
 	r := platform.NewScopedMemReader("/proc", mem)
 	t.Cleanup(func() { _ = r.Close() })
@@ -1228,7 +1228,7 @@ func TestScopedMemReader_Constructor(t *testing.T) {
 func TestScopedMemReader_ReadFile(t *testing.T) {
 	t.Parallel()
 	mem := platform.NewMemPlatformReader()
-	mem.AddFile("/proc/f", []byte("payload"), 0o644)
+	mem.AddFile("/proc/f", []byte(testPayload), 0o644)
 	mem.AddDir("/proc/d", 0o755)
 
 	r := platform.NewScopedMemReader("/proc", mem)
@@ -1240,8 +1240,8 @@ func TestScopedMemReader_ReadFile(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ReadFile: %v", err)
 		}
-		if string(data) != "payload" {
-			t.Errorf("ReadFile = %q, want %q", data, "payload")
+		if string(data) != testPayload {
+			t.Errorf("ReadFile = %q, want %q", data, testPayload)
 		}
 	})
 
@@ -1395,7 +1395,7 @@ func TestScopedMemReader_SymlinkChain(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	mem.AddFile("/proc/real", []byte("payload"), 0o644)
+	mem.AddFile("/proc/real", []byte(testPayload), 0o644)
 	mem.AddSymlink("/proc/a", "b")
 	mem.AddSymlink("/proc/b", "c")
 	mem.AddSymlink("/proc/c", "real")
@@ -1407,8 +1407,8 @@ func TestScopedMemReader_SymlinkChain(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFile a: %v", err)
 	}
-	if string(data) != "payload" {
-		t.Errorf("ReadFile a = %q, want %q", data, "payload")
+	if string(data) != testPayload {
+		t.Errorf("ReadFile a = %q, want %q", data, testPayload)
 	}
 }
 

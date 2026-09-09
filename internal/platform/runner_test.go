@@ -704,7 +704,10 @@ func TestOSCommandRunner_ReapsKilledProcess(t *testing.T) {
 	}
 	// Calling Run again must work and must not block. If the previous
 	// child were not reaped, the runner would deadlock on the new process.
-	result2, err := r.Run(context.Background(), echoCommand, "reaped")
+	// Use a separate runner with a generous timeout so CI does not flake
+	// on process-startup latency.
+	r2 := platform.NewOSCommandRunner(5 * time.Second)
+	result2, err := r2.Run(context.Background(), echoCommand, "reaped")
 	if err != nil {
 		t.Fatalf("second Run: %v", err)
 	}
