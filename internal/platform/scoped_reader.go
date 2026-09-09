@@ -2,7 +2,6 @@ package platform
 
 import (
 	"errors"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -25,6 +24,11 @@ const maxSymlinkDepthMemory = 16
 // applied when converting unix.Stat_t mode to os.FileMode.
 const permMask = 0o777
 
+// ioChunkBytes is the buffer size for unix.Read / unix.Getdents loops.
+// 4 KiB matches the typical page size and balances syscall overhead
+// against transient buffer allocation cost.
+const ioChunkBytes = 4096
+
 // ErrSymlinkUnsupported is returned by NewScopedOSReader when openat2(2)
 // with RESOLVE_IN_ROOT is unavailable. This happens on pre-5.6 kernels
 // (the syscall returns ENOSYS) and on hosts where the underlying security
@@ -34,6 +38,14 @@ var ErrSymlinkUnsupported = errors.New("platform: openat2 with RESOLVE_IN_ROOT r
 // ErrClosed is returned by ScopedReader methods after the reader has been
 // closed. Root() continues to work after Close.
 var ErrClosed = errors.New("platform: ScopedReader is closed")
+
+// sentinelClosedRootFD is the value of ScopedOSReader.fd once Close has
+// run. Any other value (including zero) is a valid file descriptor.
+//
+// FD 0 is a legal kernel-returned descriptor; a process with stdin
+// closed can legitimately receive FD 0 from openat2(2). The sentinel
+// therefore MUST NOT be 0.
+const sentinelClosedRootFD = int64(-1)
 
 // ScopedReader is the filesystem abstraction that operates under a declared
 // root. All four file methods accept subpaths relative to the root; the
@@ -126,11 +138,28 @@ func scopedStatMode(mode uint32) os.FileMode {
 // -----------------------------------------------------------------------------
 
 // ScopedOSReader is the production ScopedReader backed by openat2(2) with
-// RESOLVE_IN_ROOT | RESOLVE_NO_MAGICLINKS. The root inode is held by an FD
-// for the reader's lifetime and released by Close.
+// RESOLVE_IN_ROOT | RESOLVE_NO_MAGICLINKS.
+//
+// FD-ownership model:
+//
+//   - rootfd: stored as int64 in atomic.Int64 with sentinel -1 meaning
+//     "closed". Any non-sentinel value (including 0) is a valid
+//     descriptor returned by the kernel. The constructor stores the
+//     kernel-returned value verbatim; Close performs a CAS swap to
+//     the sentinel and closes exactly once.
+//
+//   - per-operation FD: openat2(rootfd, subpath, flags) inside
+//     readSubpath; ownership is anchored to the readSubpath scope via a
+//     defer that calls unix.Close. Inner callbacks MUST NOT close the
+//     FD and MUST NOT wrap it in *os.File (whose Close would compete
+//     with the defer). Callbacks perform fd-relative I/O via the
+//     unix.* syscalls directly.
+//
+// Exactly one close path per FD is therefore mechanically guaranteed;
+// double-close is impossible by construction.
 type ScopedOSReader struct {
-	rootfd atomic.Int32 // 0 before construction completes, -1 after Close
-	root   string
+	fd   atomic.Int64
+	root string
 }
 
 // NewScopedOSReader opens root once via openat2(AT_FDCWD, root, O_PATH|O_DIRECTORY,
@@ -151,43 +180,47 @@ func NewScopedOSReader(root string) (ScopedReader, error) {
 		return nil, mapOpenError(err, root)
 	}
 	r := &ScopedOSReader{root: root}
-	// rootfd is an atomic.Int32 storing a non-negative file descriptor
-	// until Close() swaps it for -1. Linux file descriptors fit in int32
-	// in practice; the construction sites check that the value is > 0
-	// before use. The explicit cast is intentional: no G115 narrowing
-	// occurs because open(2) returns a small non-negative integer.
-	//nolint:gosec // G115: kernel-returned file descriptor, not an arbitrary int.
-	r.rootfd.Store(int32(fd))
+	// Store the kernel-returned FD verbatim. FD 0 is valid; the
+	// sentinel -1 is reserved for the closed state.
+	r.fd.Store(int64(fd))
 	return r, nil
 }
 
 // Root returns the configured root path string.
 func (r *ScopedOSReader) Root() string { return r.root }
 
-// rootFD returns the live root FD; reports ErrClosed if the reader has
-// been closed. The returned FD must NOT be closed by the caller; it is
-// owned by the ScopedOSReader.
+// rootFD returns the live root FD or ErrClosed if Close has run.
+// The returned FD is owned by the ScopedOSReader; callers MUST NOT
+// close it.
 func (r *ScopedOSReader) rootFD() (int, error) {
-	fd := int(r.rootfd.Load())
-	if fd == 0 {
-		// Not yet constructed; treat as closed to fail fast.
+	fd := r.fd.Load()
+	if fd == sentinelClosedRootFD {
 		return 0, ErrClosed
 	}
-	if fd < 0 {
-		return 0, ErrClosed
+	return int(fd), nil
+}
+
+// checkOpen returns ErrClosed if Close has been called.
+func (r *ScopedOSReader) checkOpen() error {
+	if r.fd.Load() == sentinelClosedRootFD {
+		return ErrClosed
 	}
-	return fd, nil
+	return nil
 }
 
 // Close releases the root FD. Idempotent: subsequent calls return nil.
 // After Close, all four file methods return ErrClosed; Root() remains valid.
+//
+// The CAS loop ensures exactly one Close wins the FD-release race; the
+// losing concurrent Close observes the sentinel and returns nil without
+// calling unix.Close on the already-closed descriptor.
 func (r *ScopedOSReader) Close() error {
 	for {
-		old := r.rootfd.Load()
-		if old <= 0 {
+		old := r.fd.Load()
+		if old == sentinelClosedRootFD {
 			return nil
 		}
-		if r.rootfd.CompareAndSwap(old, -1) {
+		if r.fd.CompareAndSwap(old, sentinelClosedRootFD) {
 			_ = unix.Close(int(old))
 			return nil
 		}
@@ -198,6 +231,12 @@ func (r *ScopedOSReader) Close() error {
 // invokes fn(fd). The flag set is supplied by the caller (O_RDONLY,
 // O_PATH, O_RDONLY|O_DIRECTORY, etc.); Resolve is always RESOLVE_IN_ROOT |
 // RESOLVE_NO_MAGICLINKS.
+//
+// FD ownership: readSubpath is the SOLE owner of the per-operation FD.
+// The defer in this function is the ONLY close path; callbacks MUST NOT
+// close the FD and MUST NOT assign it to *os.File. Callbacks perform
+// fd-relative I/O via direct unix syscalls (read, fstat, fstatat,
+// readlinkat, getdents).
 func (r *ScopedOSReader) readSubpath(subpath string, flags uint64, fn func(fd int) error) error {
 	if err := r.checkOpen(); err != nil {
 		return err
@@ -220,29 +259,47 @@ func (r *ScopedOSReader) readSubpath(subpath string, flags uint64, fn func(fd in
 	return fn(fd)
 }
 
-// checkOpen returns ErrClosed if Close has been called. It is invoked at
-// the top of every file method.
-func (r *ScopedOSReader) checkOpen() error {
-	if r.rootfd.Load() <= 0 {
-		return ErrClosed
-	}
-	return nil
-}
-
-// ReadFile opens subpath with O_RDONLY and reads all bytes.
+// ReadFile opens subpath with O_RDONLY and reads all bytes via unix.Read.
+// Per-operation FD is owned and closed by readSubpath; the callback
+// performs fd-relative reads and returns the assembled buffer.
 func (r *ScopedOSReader) ReadFile(subpath string) ([]byte, error) {
 	var data []byte
 	err := r.readSubpath(subpath, unix.O_RDONLY, func(fd int) error {
-		f := os.NewFile(uintptr(fd), "scoped-readfile")
-		defer f.Close() //nolint:errcheck // os.File.Close handles EBADF; FD is owned.
-		var ferr error
-		data, ferr = io.ReadAll(f)
-		return ferr
+		d, ferr := readAllFD(fd)
+		if ferr != nil {
+			return ferr
+		}
+		data = d
+		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 	return data, nil
+}
+
+// readAllFD drains fd via repeated unix.Read until EOF. The caller owns
+// fd and is responsible for closing it.
+func readAllFD(fd int) ([]byte, error) {
+	var buf []byte
+	tmp := make([]byte, ioChunkBytes)
+	for {
+		n, err := unix.Read(fd, tmp)
+		if n > 0 {
+			buf = append(buf, tmp[:n]...)
+		}
+		if err != nil {
+			if err == unix.EAGAIN {
+				continue
+			}
+			// EOF surfaces as a successful zero-length read on
+			// regular files; only a non-nil err here means failure.
+			return buf, err
+		}
+		if n == 0 {
+			return buf, nil
+		}
+	}
 }
 
 // Stat opens subpath with O_PATH and returns FileInfo built from fstat(2).
@@ -269,23 +326,21 @@ func (r *ScopedOSReader) Stat(subpath string) (os.FileInfo, error) {
 }
 
 // ReadDir opens subpath with O_RDONLY|O_DIRECTORY, enumerates children via
-// the standard library's File.ReadDir(-1), and re-stats each child with
+// unix.Getdents + unix.ParseDirent, and re-stats each child with
 // AT_SYMLINK_NOFOLLOW so child symlinks are not followed.
+//
+// Per-operation FD is owned and closed by readSubpath; the callback
+// performs fd-relative enumeration via direct syscalls. No *os.File is
+// constructed.
 func (r *ScopedOSReader) ReadDir(subpath string) ([]os.DirEntry, error) {
 	var entries []os.DirEntry
 	err := r.readSubpath(subpath, unix.O_RDONLY|unix.O_DIRECTORY, func(fd int) error {
-		dirFile := os.NewFile(uintptr(fd), "scoped-readdir")
-		defer dirFile.Close() //nolint:errcheck // os.File.Close handles EBADF; FD is owned.
-
-		osEntries, rerr := dirFile.ReadDir(-1)
-		if rerr != nil {
-			return rerr
+		names, gerr := readDirNames(fd)
+		if gerr != nil {
+			return gerr
 		}
-
-		dirFd := int(dirFile.Fd())
-		out := make([]os.DirEntry, 0, len(osEntries))
-		for _, de := range osEntries {
-			name := de.Name()
+		out := make([]os.DirEntry, 0, len(names))
+		for _, name := range names {
 			// RESOLVE_IN_ROOT is per-open; filtering "." and ".."
 			// before any fstatat prevents accidentally reaching
 			// dirFd's parent (which is outside root).
@@ -293,12 +348,12 @@ func (r *ScopedOSReader) ReadDir(subpath string) ([]os.DirEntry, error) {
 				continue
 			}
 			var st unix.Stat_t
-			if serr := unix.Fstatat(dirFd, name, &st, unix.AT_SYMLINK_NOFOLLOW); serr != nil {
-				// Entry renamed or deleted between enumeration and
-				// stat. Skip silently; the security invariant holds
-				// because AT_SYMLINK_NOFOLLOW prevents following
-				// the entry's symlink target even if it was
-				// atomically replaced.
+			if serr := unix.Fstatat(fd, name, &st, unix.AT_SYMLINK_NOFOLLOW); serr != nil {
+				// Entry renamed or deleted between enumeration
+				// and stat. Skip silently; the security invariant
+				// holds because AT_SYMLINK_NOFOLLOW prevents
+				// following the entry's symlink target even if it
+				// was atomically replaced.
 				continue
 			}
 			out = append(out, &scopedDirEntry{
@@ -321,9 +376,30 @@ func (r *ScopedOSReader) ReadDir(subpath string) ([]os.DirEntry, error) {
 	return entries, nil
 }
 
+// readDirNames enumerates the directory entries reachable via fd.
+// The caller owns fd and is responsible for closing it.
+func readDirNames(fd int) ([]string, error) {
+	var names []string
+	tmp := make([]byte, ioChunkBytes)
+	for {
+		n, err := unix.Getdents(fd, tmp)
+		if err != nil {
+			if err == unix.EAGAIN {
+				continue
+			}
+			return nil, err
+		}
+		if n == 0 {
+			return names, nil
+		}
+		_, _, parsed := unix.ParseDirent(tmp[:n], -1, names)
+		names = parsed
+	}
+}
+
 // Readlink opens subpath with O_PATH|O_NOFOLLOW (which yields an FD
 // referring to the symlink itself, per open(2)), then readlinkat(fd, "")
-// returns the raw stored target. The target is not validated; callers
+// returns the raw stored. The target is not validated; callers
 // interpret it.
 func (r *ScopedOSReader) Readlink(subpath string) (string, error) {
 	var target string
