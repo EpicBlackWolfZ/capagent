@@ -16,8 +16,13 @@ Welcome to the **capagent** codebase. This document defines the engineering prin
 2. **Evidence Before Inference**: Direct live measurements always beat runtime self-reports, which beat configuration files, which beat historical version knowledge, which beat heuristics.
 3. **Unknown is Not False**: Capabilities distinguish five operational states: `supported`, `unsupported`, `misconfigured`, `unavailable`, and `unknown`.
 4. **Context is First-Class**: Capabilities evaluate under an explicit `EvaluationContext` distinguishing current execution identity from target deployment identity (UID, GID, subuid/subgid allocations, user systemd, rootless status).
-5. **Zero External Runtime Dependencies**: Compiles with `CGO_ENABLED=0` to a single statically linked binary without third-party runtime dependencies. Standard library is prioritized for core logic.
+5. **Zero External Runtime Dependencies**: Compiles with `CGO_ENABLED=0` to a single statically linked binary without third-party runtime dependencies. Standard library is prioritized for core logic. The single exception is `golang.org/x/sys/unix`, used by `internal/platform` for kernel-confined filesystem operations (`openat2(2)`); this dependency is permitted solely to enforce the M1.1 filesystem-security boundary.
 6. **TDD is Mandatory**: Every capability and domain semantic follows the RED $\to$ GREEN $\to$ REFACTOR cycle. A capability without automated tests is not a supported capability.
+7. **Filesystem Containment is Kernel-Backed**: All untrusted subpath access passes through `internal/platform.ScopedReader`. Each file operation is confined by the kernel via `openat2(2)` with `RESOLVE_IN_ROOT | RESOLVE_NO_MAGICLINKS`; lexical `ValidateSubpath` is a complementary first-layer check, never the only one.
+
+### 2.1 Kernel Support
+
+capagent requires **Linux 5.6 or newer** for `openat2(2)` with `RESOLVE_IN_ROOT` and `RESOLVE_NO_MAGICLINKS`. Older kernels return `ErrSymlinkUnsupported` from `NewScopedOSReader`; the caller is expected to fail fast. This minimum is declared in the M1.1 plan (`docs/security/m1.1-filesystem-hardening-plan.md`).
 
 ---
 
@@ -69,6 +74,7 @@ cmd/capagent (CLI entrypoint; flag parsing and formatting ONLY; zero business lo
 - `internal/requirement` encapsulates all 3-valued Boolean algebra and requirement AST evaluation.
 - `cmd/capagent` MUST NOT contain probe logic, capability resolution, or requirement evaluation.
 - Runtime adapters (`internal/runtime/*`) MUST NOT depend on the CLI package.
+- `internal/platform` owns ALL host-I/O primitives (`os.ReadFile`, `os.Open`, `os.Stat`, `os.Readlink`, `os/exec.Command`, ambient-env access). No other production package may import these primitives; the `TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform` AST rule enforces this.
 - **Mechanical AST Boundary Enforcement**: Architectural boundaries MUST be mechanically enforced by automated contract tests (`tests/contract/architecture_test.go`) that parse the Go AST. Restricted packages (`internal/model`, `internal/requirement`) MUST reject all unauthorized internal and third-party imports.
 
 ---
