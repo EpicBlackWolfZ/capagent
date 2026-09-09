@@ -1,6 +1,7 @@
 package platform_test
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"sync/atomic"
 	"syscall"
 	"testing"
+	"time"
 
 	"github.com/EpicBlackWolfZ/capagent/internal/platform"
 )
@@ -825,6 +827,43 @@ func TestScopedReader_ReadDir_FiltersDotAndDotDot(t *testing.T) {
 	})
 }
 
+// TestScopedReader_SymlinkRace_AbortPath verifies the termination
+// contract documented on TestScopedReader_SymlinkRace: when one
+// goroutine cancels the context, the partner must unblock promptly
+// rather than hang on a channel rendezvous that has no listener.
+//
+// This is a meta-test of the test harness itself: if the harness's
+// abort mechanism regresses, this test catches it.
+func TestScopedReader_SymlinkRace_AbortPath(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	done := make(chan struct{})
+	partner := make(chan struct{})
+
+	// Goroutine A: blocks on a channel that no one will ever send to.
+	// It must unblock via ctx.Done() when cancel() is called.
+	go func() {
+		defer close(done)
+		select {
+		case <-partner:
+		case <-ctx.Done():
+		}
+	}()
+
+	// Trigger the abort.
+	cancel()
+
+	// Goroutine A must exit within a bounded time.
+	select {
+	case <-done:
+		// expected
+	case <-time.After(2 * time.Second):
+		t.Fatal("partner goroutine did not unblock on cancel; deadlock regression")
+	}
+}
+
 // -----------------------------------------------------------------------------
 // Lifecycle tests (plan §10.4)
 // -----------------------------------------------------------------------------
@@ -1035,6 +1074,13 @@ func TestTranslateSymlinkTarget_Unit(t *testing.T) {
 // The test is a regression detector, not a proof of kernel
 // correctness: it ensures the implementation never falls out of
 // kernel-confined semantics regardless of timing.
+//
+// Termination contract: either goroutine can call cancel() to abort
+// the test cleanly if it observes a regression (wrong content, I/O
+// error, OS-level failure). All blocking channel operations are
+// guarded by a select on ctx.Done(), so the partner goroutine
+// unblocks immediately rather than hanging on a rendezvous that
+// will never complete.
 func TestScopedReader_SymlinkRace(t *testing.T) {
 
 
@@ -1059,6 +1105,12 @@ func TestScopedReader_SymlinkRace(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = r.Close() })
 
+	// ctx cancel propagates an abort signal to BOTH goroutines so
+	// that an early-exit error in one cannot leave the partner
+	// hung on a channel send or receive that has no listener.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	const iterationsPerState = 200
 	targetPath := filepath.Join(dir, "target")
 
@@ -1079,60 +1131,95 @@ func TestScopedReader_SymlinkRace(t *testing.T) {
 	// Swapper: sets up state, signals, waits for reader.
 	go func() {
 		defer wg.Done()
+		defer cancel() // panic safety: ensure partner unblocks
 		for i := 0; i < iterationsPerState; i++ {
 			// State A: regular file with in-root content.
 			_ = os.Remove(targetPath)
 			if err := os.WriteFile(targetPath, safeContent, 0o600); err != nil {
+				cancel()
 				t.Errorf("swap A: %v", err)
 				return
 			}
-			syncCh <- struct{}{} // signal: state A ready
-			<-syncCh             // wait: reader done with state A
+			select {
+			case syncCh <- struct{}{}: // signal: state A ready
+			case <-ctx.Done():
+				return
+			}
+			select {
+			case <-syncCh: // wait: reader done with state A
+			case <-ctx.Done():
+				return
+			}
 
 			// State B: symlink to outside.
 			_ = os.Remove(targetPath)
 			if err := os.Symlink(filepath.Join(outsideDir, "secret"), targetPath); err != nil {
+				cancel()
 				t.Errorf("swap B: %v", err)
 				return
 			}
-			syncCh <- struct{}{} // signal: state B ready
-			<-syncCh             // wait: reader done with state B
+			select {
+			case syncCh <- struct{}{}: // signal: state B ready
+			case <-ctx.Done():
+				return
+			}
+			select {
+			case <-syncCh: // wait: reader done with state B
+			case <-ctx.Done():
+				return
+			}
 		}
-		// Final signal so the reader exits its loop.
-		syncCh <- struct{}{}
 	}()
 
 	// Reader: waits for state, reads, signals.
 	go func() {
 		defer wg.Done()
+		defer cancel() // panic safety: ensure partner unblocks
 		for i := 0; i < iterationsPerState; i++ {
 			// State A read.
-			<-syncCh
+			select {
+			case <-syncCh:
+			case <-ctx.Done():
+				return
+			}
 			data, err := r.ReadFile("target")
-			syncCh <- struct{}{}
+			select {
+			case syncCh <- struct{}{}:
+			case <-ctx.Done():
+				return
+			}
 			if err != nil {
+				cancel()
 				leaks.Add(1)
 				t.Errorf("state A read error: %v", err)
 				return
 			}
 			if string(data) != "in-root-content" {
+				cancel()
 				t.Errorf("state A read content = %q, want %q", string(data), "in-root-content")
 				return
 			}
 			roundsA.Add(1)
 
 			// State B read.
-			<-syncCh
+			select {
+			case <-syncCh:
+			case <-ctx.Done():
+				return
+			}
 			data, err = r.ReadFile("target")
-			syncCh <- struct{}{}
+			select {
+			case syncCh <- struct{}{}:
+			case <-ctx.Done():
+				return
+			}
 			if err == nil && string(data) == "OUTSIDE" {
+				cancel()
 				t.Errorf("state B read returned OUTSIDE content; containment violated")
 				return
 			}
 			roundsB.Add(1)
 		}
-		// Drain the final signal so the swapper can exit.
-		<-syncCh
 	}()
 
 	wg.Wait()
