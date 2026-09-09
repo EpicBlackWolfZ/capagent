@@ -11,12 +11,6 @@ import (
 	"github.com/EpicBlackWolfZ/capagent/internal/platform"
 )
 
-// Reused literal names hoisted to constants for the goconst linter.
-const (
-	scopedReaderBaselinePayload = "payload"
-	scopedReaderBaselineL       = "l"
-)
-
 // skipIfNoOpenat2 skips the calling test when the host kernel does
 // not support openat2 with RESOLVE_IN_ROOT, returning the temporary
 // directory the test created so the caller can defer os.RemoveAll.
@@ -489,7 +483,7 @@ func TestScopedOSReader_StatMode_SymlinkLink(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewScopedOSReader: %v", err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "target"), []byte(scopedReaderBaselinePayload), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "target"), []byte(testPayload), 0o644); err != nil {
 		t.Fatalf("seed target: %v", err)
 	}
 	if err := os.Symlink("target", filepath.Join(dir, "l")); err != nil {
@@ -592,7 +586,7 @@ func TestScopedMemReader_ReadDir_MissingAndNonDirectory(t *testing.T) {
 func TestScopedMemReader_ReadFile_MissingAndRelativeRoot(t *testing.T) {
 	t.Parallel()
 	mem := platform.NewMemPlatformReader()
-	mem.AddFile("/proc/f", []byte(scopedReaderBaselinePayload), 0o644)
+	mem.AddFile("/proc/f", []byte(testPayload), 0o644)
 
 	r := platform.NewScopedMemReader("/proc", mem)
 	t.Cleanup(func() { _ = r.Close() })
@@ -1234,7 +1228,7 @@ func TestScopedMemReader_Constructor(t *testing.T) {
 func TestScopedMemReader_ReadFile(t *testing.T) {
 	t.Parallel()
 	mem := platform.NewMemPlatformReader()
-	mem.AddFile("/proc/f", []byte(scopedReaderBaselinePayload), 0o644)
+	mem.AddFile("/proc/f", []byte(testPayload), 0o644)
 	mem.AddDir("/proc/d", 0o755)
 
 	r := platform.NewScopedMemReader("/proc", mem)
@@ -1246,8 +1240,8 @@ func TestScopedMemReader_ReadFile(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ReadFile: %v", err)
 		}
-		if string(data) != scopedReaderBaselinePayload {
-			t.Errorf("ReadFile = %q, want %q", data, scopedReaderBaselinePayload)
+		if string(data) != testPayload {
+			t.Errorf("ReadFile = %q, want %q", data, testPayload)
 		}
 	})
 
@@ -1401,7 +1395,7 @@ func TestScopedMemReader_SymlinkChain(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	mem.AddFile("/proc/real", []byte(scopedReaderBaselinePayload), 0o644)
+	mem.AddFile("/proc/real", []byte(testPayload), 0o644)
 	mem.AddSymlink("/proc/a", "b")
 	mem.AddSymlink("/proc/b", "c")
 	mem.AddSymlink("/proc/c", "real")
@@ -1413,8 +1407,8 @@ func TestScopedMemReader_SymlinkChain(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFile a: %v", err)
 	}
-	if string(data) != scopedReaderBaselinePayload {
-		t.Errorf("ReadFile a = %q, want %q", data, scopedReaderBaselinePayload)
+	if string(data) != testPayload {
+		t.Errorf("ReadFile a = %q, want %q", data, testPayload)
 	}
 }
 

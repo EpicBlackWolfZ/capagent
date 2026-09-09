@@ -110,11 +110,11 @@ func TestMemPlatformReader_ReadFile(t *testing.T) {
 		{
 			name: "single-hop symlink resolved",
 			setup: func(m *platform.MemPlatformReader) {
-				m.AddFile("/target", []byte("payload"), 0o644)
+				m.AddFile("/target", []byte(testPayload), 0o644)
 				m.AddSymlink(readerTestLinkPath, "target")
 			},
 			path: readerTestLinkPath,
-			want: []byte("payload"),
+			want: []byte(testPayload),
 		},
 		{
 			name: "multi-hop symlink resolved",
@@ -242,7 +242,7 @@ func TestMemPlatformReader_Stat(t *testing.T) {
 		{
 			name: "symlink resolution",
 			setup: func(m *platform.MemPlatformReader) {
-				m.AddFile("/data", []byte("payload"), 0o644)
+				m.AddFile("/data", []byte(testPayload), 0o644)
 				m.AddSymlink("/link", "data")
 			},
 			path:      "/link",
@@ -478,7 +478,7 @@ func TestMemPlatformReader_ConcurrentSafe(t *testing.T) {
 	t.Parallel()
 
 	m := platform.NewMemPlatformReader()
-	m.AddFile("/x", []byte("payload"), 0o644)
+	m.AddFile("/x", []byte(testPayload), 0o644)
 
 	done := make(chan struct{})
 	for i := 0; i < 8; i++ {

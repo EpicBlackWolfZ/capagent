@@ -336,9 +336,9 @@ predicate but is not the security boundary.
 `*os.File`. Each per-operation FD is owned exclusively by
 `readSubpath`, whose deferred `unix.Close(fd)` is the only close
 path. Callbacks perform fd-relative I/O via direct syscalls; they
-do not (and cannot) close the FD. Double-close is impossible by
-construction; FD 0 is a valid descriptor and is treated symmetrically
-with any other non-sentinel FD value.
+must not close the FD. This ownership rule prevents double-close;
+FD 0 is a valid descriptor and is treated symmetrically with any
+other non-sentinel FD value.
 
 **Symlink semantics:** the OS reader delegates symlink traversal to
 the kernel (SYMLOOP_MAX = 40 hops); the memory reader maintains an
@@ -353,14 +353,17 @@ is surfaced as `syscall.ELOOP` (not `ErrSubpathEscape`), per the
 corrected semantics. Pre-5.6 kernels return `ErrSymlinkUnsupported`
 from `NewScopedOSReader`; capagent targets Linux 5.6+ as the
 documented minimum. The OS-vs-memory discrepancy for absolute
-symlink targets outside root (OS returns `ErrNotExist` via kernel
-re-interpretation; memory returns `ErrSubpathEscape` via explicit
-lexical check) is documented and tested.
+symlink targets outside root (OS reinterprets absolute targets
+relative to the scoped root,
+returning `ErrNotExist` if the reinterpreted path is absent; memory
+returns `ErrSubpathEscape` via an explicit lexical check) is
+documented and tested.
 
 **Architecture enforcement.** The AST-based host-IO denylist test
 (`TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform`) mechanically
 prevents direct file-I/O, command-execution, and ambient-environment
-access outside `internal/platform/`. The `cmd/` CLI prefix is NOT in
+access outside `internal/platform/`, with an exemption for the
+`tests/contract/` harness. The `cmd/` CLI prefix is NOT in
 the denylist allowlist; CLI binaries that need `os.Args`,
 `os.Stdout`, `os.Stderr`, or `os.Exit` use those primitives
 directly because they are not in any denylist. Test files may use
