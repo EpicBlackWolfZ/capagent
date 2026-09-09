@@ -86,10 +86,11 @@ func (s *stubProbe) Run(ctx context.Context, env platform.Environment) (model.Ob
 }
 
 func newEnv() platform.Environment {
+	mem := platform.NewMemPlatformReader()
 	return platform.Environment{
-		Reader: platform.NewOSPlatformReader(),
-		Procfs: platform.NewProcfsReader(platform.NewOSPlatformReader(), "/proc"),
-		Sysfs:  platform.NewSysfsReader(platform.NewOSPlatformReader(), "/sys"),
+		Reader: mem,
+		Procfs: platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem), "/proc"),
+		Sysfs:  platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys"),
 		Runner: platform.NewFakeCommandRunner(),
 	}
 }
