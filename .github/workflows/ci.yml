@@ -160,7 +160,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build:
-    name: Build, GoReleaser Snapshot & Fat Bundling Verification
+    name: Build, GoReleaser Snapshot & Self-Bundling Verification
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
