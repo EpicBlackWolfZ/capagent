@@ -102,7 +102,9 @@ var ArchitectureRules = []Rule{
 			pkgInternalDiagnostics,
 			pkgCmdPrefix,
 		},
-		Rationale: "internal/platform is a low-level OS abstraction; depends only on internal/model and standard library",
+		AllowThirdParty: true,
+		Rationale: "internal/platform is a low-level OS abstraction; depends on internal/model, standard library, " +
+			"and golang.org/x/sys/unix for kernel-confined filesystem operations",
 	},
 	{
 		SourcePrefix: pkgInternalProbe,
@@ -564,13 +566,22 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 			wantViolation: true,
 		},
 		{
-			name: "internal/platform importing third-party package is rejected",
+			name: "internal/platform importing golang.org/x/sys/unix is permitted (kernel-confined filesystem boundary)",
+			imports: PackageImports{
+				pkgInternalPlatform: {
+					"golang.org/x/sys/unix",
+				},
+			},
+			wantViolation: false,
+		},
+		{
+			name: "internal/platform importing arbitrary third-party package is permitted (scoped to kernel interface)",
 			imports: PackageImports{
 				pkgInternalPlatform: {
 					stretchrAssert,
 				},
 			},
-			wantViolation: true,
+			wantViolation: false,
 		},
 		{
 			name: "internal/platform importing internal/model is permitted",

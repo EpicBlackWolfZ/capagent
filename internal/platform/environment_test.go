@@ -13,8 +13,10 @@ func TestNewEnvironment_PreservesComponents(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	procfs := platform.NewProcfsReader(mem, "/proc")
-	sysfs := platform.NewSysfsReader(mem, "/sys")
+	procScoped := platform.NewScopedMemReader("/proc", mem)
+	sysScoped := platform.NewScopedMemReader("/sys", mem)
+	procfs := platform.NewProcfsReader(procScoped, "/proc")
+	sysfs := platform.NewSysfsReader(sysScoped, "/sys")
 	runner := platform.NewFakeCommandRunner()
 
 	env := platform.NewEnvironment(mem, procfs, sysfs, runner)

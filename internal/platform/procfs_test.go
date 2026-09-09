@@ -22,6 +22,17 @@ const (
 	cgroupCPUController = "cpu"
 )
 
+// mustOSProcfsReader constructs a kernel-confined ProcfsReader rooted at
+// root. It skips the surrounding test if openat2(2) is unavailable.
+func mustOSProcfsReader(t *testing.T, root string) *platform.ProcfsReader {
+	t.Helper()
+	scoped, err := platform.NewScopedOSReader(root)
+	if err != nil {
+		t.Skipf("ScopedOSReader unavailable: %v", err)
+	}
+	return platform.NewProcfsReader(scoped, root)
+}
+
 func TestProcfsReader_Filesystems(t *testing.T) {
 	t.Parallel()
 
@@ -60,10 +71,10 @@ func TestProcfsReader_Filesystems(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mem := platform.NewMemPlatformReader()
-			mem.AddFile("/proc/filesystems", []byte(tt.input), 0o644)
+mem := platform.NewMemPlatformReader()
+		mem.AddFile("/proc/filesystems", []byte(tt.input), 0o644)
 
-			r := platform.NewProcfsReader(mem, "/proc")
+		r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem), "/proc")
 			got, err := r.Filesystems()
 			if err != nil {
 				t.Fatalf("Filesystems: %v", err)
@@ -119,10 +130,10 @@ func TestProcfsReader_Cgroups(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mem := platform.NewMemPlatformReader()
-			mem.AddFile("/proc/self/cgroup", []byte(tt.input), 0o644)
+mem := platform.NewMemPlatformReader()
+		mem.AddFile("/proc/self/cgroup", []byte(tt.input), 0o644)
 
-			r := platform.NewProcfsReader(mem, "/proc")
+		r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem), "/proc")
 			got, err := r.Cgroups()
 			if err != nil {
 				t.Fatalf("Cgroups: %v", err)
@@ -278,10 +289,10 @@ func TestProcfsReader_Mounts(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mem := platform.NewMemPlatformReader()
-			mem.AddFile("/proc/self/mountinfo", []byte(tt.input), 0o644)
+mem := platform.NewMemPlatformReader()
+		mem.AddFile("/proc/self/mountinfo", []byte(tt.input), 0o644)
 
-			r := platform.NewProcfsReader(mem, "/proc")
+		r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem), "/proc")
 			got, err := r.Mounts()
 			if err != nil {
 				t.Fatalf("Mounts: %v", err)
@@ -300,7 +311,7 @@ func TestProcfsReader_ReadProcFileAndReadSelf(t *testing.T) {
 	mem.AddFile("/proc/version", []byte("Linux 6.0.0"), 0o644)
 	mem.AddFile("/proc/self/status", []byte("Name:\tbash"), 0o644)
 
-	r := platform.NewProcfsReader(mem, "/proc")
+	r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem), "/proc")
 
 	v, err := r.ReadProcFile("version")
 	if err != nil {
@@ -325,7 +336,7 @@ func TestProcfsReader_CustomRoot(t *testing.T) {
 	mem := platform.NewMemPlatformReader()
 	mem.AddFile("/testdata/proc/filesystems", []byte("nodev\ttmpfs\n"), 0o644)
 
-	r := platform.NewProcfsReader(mem, "/testdata/proc")
+	r := platform.NewProcfsReader(platform.NewScopedMemReader("/testdata/proc", mem), "/testdata/proc")
 	got, err := r.Filesystems()
 	if err != nil {
 		t.Fatalf("Filesystems: %v", err)
@@ -344,7 +355,7 @@ func TestProcfsReader_DefaultRootIsProc(t *testing.T) {
 	mem := platform.NewMemPlatformReader()
 	mem.AddFile("/proc/filesystems", []byte("nodev\ttmpfs\n"), 0o644)
 
-	r := platform.NewProcfsReader(mem, "")
+	r := platform.NewProcfsReader(platform.NewScopedMemReader("", mem), "")
 	if r.Root() != "/proc" {
 		t.Errorf("Root = %q, want /proc", r.Root())
 	}
@@ -362,7 +373,7 @@ func TestProcfsReader_MissingFilePropagates(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	r := platform.NewProcfsReader(mem, "/proc")
+	r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem), "/proc")
 
 	if _, err := r.Filesystems(); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("Filesystems missing-file error = %v, want ErrNotExist", err)
@@ -382,7 +393,7 @@ func TestProcfsReader_PermissionErrorPropagates(t *testing.T) {
 	mem.AddFile("/proc/filesystems", []byte("nodev\ttmpfs\n"), 0o644)
 	mem.AddError("/proc/self/cgroup", syscall.EACCES)
 
-	r := platform.NewProcfsReader(mem, "/proc")
+	r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem), "/proc")
 
 	if _, err := r.Filesystems(); err != nil {
 		t.Errorf("Filesystems error = %v, want nil", err)
@@ -399,7 +410,7 @@ func TestProcfsReader_RealProcfs(t *testing.T) {
 		t.Skipf("/proc/filesystems not available: %v", err)
 	}
 
-	r := platform.NewProcfsReader(platform.NewOSPlatformReader(), "/proc")
+	r := mustOSProcfsReader(t, "/proc")
 	entries, err := r.Filesystems()
 	if err != nil {
 		t.Fatalf("real Filesystems: %v", err)

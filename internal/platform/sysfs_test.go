@@ -22,6 +22,17 @@ const (
 	cgroupRdma   = "rdma"
 )
 
+// mustOSSysfsReader constructs a kernel-confined SysfsReader rooted at
+// root. It skips the surrounding test if openat2(2) is unavailable.
+func mustOSSysfsReader(t *testing.T, root string) *platform.SysfsReader {
+	t.Helper()
+	scoped, err := platform.NewScopedOSReader(root)
+	if err != nil {
+		t.Skipf("ScopedOSReader unavailable: %v", err)
+	}
+	return platform.NewSysfsReader(scoped, root)
+}
+
 func TestSysfsReader_CgroupControllers(t *testing.T) {
 	t.Parallel()
 
@@ -56,10 +67,10 @@ func TestSysfsReader_CgroupControllers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mem := platform.NewMemPlatformReader()
-			mem.AddFile("/sys/fs/cgroup/cgroup.controllers", []byte(tt.input), 0o644)
+mem := platform.NewMemPlatformReader()
+		mem.AddFile("/sys/fs/cgroup/cgroup.controllers", []byte(tt.input), 0o644)
 
-			r := platform.NewSysfsReader(mem, "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 			got, err := r.CgroupControllers()
 			if err != nil {
 				t.Fatalf("CgroupControllers: %v", err)
@@ -75,7 +86,7 @@ func TestSysfsReader_CgroupControllersMissingFile(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	r := platform.NewSysfsReader(mem, "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 	if _, err := r.CgroupControllers(); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("missing-file error = %v, want ErrNotExist", err)
@@ -89,7 +100,7 @@ func TestSysfsReader_ReadCgroupController(t *testing.T) {
 	mem.AddFile("/sys/fs/cgroup/cpu", []byte("cpu cgroup controller"), 0o644)
 	mem.AddFile("/sys/fs/cgroup/memory", []byte("memory cgroup controller"), 0o644)
 
-	r := platform.NewSysfsReader(mem, "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 	data, err := r.ReadCgroupController(cgroupCPU)
 	if err != nil {
@@ -112,7 +123,7 @@ func TestSysfsReader_ReadCgroupController_Empty(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	r := platform.NewSysfsReader(mem, "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 	if _, err := r.ReadCgroupController(""); err == nil {
 		t.Error("expected error for empty controller name")
@@ -123,7 +134,7 @@ func TestSysfsReader_ReadCgroupController_Missing(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	r := platform.NewSysfsReader(mem, "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 	if _, err := r.ReadCgroupController("nonexistent"); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("missing-controller error = %v, want ErrNotExist", err)
@@ -148,9 +159,9 @@ func TestSysfsReader_ReadCgroupController_Missing(t *testing.T) {
 func TestSysfsReader_ReadCgroupController_RejectsPathLikeInputs(t *testing.T) {
 	t.Parallel()
 
-	// Use a recording PlatformReader so we can also verify that rejected
+	// Use a recording ScopedReader so we can also verify that rejected
 	// inputs NEVER reach the reader.
-	spy := &recordingReader{PlatformReader: platform.NewMemPlatformReader()}
+	spy := &recordingScopedReader{ScopedReader: platform.NewScopedMemReader("/sys", platform.NewMemPlatformReader())}
 	r := platform.NewSysfsReader(spy, "/sys")
 
 	rejected := []string{
@@ -189,7 +200,7 @@ func TestSysfsReader_ReadCgroupController_AcceptsValidNames(t *testing.T) {
 	mem.AddFile("/sys/fs/cgroup/memory", []byte("ok"), 0o644)
 	mem.AddFile("/sys/fs/cgroup/cpu_cpuacct", []byte("ok"), 0o644)
 
-	r := platform.NewSysfsReader(mem, "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 	for _, name := range []string{"cpu", "memory", "cpu_cpuacct"} {
 		if _, err := r.ReadCgroupController(name); err != nil {
@@ -208,7 +219,7 @@ func TestSysfsReader_SELinux(t *testing.T) {
 		mem.AddDir("/sys/fs/selinux", 0o755)
 		mem.AddFile("/sys/fs/selinux/enforce", []byte("1\n"), 0o644)
 
-		r := platform.NewSysfsReader(mem, "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 		present, err := r.SELinuxPresent()
 		if err != nil {
@@ -242,7 +253,7 @@ func TestSysfsReader_SELinux(t *testing.T) {
 		mem.AddDir("/sys/fs/selinux", 0o755)
 		mem.AddFile("/sys/fs/selinux/enforce", []byte("0\n"), 0o644)
 
-		r := platform.NewSysfsReader(mem, "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 		enforcing, err := r.IsSELinuxEnforcing()
 		if err != nil {
@@ -258,7 +269,7 @@ func TestSysfsReader_SELinux(t *testing.T) {
 
 		mem := platform.NewMemPlatformReader()
 
-		r := platform.NewSysfsReader(mem, "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 		present, err := r.SELinuxPresent()
 		if err != nil {
@@ -291,7 +302,7 @@ func TestSysfsReader_SELinux(t *testing.T) {
 		mem := platform.NewMemPlatformReader()
 		mem.AddError("/sys/fs/selinux", syscall.EACCES)
 
-		r := platform.NewSysfsReader(mem, "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 		if _, err := r.SELinuxPresent(); !errors.Is(err, syscall.EACCES) {
 			t.Errorf("SELinuxPresent error = %v, want EACCES", err)
@@ -308,7 +319,7 @@ func TestSysfsReader_AppArmor(t *testing.T) {
 		mem := platform.NewMemPlatformReader()
 		mem.AddDir("/sys/kernel/security/apparmor", 0o755)
 
-		r := platform.NewSysfsReader(mem, "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 		got, err := r.AppArmorPresent()
 		if err != nil {
@@ -324,7 +335,7 @@ func TestSysfsReader_AppArmor(t *testing.T) {
 
 		mem := platform.NewMemPlatformReader()
 
-		r := platform.NewSysfsReader(mem, "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 		got, err := r.AppArmorPresent()
 		if err != nil {
@@ -341,7 +352,7 @@ func TestSysfsReader_AppArmor(t *testing.T) {
 		mem := platform.NewMemPlatformReader()
 		mem.AddError("/sys/kernel/security/apparmor", syscall.EACCES)
 
-		r := platform.NewSysfsReader(mem, "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 
 		if _, err := r.AppArmorPresent(); !errors.Is(err, syscall.EACCES) {
 			t.Errorf("AppArmorPresent error = %v, want EACCES", err)
@@ -355,7 +366,7 @@ func TestSysfsReader_CustomRoot(t *testing.T) {
 	mem := platform.NewMemPlatformReader()
 	mem.AddFile("/fixtures/sys/fs/cgroup/cgroup.controllers", []byte(cgroupCPU+" "+cgroupMemory+"\n"), 0o644)
 
-	r := platform.NewSysfsReader(mem, "/fixtures/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/fixtures/sys", mem), "/fixtures/sys")
 	got, err := r.CgroupControllers()
 	if err != nil {
 		t.Fatalf("CgroupControllers: %v", err)
@@ -374,7 +385,7 @@ func TestSysfsReader_DefaultRoot(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	r := platform.NewSysfsReader(mem, "")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("", mem), "")
 	if r.Root() != "/sys" {
 		t.Errorf("Root = %q, want /sys", r.Root())
 	}
@@ -395,7 +406,7 @@ func TestSysfsReader_RealSysfs(t *testing.T) {
 		t.Skipf("/sys/fs/cgroup/cgroup.controllers not available: %v", err)
 	}
 
-	r := platform.NewSysfsReader(platform.NewOSPlatformReader(), "/sys")
+	r := mustOSSysfsReader(t, "/sys")
 	controllers, err := r.CgroupControllers()
 	if err != nil {
 		t.Fatalf("real CgroupControllers: %v", err)
@@ -421,7 +432,7 @@ func TestSysfsReader_CgroupControllersDeduplicates(t *testing.T) {
 	mem := platform.NewMemPlatformReader()
 	mem.AddFile("/sys/fs/cgroup/cgroup.controllers", []byte("cpu cpu memory cpu memory\n"), 0o644)
 
-	r := platform.NewSysfsReader(mem, "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
 	got, err := r.CgroupControllers()
 	if err != nil {
 		t.Fatalf("CgroupControllers: %v", err)
@@ -437,19 +448,19 @@ func TestSysfsReader_CgroupControllersDeduplicates(t *testing.T) {
 	}
 }
 
-// recordingReader is a PlatformReader decorator that counts how many times
-// ReadFile was invoked. Tests use it to prove that validation rejects
-// input before any I/O is dispatched to the underlying reader.
-type recordingReader struct {
-	platform.PlatformReader
+// recordingScopedReader is a ScopedReader decorator that counts how many
+// times ReadFile was invoked. Tests use it to prove that validation
+// rejects input before any I/O is dispatched to the underlying reader.
+type recordingScopedReader struct {
+	platform.ScopedReader
 	readCalls atomic.Int32
 }
 
-func (r *recordingReader) ReadFile(path string) ([]byte, error) {
+func (r *recordingScopedReader) ReadFile(subpath string) ([]byte, error) {
 	r.readCalls.Add(1)
-	return r.PlatformReader.ReadFile(path)
+	return r.ScopedReader.ReadFile(subpath)
 }
 
-func (r *recordingReader) callCount() int32 {
+func (r *recordingScopedReader) callCount() int32 {
 	return r.readCalls.Load()
 }
