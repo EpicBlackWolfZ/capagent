@@ -2,6 +2,14 @@
 
 This document defines the architectural boundaries, domain model, evaluation semantics, package structure, and contract specifications for `capagent`.
 
+## Implementation status and planned integration
+
+This document describes both the current foundation and its target architecture. The current CLI does not yet evaluate hosts. [M1.1](https://github.com/EpicBlackWolfZ/capagent/milestone/23) closes known resource, filesystem and execution-contract gaps; [M1.2](https://github.com/EpicBlackWolfZ/capagent/milestone/24) supplies a minimal evaluation path before broader capability work. See [roadmap.md](roadmap.md) and [security.md](security.md) for delivery status and limits.
+
+The planned application/composition layer in [#61](https://github.com/EpicBlackWolfZ/capagent/issues/61) owns context selection, dependency construction, evaluation order and resource teardown after workers join. It sits above the pure engines and probe framework. `cmd/capagent` remains flags/formatting only, and `internal/probe` remains limited to model/platform dependencies. Today environments are caller-owned; `Orchestrator.Run` does not create or close them.
+
+The current identity booleans and minimal observations are structural scaffolding. [#59](https://github.com/EpicBlackWolfZ/capagent/issues/59) and [#64](https://github.com/EpicBlackWolfZ/capagent/issues/64) add explicit scope, typed payloads and uncertainty/completeness before consumers rely on them. Never treat an unobserved zero value as measured negative evidence. The `context` capability namespace and UID/GID schema bounds remain pending contract alignment.
+
 ---
 
 ## 1. Architectural Overview
@@ -158,17 +166,14 @@ type EvaluationContext struct {
 }
 
 type IdentityContext struct {
-    CurrentUID    uint32
-    CurrentGID    uint32
-    TargetUID     uint32
-    TargetUser    string
-    HomeDir       string
-    XDGRuntimeDir string
-    IsRootless    bool
-    SubUIDRanges  []SubIDRange
-    SubGIDRanges  []SubIDRange
+    Current        UserIdentity
+    Target         UserIdentity
+    IsRootless     bool
+    SubUIDRanges   []SubIDRange
+    SubGIDRanges   []SubIDRange
+    XDGRuntimeDir  string
     HasUserSystemd bool
-    InContainer   bool
+    InContainer    bool
 }
 ```
 
@@ -186,7 +191,7 @@ cmd/
 
 internal/
   model/                    # Core domain primitives: Facts, Observations, Evidence,
-                            # Capabilities, Requirements, EvaluationContext, States.
+                            # Capabilities, EvaluationContext, States.
   probe/                    # Probe interface, registry, runner, timeout & concurrency orchestration.
   platform/                 # OS abstractions: PlatformReader, ScopedReader,
                             # ProcfsReader, SysfsReader, CommandRunner, syscall
@@ -246,8 +251,8 @@ or CLI packages.
 **Surface.** Two exported types drive all probe execution:
 
 - `Probe` (`internal/probe/probe.go`): declares `ID()`, `Dependencies()`, and
-  `Run(ctx, env) → (model.Observation, error)`. Probes are stateless; all
-  execution state lives in the orchestrator.
+  `Run(ctx, env) → (model.Observation, error)`. Per-run scheduling state lives
+  in the orchestrator; probe-local mutation follows the concurrency contract below.
 - `Registry` (`internal/probe/registry.go`): owns the canonical DAG. State
   machine is `Open → Resolved → immutable`; subsequent `Register()` calls
   after `Resolve()` return `ErrRegistryResolved`.
@@ -255,9 +260,8 @@ or CLI packages.
 **Scheduling invariants.**
 
 - Topological order is computed via Kahn's algorithm with a **registration-order
-  tie-breaker** — when multiple roots are simultaneously runnable, they execute
-  in the order they were registered, guaranteeing deterministic output across
-  runs and platforms.
+  tie-breaker** for the resolved plan and output. Concurrent probe start and
+  completion order are not guaranteed; output remains ordered by the plan.
 - A dependent becomes runnable **only** after all its declared prerequisites
   finish with `ProbeSucceeded`. Prerequisite `ProbeFailed`, `ProbeCancelled`,
   or `ProbeSkipped` cascades to transitive dependents as `ProbeSkipped` with
@@ -314,8 +318,8 @@ probe behavior fully deterministic in unit tests.
 `Setpgid`. When timeout or caller cancellation interrupts execution, the
 runner terminates the entire process group and waits for the process to
 be reaped. Normally completing commands are not signalled after
-completion; the subprocess group is left intact because it has already
-exited. Timeout-vs-caller-cancellation precedence: when both events
+completion. This does not prove that all descendants have exited. Bounded
+pipe-drain handling remains open in [#37](https://github.com/EpicBlackWolfZ/capagent/issues/37). Timeout-vs-caller-cancellation precedence: when both events
 become observable before result classification, caller cancellation wins.
 `TimedOut` is set to `true` only when the internal timeout is the
 selected termination reason.
@@ -360,9 +364,9 @@ returns `ErrSubpathEscape` via an explicit lexical check) is
 documented and tested.
 
 **Architecture enforcement.** The AST-based host-IO denylist test
-(`TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform`) mechanically
-prevents direct file-I/O, command-execution, and ambient-environment
-access outside `internal/platform/`, with an exemption for the
+(`TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform`) detects configured
+direct file-I/O, command-execution and ambient-environment patterns
+outside `internal/platform/`, with an exemption for the
 `tests/contract/` harness. The `cmd/` CLI prefix is NOT in
 the denylist allowlist; CLI binaries that need `os.Args`,
 `os.Stdout`, `os.Stderr`, or `os.Exit` use those primitives
@@ -378,7 +382,7 @@ Deterministic serialization guarantees that identical inputs produce canonical b
 
 ### 7.1 Architecture Invariant: Domain Model vs. Wire Contract
 
-`internal/model` represents the authoritative domain model: rich kernel facts, identity execution delegation, evidence trees, and 3-valued Boolean logic. **Schema v1 must never become the domain model.**
+`internal/model` represents domain data and validation: facts, identity context and evidence/capability records. Three-valued Boolean logic and requirement evaluation belong to `internal/requirement`. **Schema v1 must never become the domain model.**
 
 `internal/output` defines versioned serialization DTOs (`v1`) that project internal domain types into the external wire format. When future schema versions (`v2`, etc.) are introduced, they will define dedicated DTO projections without mutating or churning the internal domain model.
 

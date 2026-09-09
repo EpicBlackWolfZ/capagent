@@ -22,11 +22,11 @@ when:
   - systemd_version >= 250
 ```
 
-`capagent` enables declarative, capability-oriented assertions:
+The planned report contract enables declarative, capability-oriented assertions:
 ```yaml
 # Declarative, decoupled capability assertion
 when:
-  - host_capabilities.capabilities.container.lifecycle.systemd_native.state == "supported"
+  - host_capabilities['capabilities']['container.lifecycle.systemd_native']['state'] == "supported"
 ```
 
 ---
@@ -64,39 +64,46 @@ Deployment Decision
 
 ---
 
-## Roadmap & Milestones
+## Current Status and Roadmap
 
-| Milestone | Title | Focus Area | Status |
-| :--- | :--- | :--- | :--- |
-| **M0** | [Architecture & Contract](docs/roadmap.md#milestone-0--architecture-semantics--contract) | Domain types, 3-valued truth tables, schema skeleton | ✅ Complete |
-| **M1** | [Probe Core](docs/roadmap.md#milestone-1--portable-probe-core) | Static binary, mockable OS readers, command runner | ✅ Complete |
-| **M2** | [Host Facts](docs/roadmap.md#milestone-2--host-fact-engine) | Direct /proc, /sys, cgroups v1/v2, systemd, namespaces | ⏳ Queued |
-| **M3** | [Execution Context](docs/roadmap.md#milestone-3--identity--rootless-context) | Target user, subuid/subgid, user-systemd, rootless | ⏳ Queued |
-| **M4** | [Runtime Discovery](docs/roadmap.md#milestone-4--runtime-discovery) | Podman, Docker, containerd, socket discovery | ⏳ Queued |
-| **M5** | [Podman Core](docs/roadmap.md#milestone-5--podman-core-runtime-adapter) | Version parser, podman info, Quadlet, network backend | ⏳ Queued |
-| **M6** | [Configuration Discovery](docs/roadmap.md#milestone-6--configuration-discovery-engine) | containers.conf, registries.conf, storage.conf precedence | ⏳ Queued |
-| **M7** | [Configuration Capabilities](docs/roadmap.md#milestone-7--configuration-capabilities) | Registries, storage drivers, container DNS capabilities | ⏳ Queued |
-| **M8** | [Capability Engine](docs/roadmap.md#milestone-8--canonical-capability-engine) | Canonical capability registry, dependency DAG, evidence graph | ⏳ Queued |
-| **M9** | [Requirement Engine](docs/roadmap.md#milestone-9--requirement-engine) | 3-valued requirement evaluation (AND, OR, predicate NOT) | ⏳ Queued |
-| **M10** | [Ansible Integration](docs/roadmap.md#milestone-10--early-ansible-integration) | Playbooks, gating examples, capagent_probe role | ⏳ Queued |
-| **M11** | [Diagnostics](docs/roadmap.md#milestone-11--diagnostics--doctor) | CLI doctor, runtime inspection, terminal evidence tree | ⏳ Queued |
-| **M12** | [Docker Adapter](docs/roadmap.md#milestone-12--docker-runtime-adapter) | Docker engine observation and canonical mapping | ⏳ Queued |
-| **M13** | [containerd & CRI](docs/roadmap.md#milestone-13--containerd--cri--cri-o--nerdctl) | CRI plugins, containerd sockets, CRI-O, nerdctl | ⏳ Queued |
-| **M14** | [Historical Knowledge](docs/roadmap.md#milestone-14--historical-knowledge-base) | Provenance tracking, version rules without overriding live evidence | ⏳ Queued |
-| **M15** | [Compatibility Fixtures](docs/roadmap.md#milestone-15--compatibility-fixture-framework) | Offline simulation corpus across OS and runtime versions | ⏳ Queued |
-| **M16** | [Real Compatibility Matrix](docs/roadmap.md#milestone-16--real-os--runtime-compatibility-matrix) | Validation against RHEL 8/9/10, Fedora, Debian | ⏳ Queued |
-| **M17** | [Active Validation](docs/roadmap.md#milestone-17--active-validation) | Safe opt-in active probing (`--active`) with cleanup | ⏳ Queued |
-| **M18** | [Production Hardening](docs/roadmap.md#milestone-18--production-hardening) | Security audit, resource limits, stripped-host execution | ⏳ Queued |
-| **M19** | [API Stabilization](docs/roadmap.md#milestone-19--api-stabilization) | JSON Schema v1 freeze, capability ID stability | ⏳ Queued |
-| **M20** | [Documentation & DX](docs/roadmap.md#milestone-20--documentation--developer-experience) | Contributor guides, authoring playbooks | ⏳ Queued |
-| **M21** | [v1.0 Release](docs/roadmap.md#milestone-21--v10-release) | Production release with stable contract | ⏳ Queued |
+The current CLI provides `--help` and `--version`; it does not yet evaluate hosts or accept `--json`. M0 and the initial M1 scaffolding are delivered. M1.1 is the open hardening gate, followed by the M1.2 context/evaluation slice. The full [roadmap](docs/roadmap.md) links each deliverable to its GitHub issues and milestones.
+
+Execution targets Linux 5.6+ with working `openat2` confinement on amd64/arm64. Historical distribution fixtures do not imply supported execution on older kernels. See the [security and support contract](docs/security.md).
+
+| Milestone | Status | Deliverable |
+|---|---|---|
+| [M0 — Architecture & Contract](https://github.com/EpicBlackWolfZ/capagent/milestone/1) | Initial skeleton delivered | Initial models, state algebra and schema skeleton; remaining semantics have explicit follow-ups. |
+| [M1 — Probe Core](https://github.com/EpicBlackWolfZ/capagent/milestone/2) | Initial foundation delivered | Static payload, OS abstractions and scheduler scaffolding; host-report CLI is not delivered. |
+| [M1.1 — Hardening, Security & Performance](https://github.com/EpicBlackWolfZ/capagent/milestone/23) | Active gate | Confinement, descriptor ownership, bounded I/O, parser fidelity, execution/build policy and regression gate. |
+| [M1.2 — Context & Evaluation Slice](https://github.com/EpicBlackWolfZ/capagent/milestone/24) | Queued; pure work may overlap | Typed context/evidence, minimal evaluator/requirements, reusable fixtures, application lifecycle and JSON consumer smoke. |
+| [M2 — Host Facts](https://github.com/EpicBlackWolfZ/capagent/milestone/3) | Queued | First live host probes, mockable syscall adapters and real-host JSON validation. |
+| [M3 — Execution Context](https://github.com/EpicBlackWolfZ/capagent/milestone/4) | Queued | Target identity validation, groups, subordinate ranges, helper metadata, XDG and user systemd. |
+| [M4 — Runtime Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/5) | Queued | Explicit binary/endpoint/identity policy and runtime availability. |
+| [M5 — Podman Core](https://github.com/EpicBlackWolfZ/capagent/milestone/6) | Queued | Bounded passive version/effective-info observations and first real rootless fixture. |
+| [M6 — Configuration Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/7) | Queued | Effective configuration and provenance across source/user scopes. |
+| [M7 — Configuration Capabilities](https://github.com/EpicBlackWolfZ/capagent/milestone/8) | Queued | Use the M1.2 evaluator for registry/storage/network mappings. |
+| [M8 — Capability Catalog Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/9) | Queued | Expand lifecycle and dependency mappings; engine infrastructure already exists. |
+| [M9 — Requirement Language & Explanations](https://github.com/EpicBlackWolfZ/capagent/milestone/10) | Queued | Extend the minimal AST and consumer-driven language/explanation features. |
+| [M10 — Ansible Integration](https://github.com/EpicBlackWolfZ/capagent/milestone/11) | Queued | Full role and real-host gating/fallback examples; initial consumer smoke occurs in M1.2. |
+| [M11 — Diagnostics](https://github.com/EpicBlackWolfZ/capagent/milestone/12) | Queued | Doctor, runtime/config inspection and evidence explanations. |
+| [M12 — Docker](https://github.com/EpicBlackWolfZ/capagent/milestone/13) | Queued | Useful Docker baseline with real fixtures and target-scoped mappings. |
+| [M13 — containerd & CRI](https://github.com/EpicBlackWolfZ/capagent/milestone/14) | Queued | Baseline CRI support; CRI-O/nerdctl remain optional experimental scope. |
+| [M14 — Historical Knowledge](https://github.com/EpicBlackWolfZ/capagent/milestone/15) | Queued | Sourced high-impact rules that never override direct evidence. |
+| [M15 — Compatibility Corpus Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/16) | Queued | Broaden the M1.2 harness and captured regression corpus. |
+| [M16 — Real Compatibility Matrix](https://github.com/EpicBlackWolfZ/capagent/milestone/17) | Queued | Automate a wider supported OS/runtime matrix; first real tests occur earlier. |
+| [M17 — Active Validation](https://github.com/EpicBlackWolfZ/capagent/milestone/18) | Queued; experimental | Explicit opt-in, bounded disposable verification and documented cleanup limits. |
+| [M18 — Production Hardening](https://github.com/EpicBlackWolfZ/capagent/milestone/19) | Queued | Final integrated fleet checks and broader benchmark/scalability work. |
+| [M19 — API Stabilization](https://github.com/EpicBlackWolfZ/capagent/milestone/20) | Queued | Freeze validated schema, evidence, requirement and ID compatibility contracts. |
+| [M20 — Documentation](https://github.com/EpicBlackWolfZ/capagent/milestone/21) | Queued | Complete installation, operation, integration and troubleshooting guides. |
+| [M21 — v1.0](https://github.com/EpicBlackWolfZ/capagent/milestone/22) | Queued | Release verified stable scope; optional experimental features do not block it. |
+
 
 ---
 
 ## Design Principles
 
 1. **Passive by Default**: Never creates containers, modifies networks, or alters system files unless `--active` is explicitly passed.
-2. **Evidence Before Inference**: Direct live evidence beats configuration files, which beat version knowledge, which beats heuristics.
+2. **Evidence Before Inference**: Direct live evidence beats runtime-reported effective state, configuration, version knowledge and heuristics, in that order.
 3. **Unknown is Not False**: Distinguishes `supported`, `unsupported`, `misconfigured`, `unavailable`, and `unknown`.
 4. **Context is First-Class**: Evaluates capabilities under the target user's identity, subuid/subgid mapping, and runtime directory.
 5. **Zero External Runtime Dependencies**: Compiles with `CGO_ENABLED=0` to a single statically linked binary; uses direct kernel APIs (`/proc`, `/sys`, syscalls) over spawning shell utilities.
