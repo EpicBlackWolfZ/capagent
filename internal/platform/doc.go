@@ -2,8 +2,9 @@
 //
 // In accordance with capagent architecture, this package isolates all interactions
 // with the underlying host operating system behind deterministic, testable
-// interfaces. It depends solely on internal/model and the Go standard library,
-// and contains zero container, runtime, or business-logic interpretations.
+// interfaces. It depends solely on internal/model, the Go standard library,
+// and golang.org/x/sys/unix for kernel-confined filesystem operations. The
+// package contains zero container, runtime, or business-logic interpretations.
 //
 // The package exposes:
 //
@@ -11,8 +12,13 @@
 //     directory enumeration, stat metadata, and symlink targets. Both a real
 //     implementation (OSPlatformReader) and an in-memory test double
 //     (MemPlatformReader) are provided.
+//   - ScopedReader: a root-confined filesystem abstraction that performs each
+//     operation through a kernel-enforced containment boundary (Linux 5.6+
+//     openat2(2) with RESOLVE_IN_ROOT | RESOLVE_NO_MAGICLINKS on the OS
+//     reader; explicit lexical + per-hop checks on the memory reader). The
+//     reader owns its root FD for its lifetime and releases it via Close().
 //   - ProcfsReader / SysfsReader: thin parsers of Linux pseudo-filesystem
-//     protocols built on top of a PlatformReader, returning pure transport
+//     protocols built on top of a ScopedReader, returning pure transport
 //     structs without inferring runtime or container semantics.
 //   - CommandRunner: a bounded subprocess execution abstraction with strict
 //     per-stream output caps, internal timeout handling, cancellation
