@@ -26,18 +26,20 @@ const apparmorPath = "kernel/security/apparmor"
 // SELinuxModeEnforcing is the value written to sysfs when SELinux is enforcing.
 const selinuxEnforcing = "1"
 
-// SysfsReader parses sysfs pseudo-files via a PlatformReader.
+// SysfsReader parses sysfs pseudo-files via a ScopedReader.
 //
 // All methods are pure parsers; they translate sysfs text protocols into
 // structured transport types and never interpret security state.
+//
+// Path containment is delegated to the supplied ScopedReader.
 type SysfsReader struct {
-	reader PlatformReader
+	reader ScopedReader
 	root   string
 }
 
-// NewSysfsReader constructs a SysfsReader bound to the given PlatformReader.
+// NewSysfsReader constructs a SysfsReader bound to the given ScopedReader.
 // An empty root defaults to "/sys".
-func NewSysfsReader(r PlatformReader, root string) *SysfsReader {
+func NewSysfsReader(r ScopedReader, root string) *SysfsReader {
 	if r == nil {
 		return nil
 	}
@@ -52,13 +54,16 @@ func (s *SysfsReader) Root() string {
 	return s.root
 }
 
-// joinRoot joins the sysfs root with a relative subpath.
+// joinRoot canonicalizes the subpath for forwarding to the underlying
+// ScopedReader. The ScopedReader operates relative to its declared root;
+// the helper normalizes "/" / "." to "." and passes the cleaned relative
+// subpath through verbatim.
 func (s *SysfsReader) joinRoot(subpath string) string {
 	cleanSub := filepath.Clean(subpath)
-	if cleanSub == "." || cleanSub == "/" {
-		return s.root
+	if cleanSub == "/" {
+		return "."
 	}
-	return filepath.Join(s.root, cleanSub)
+	return cleanSub
 }
 
 // ReadSysFile reads raw bytes at the supplied sysfs-relative subpath.

@@ -19,8 +19,11 @@ package platform
 //   - PlatformReader: MemPlatformReader (RWMutex-protected); OSPlatformReader
 //     is safe to call from multiple goroutines because each os.* call is
 //     independent and the underlying file descriptors are independent.
+//   - ScopedReader: ScopedMemReader (RWMutex-protected); ScopedOSReader
+//     is safe to call from multiple goroutines because each openat2 / fd
+//     operation is independent and Linux fds are safe for concurrent use.
 //   - ProcfsReader / SysfsReader: stateless wrappers; their methods only
-//     forward to a PlatformReader and do not retain state between calls.
+//     forward to a ScopedReader and do not retain state between calls.
 //   - CommandRunner: FakeCommandRunner is RWMutex-safe; OSCommandRunner
 //     spawns independent subprocesses per call.
 //
@@ -50,16 +53,25 @@ func NewEnvironment(reader PlatformReader, procfs *ProcfsReader, sysfs *SysfsRea
 // to fresh ProcfsReader and SysfsReader instances rooted at "/proc" and "/sys"
 // respectively, paired with the supplied CommandRunner.
 //
+// The PlatformReader field is set to the supplied mem so probe code that
+// still uses Reader can interact with the same in-memory tree. The
+// ProcfsReader/SysfsReader are wired through ScopedMemReader instances
+// that share the mem backing store; this preserves backward-compatible
+// test ergonomics while routing the file methods through the new
+// containment boundary.
+//
 // It is intended exclusively for tests. Production code must use NewEnvironment
 // with explicit OS-backed components.
 func NewTestEnvironment(mem *MemPlatformReader, runner CommandRunner) Environment {
-	var reader PlatformReader
+	var backing *MemPlatformReader
 	if mem == nil {
-		reader = NewMemPlatformReader()
+		backing = NewMemPlatformReader()
 	} else {
-		reader = mem
+		backing = mem
 	}
-	procfs := NewProcfsReader(reader, defaultProcRoot)
-	sysfs := NewSysfsReader(reader, defaultSysRoot)
-	return NewEnvironment(reader, procfs, sysfs, runner)
+	procScoped := NewScopedMemReader(defaultProcRoot, backing)
+	sysScoped := NewScopedMemReader(defaultSysRoot, backing)
+	procfs := NewProcfsReader(procScoped, defaultProcRoot)
+	sysfs := NewSysfsReader(sysScoped, defaultSysRoot)
+	return NewEnvironment(backing, procfs, sysfs, runner)
 }

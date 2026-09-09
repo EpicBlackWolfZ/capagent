@@ -92,19 +92,22 @@ func (e CgroupEntry) IsUnified() bool {
 	return e.HierarchyID == "0" && e.Controllers == ""
 }
 
-// ProcfsReader parses procfs pseudo-files via a PlatformReader.
+// ProcfsReader parses procfs pseudo-files via a ScopedReader.
 //
 // All methods are pure parsers: they translate Linux text protocols into
 // structured transport types and never interpret runtime, container, or
 // host semantics.
+//
+// Path containment is delegated to the supplied ScopedReader. The reader
+// is the security boundary; ProcfsReader does not re-validate subpaths.
 type ProcfsReader struct {
-	reader PlatformReader
+	reader ScopedReader
 	root   string
 }
 
-// NewProcfsReader constructs a ProcfsReader bound to the given PlatformReader.
+// NewProcfsReader constructs a ProcfsReader bound to the given ScopedReader.
 // An empty root defaults to "/proc".
-func NewProcfsReader(r PlatformReader, root string) *ProcfsReader {
+func NewProcfsReader(r ScopedReader, root string) *ProcfsReader {
 	if r == nil {
 		return nil
 	}
@@ -119,14 +122,18 @@ func (p *ProcfsReader) Root() string {
 	return p.root
 }
 
-// joinRoot returns filepath.Join(root, subpath) or returns the canonical
-// separator-free path for the default root when subpath is empty.
+// joinRoot canonicalizes the subpath for forwarding to the underlying
+// ScopedReader. Because the ScopedReader already operates relative to
+// its declared root, the join is logical, not textual: the cleaned
+// subpath is passed through verbatim. The root is encoded into the
+// ScopedReader at construction; this helper exists only to keep the
+// historical "." / "/" → "." normalization for the empty/root case.
 func (p *ProcfsReader) joinRoot(subpath string) string {
 	cleanSub := filepath.Clean(subpath)
-	if cleanSub == "." || cleanSub == "/" {
-		return p.root
+	if cleanSub == "/" {
+		return "."
 	}
-	return filepath.Join(p.root, cleanSub)
+	return cleanSub
 }
 
 // ReadProcFile reads raw bytes at the supplied procfs-relative subpath.
