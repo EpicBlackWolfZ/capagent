@@ -8,14 +8,11 @@ on:
       - 'docs/**'
       - 'LICENSE*'
       - '.gitignore'
+  # PRs targeting any branch run CI. This supports stacked
+  # development workflows where each layer of a stack is validated
+  # independently before the lower layers reach main.
   pull_request:
-    branches: [main]
     types: [opened, synchronize, reopened, edited]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'LICENSE*'
-      - '.gitignore'
   workflow_dispatch:
 
 permissions:
