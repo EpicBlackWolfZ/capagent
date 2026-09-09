@@ -245,7 +245,7 @@ func TestOSPlatformReader_SymlinkReadFollowsTarget(t *testing.T) {
 
 	dir := t.TempDir()
 	target := filepath.Join(dir, "real.txt")
-	if err := os.WriteFile(target, []byte("payload"), 0o600); err != nil {
+	if err := os.WriteFile(target, []byte(testPayload), 0o600); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
 	link := filepath.Join(dir, "link.txt")
@@ -259,16 +259,16 @@ func TestOSPlatformReader_SymlinkReadFollowsTarget(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ReadFile via symlink: %v", err)
 	}
-	if string(data) != "payload" {
-		t.Errorf("ReadFile via symlink = %q, want %q", string(data), "payload")
+	if string(data) != testPayload {
+		t.Errorf("ReadFile via symlink = %q, want %q", string(data), testPayload)
 	}
 
 	info, err := r.Stat(link)
 	if err != nil {
 		t.Fatalf("Stat via symlink: %v", err)
 	}
-	if info.Size() != int64(len("payload")) {
-		t.Errorf("Stat size via symlink = %d, want %d", info.Size(), len("payload"))
+	if info.Size() != int64(len(testPayload)) {
+		t.Errorf("Stat size via symlink = %d, want %d", info.Size(), len(testPayload))
 	}
 }
 

@@ -332,11 +332,11 @@ func TestScopedReader_ReadFile(t *testing.T) {
 		{
 			name: "symlink inside root resolves",
 			setup: func(m *platform.MemPlatformReader) {
-				m.AddFile("/proc/b", []byte("payload"), 0o644)
+				m.AddFile("/proc/b", []byte(testPayload), 0o644)
 				m.AddSymlink("/proc/a", "b")
 			},
 			subpath: "a",
-			want:    "payload",
+			want:    testPayload,
 		},
 		{
 			name: "self-loop returns ELOOP",
@@ -466,7 +466,7 @@ func TestScopedReader_Stat(t *testing.T) {
 		{
 			name: "symlink resolution",
 			setup: func(m *platform.MemPlatformReader) {
-				m.AddFile("/proc/target", []byte("payload"), 0o644)
+				m.AddFile("/proc/target", []byte(testPayload), 0o644)
 				m.AddSymlink("/proc/link", "target")
 			},
 			subpath:    "link",
@@ -928,7 +928,7 @@ func TestScopedReader_UseAfterClose(t *testing.T) {
 
 
 	mem := platform.NewMemPlatformReader()
-	mem.AddFile("/proc/x", []byte("payload"), 0o644)
+	mem.AddFile("/proc/x", []byte(testPayload), 0o644)
 	r := platform.NewScopedMemReader(scopedReaderProcRoot, mem)
 
 	if err := r.Close(); err != nil {
@@ -962,7 +962,7 @@ func TestScopedReader_Race_LegalConcurrentUse(t *testing.T) {
 
 
 	mem := platform.NewMemPlatformReader()
-	mem.AddFile("/proc/x", []byte("payload"), 0o644)
+	mem.AddFile("/proc/x", []byte(testPayload), 0o644)
 	mem.AddDir("/proc/d", 0o755)
 	mem.AddFile("/proc/d/child", []byte("c"), 0o644)
 	mem.AddSymlink("/proc/l", "x")
@@ -1150,7 +1150,7 @@ func TestScopedOSFactory_VerifiesMaterializedSymlinks(t *testing.T) {
 	// Build a small tree: a directory, a file inside it, a
 	// symlink whose target is the in-root file.
 	mem.AddDir("/proc/d", 0o755)
-	mem.AddFile("/proc/d/target", []byte("payload"), 0o644)
+	mem.AddFile("/proc/d/target", []byte(testPayload), 0o644)
 	mem.AddSymlink("/proc/d/link", "target")
 
 	// Materialize via the harness's helpers directly to avoid
