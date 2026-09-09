@@ -92,11 +92,11 @@ M21  v1.0 Release
 - **Issue 0.11**: Define initial JSON Schema v1 skeleton.
 
 **Exit Criteria**:
-- [ ] Domain model documented and agreed upon.
-- [ ] Capability states and confidence levels implemented in code.
-- [ ] Requirement truth tables covered by unit tests.
-- [ ] Execution context structure defined.
-- [ ] Schema v1 skeleton validates sample outputs.
+- [x] Domain model documented and agreed upon.
+- [x] Capability states and confidence levels implemented in code.
+- [x] Requirement truth tables covered by unit tests.
+- [x] Execution context structure defined.
+- [x] Schema v1 skeleton validates sample outputs.
 
 ---
 
@@ -117,10 +117,10 @@ M21  v1.0 Release
 - **Issue 1.12**: Implement core test utilities (fake FS, fake procfs/sysfs, golden JSON fixtures).
 
 **Exit Criteria**:
-- [ ] Static binary compiles with `CGO_ENABLED=0`.
-- [ ] Probe framework executes concurrently and safely handles timeouts.
-- [ ] Host access and external commands are 100% mockable in unit tests.
-- [ ] Output serialization is bit-for-bit deterministic.
+- [x] Static binary compiles with `CGO_ENABLED=0`.
+- [x] Probe framework executes concurrently and safely handles timeouts.
+- [x] Host access and external commands are 100% mockable in unit tests.
+- [x] Output serialization is bit-for-bit deterministic.
 
 ---
 

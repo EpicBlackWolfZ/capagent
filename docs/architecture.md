@@ -231,6 +231,93 @@ testdata/
 3. **Capability engine does not execute commands**: `internal/capability` evaluates purely over `Evidence` graphs.
 4. **Requirement engine does not execute host probes**: `internal/requirement` evaluates strictly against `Capability` outputs.
 
+### `internal/probe` Contract
+The probe package is the dynamic-dependency orchestrator that materializes a
+canonical execution plan from a static DAG.
+
+**Layer position.** Sits between `internal/platform` (low-level OS abstractions)
+and `internal/host` / `internal/runtime` (which are *consumers* of probe
+infrastructure in later milestones). May import `internal/model` and
+`internal/platform` only — never engine, configuration, knowledge, diagnostics,
+or CLI packages.
+
+**Surface.** Two exported types drive all probe execution:
+
+- `Probe` (`internal/probe/probe.go`): declares `ID()`, `Dependencies()`, and
+  `Run(ctx, env) → (model.Observation, error)`. Probes are stateless; all
+  execution state lives in the orchestrator.
+- `Registry` (`internal/probe/registry.go`): owns the canonical DAG. State
+  machine is `Open → Resolved → immutable`; subsequent `Register()` calls
+  after `Resolve()` return `ErrRegistryResolved`.
+
+**Scheduling invariants.**
+
+- Topological order is computed via Kahn's algorithm with a **registration-order
+  tie-breaker** — when multiple roots are simultaneously runnable, they execute
+  in the order they were registered, guaranteeing deterministic output across
+  runs and platforms.
+- A dependent becomes runnable **only** after all its declared prerequisites
+  finish with `ProbeSucceeded`. Prerequisite `ProbeFailed`, `ProbeCancelled`,
+  or `ProbeSkipped` cascades to transitive dependents as `ProbeSkipped` with
+  `ErrDependencyFailed`. Dependents are NEVER marked `ProbeCancelled`; only
+  direct cancellation propagates that status.
+- Concurrency cap is configurable via `WithMaxConcurrency(n ≥ 1)`. Worker
+  count is capped at `min(maxConcurrency, number of registered probes)`.
+  Workers block while no probe is currently runnable and wake when work
+  becomes available. Empty registries return an empty slice without
+  spawning goroutines.
+- Output is canonically sorted by `ResolvedPlan()` order regardless of
+  completion timing — concurrent execution never perturbs result order.
+
+**Cancellation responsibilities.** Cancellation is split between the
+orchestrator and each probe:
+
+- **Orchestrator.** Propagates a `context.Context` to every `Probe.Run`
+  call, and classifies cooperative cancellation by inspecting the
+  returned error against `ctx.Err()`. The orchestrator cannot forcibly
+  terminate arbitrary Go code executing inside `Probe.Run`.
+- **Probe.** `Probe.Run` implementations MUST observe `ctx.Done()` and
+  return promptly when the supplied context is cancelled. A probe that
+  blocks indefinitely will block its worker goroutine and prevent
+  subsequent probes from being scheduled. Returning `ctx.Err()`
+  (verbatim or wrapped via `fmt.Errorf("%w", ...)` or `errors.Is`) is
+  classified as `ProbeCancelled` by the orchestrator.
+
+**Concurrency responsibilities.** Each registered `Probe` instance is
+executed at most once per `Orchestrator.Run`. Sibling probes may execute
+concurrently with one another, so the `platform.Environment` and its
+dependencies may be accessed concurrently from multiple probe goroutines.
+Probes MAY mutate their own internal state freely, but they MUST NOT
+mutate shared dependencies (e.g. `platform.Environment` fields) unless
+those dependencies explicitly document that they are safe for concurrent
+mutation.
+
+A directly cancelled probe is recorded as `ProbeCancelled`; transitive
+dependents of a cancelled, failed, or skipped probe are recorded as
+`ProbeSkipped` with `ErrDependencyFailed`. Dependents are NEVER marked
+`ProbeCancelled`; only direct cancellation propagates that status.
+
+**Environment injection.** All probe `Run` invocations receive a
+`platform.Environment` value containing a `PlatformReader`, `ProcfsReader`,
+`SysfsReader`, and `CommandRunner`. The Environment value itself is not
+deeply immutable: its fields are reference-typed pointers and interfaces
+that may be observed by sibling probes executed concurrently. Probes MUST
+NOT mutate shared dependencies unless those dependencies explicitly
+document that they are safe for concurrent mutation. Test doubles
+(`MemPlatformReader`, `FakeCommandRunner`) are the canonical way to make
+probe behavior fully deterministic in unit tests.
+
+**`internal/platform` CommandRunner process-group lifecycle.**
+`OSCommandRunner` creates each subprocess in its own process group via
+`Setpgid`. When timeout or caller cancellation interrupts execution, the
+runner terminates the entire process group and waits for the process to
+be reaped. Normally completing commands are not signalled after
+completion; the subprocess group is left intact because it has already
+exited. Timeout-vs-caller-cancellation precedence: when both events
+become observable before result classification, caller cancellation wins.
+`TimedOut` is set to `true` only when the internal timeout is the
+selected termination reason.
+
 ---
 
 ## 7. JSON Schema v1 Specification

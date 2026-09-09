@@ -80,7 +80,7 @@ else
 	@$(GO) test -race ./...
 endif
 
-## coverage: Run tests with coverage profile, output metrics, and verify threshold (>= 95.0%)
+## coverage: Run tests with coverage profile, output metrics, and verify total coverage (>= 95.0%)
 coverage:
 	@echo "==> Running tests with coverage..."
 ifdef GOTESTSUM
@@ -90,9 +90,9 @@ else
 endif
 	@echo "==> Coverage summary:"
 	@$(GO) tool cover -func=$(COVERAGE_FILE)
-	@echo "==> Verifying code coverage threshold (>= $(COVERAGE_THRESHOLD)%)..."
+	@echo "==> Verifying total repository coverage threshold (>= $(COVERAGE_THRESHOLD)%)..."
 	@TOTAL_COVERAGE=$$($(GO) tool cover -func=$(COVERAGE_FILE) | grep "total:" | awk '{print substr($$3, 1, length($$3)-1)}'); \
-	echo "$${TOTAL_COVERAGE} $(COVERAGE_THRESHOLD)" | awk '{if ($$1 < $$2) { printf "❌ Coverage %s%% is below target $(COVERAGE_THRESHOLD)%%\n", $$1; exit 1 } else { printf "✅ Total coverage %s%% satisfies target >= $(COVERAGE_THRESHOLD)%%\n", $$1 }}'
+	echo "$${TOTAL_COVERAGE} $(COVERAGE_THRESHOLD)" | awk '{if ($$1 < $$2) { printf "❌ Total coverage %s%% is below target $(COVERAGE_THRESHOLD)%%\n", $$1; exit 1 } else { printf "✅ Total coverage %s%% satisfies target >= $(COVERAGE_THRESHOLD)%%\n", $$1 }}'
 
 ## lint: Run strict golangci-lint check
 lint:

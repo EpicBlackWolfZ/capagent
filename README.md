@@ -68,8 +68,8 @@ Deployment Decision
 
 | Milestone | Title | Focus Area | Status |
 | :--- | :--- | :--- | :--- |
-| **M0** | [Architecture & Contract](docs/roadmap.md#milestone-0--architecture-semantics--contract) | Domain types, 3-valued truth tables, schema skeleton | 🏗️ Planned |
-| **M1** | [Probe Core](docs/roadmap.md#milestone-1--portable-probe-core) | Static binary, mockable OS readers, command runner | ⏳ Queued |
+| **M0** | [Architecture & Contract](docs/roadmap.md#milestone-0--architecture-semantics--contract) | Domain types, 3-valued truth tables, schema skeleton | ✅ Complete |
+| **M1** | [Probe Core](docs/roadmap.md#milestone-1--portable-probe-core) | Static binary, mockable OS readers, command runner | ✅ Complete |
 | **M2** | [Host Facts](docs/roadmap.md#milestone-2--host-fact-engine) | Direct /proc, /sys, cgroups v1/v2, systemd, namespaces | ⏳ Queued |
 | **M3** | [Execution Context](docs/roadmap.md#milestone-3--identity--rootless-context) | Target user, subuid/subgid, user-systemd, rootless | ⏳ Queued |
 | **M4** | [Runtime Discovery](docs/roadmap.md#milestone-4--runtime-discovery) | Podman, Docker, containerd, socket discovery | ⏳ Queued |
