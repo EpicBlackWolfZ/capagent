@@ -280,6 +280,10 @@ func (r *ScopedOSReader) ReadFile(subpath string) ([]byte, error) {
 
 // readAllFD drains fd via repeated unix.Read until EOF. The caller owns
 // fd and is responsible for closing it.
+//
+// ScopedReader never opens FDs in non-blocking mode, so unix.Read
+// cannot return EAGAIN for these descriptors; the loop terminates
+// only on EOF (n == 0) or on a hard error.
 func readAllFD(fd int) ([]byte, error) {
 	var buf []byte
 	tmp := make([]byte, ioChunkBytes)
@@ -289,11 +293,6 @@ func readAllFD(fd int) ([]byte, error) {
 			buf = append(buf, tmp[:n]...)
 		}
 		if err != nil {
-			if err == unix.EAGAIN {
-				continue
-			}
-			// EOF surfaces as a successful zero-length read on
-			// regular files; only a non-nil err here means failure.
 			return buf, err
 		}
 		if n == 0 {
@@ -378,15 +377,15 @@ func (r *ScopedOSReader) ReadDir(subpath string) ([]os.DirEntry, error) {
 
 // readDirNames enumerates the directory entries reachable via fd.
 // The caller owns fd and is responsible for closing it.
+//
+// ScopedReader never opens FDs in non-blocking mode, so unix.Getdents
+// cannot return EAGAIN for these descriptors.
 func readDirNames(fd int) ([]string, error) {
 	var names []string
 	tmp := make([]byte, ioChunkBytes)
 	for {
 		n, err := unix.Getdents(fd, tmp)
 		if err != nil {
-			if err == unix.EAGAIN {
-				continue
-			}
 			return nil, err
 		}
 		if n == 0 {
