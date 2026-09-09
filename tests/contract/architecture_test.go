@@ -829,13 +829,15 @@ var hostAmbientEnvDenylist = []string{
 // the denylisted primitives. The contract test directory is exempted
 // per plan §9.3 (it uses os, filepath.Walk, go/parser legitimately
 // to enforce the rules).
+//
+// The cmd/ prefix is intentionally NOT in the allowlist. CLI
+// binaries may use ordinary CLI primitives (os.Args, os.Stdout,
+// os.Stderr, os.Exit) — these are not in any denylist and so do
+// not require an exemption. File-I/O and os/exec are denied in
+// cmd/ just as in any other non-platform package.
 var hostPrimitiveAllowPrefixes = []string{
 	"internal/platform/",
-	"cmd/",
 	"tests/contract/",
-	// Schema and version packages legitimately use os/exec-free
-	// file reads but tests sometimes need ambient env. The denylist
-	// is enforced only against the listed denylist categories.
 }
 
 // Walked-directory skip constants used by the AST scanner. Hoisted
@@ -984,19 +986,9 @@ func TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform(t *testing.T) {
 
 			selector := resolvedPkg + "." + sel.Sel.Name
 
-			// Determine which denylist applies.
-			isExecImport := stringSliceContains(hostExecDenylist, resolvedPkg)
-			if isExecImport && !isTest {
-				// Imports of os/exec in production code are
-				// themselves a violation; the AST scan alone
-				// catches selector uses but we also flag the
-				// import. The import was added to aliases
-				// above; we record it via the package-imports
-				// walker below.
-				return true
-			}
-
-			// File I/O selectors apply to all files.
+			// File I/O selectors apply to all files (production and
+			// test). The denylist explicitly closes the test-file
+			// loophole: tests must use the platform package too.
 			if stringSliceContainsSet(selector, hostPrimitiveDenylist) {
 				violations = append(violations, fmt.Sprintf(
 					"%s uses forbidden host-IO primitive %s; route through internal/platform instead",
@@ -1005,7 +997,8 @@ func TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform(t *testing.T) {
 				return true
 			}
 
-			// Ambient-env selectors apply only to production code.
+			// Ambient-env selectors apply only to production code;
+			// tests legitimately need to inspect the environment.
 			if !isTest && stringSliceContainsSet(selector, hostAmbientEnvDenylist) {
 				violations = append(violations, fmt.Sprintf(
 					"%s uses forbidden ambient-env primitive %s in production code; route through internal/platform instead",
@@ -1017,16 +1010,16 @@ func TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform(t *testing.T) {
 			return true
 		})
 
-		// Also flag production-only os/exec imports in non-platform packages.
-		if !isTest {
-			for _, imp := range node.Imports {
-				importPath := strings.Trim(imp.Path.Value, `"`)
-				if stringSliceContains(hostExecDenylist, importPath) {
-					violations = append(violations, fmt.Sprintf(
-						"%s imports forbidden %s; route through internal/platform.CommandRunner instead",
-						relPath, importPath,
-					))
-				}
+		// Flag os/exec imports in BOTH production and test files
+		// outside the owning layer. Test harnesses must not bypass
+		// the platform.CommandRunner abstraction.
+		for _, imp := range node.Imports {
+			importPath := strings.Trim(imp.Path.Value, `"`)
+			if stringSliceContains(hostExecDenylist, importPath) {
+				violations = append(violations, fmt.Sprintf(
+					"%s imports forbidden %s; route through internal/platform.CommandRunner instead",
+					relPath, importPath,
+				))
 			}
 		}
 
@@ -1094,11 +1087,15 @@ func TestArchitecture_HostPrimitiveRuleEnforcement(t *testing.T) {
 		})
 	}
 
-	// Allow-prefix helpers must exempt the platform package and the CLI.
+	// Allow-prefix helpers must exempt the platform package and the
+// contract test directory. The CLI is intentionally NOT exempted:
+// CLI code that uses host-IO primitives is rejected; CLI code that
+// uses only standard CLI primitives (os.Args, os.Stdout, os.Stderr,
+// os.Exit) does not require any exemption because those primitives
+// are not in any denylist.
 	allowedSamples := []string{
 		"internal/platform/reader.go",
 		"internal/platform/scoped_reader.go",
-		"cmd/capagent/main.go",
 		"tests/contract/architecture_test.go",
 	}
 	for _, sample := range allowedSamples {
@@ -1107,10 +1104,13 @@ func TestArchitecture_HostPrimitiveRuleEnforcement(t *testing.T) {
 		}
 	}
 
-	// Non-allowed production files must NOT be exempt.
+	// Non-allowed production files must NOT be exempt. The CLI is
+	// also non-exempt; CLI primitives are not in the denylist, but
+	// file-I/O and os/exec are.
 	deniedSamples := []string{
 		"internal/probe/orchestrator.go",
 		"internal/model/capability.go",
+		"cmd/capagent/main.go",
 	}
 	for _, sample := range deniedSamples {
 		if isHostIOAllowedPath(sample) {
@@ -1121,10 +1121,10 @@ func TestArchitecture_HostPrimitiveRuleEnforcement(t *testing.T) {
 
 // TestArchitecture_HostPrimitiveFixtures verifies that the AST
 // scanner classifies the fixtures in tests/contract/fixtures/ as
-// expected: example_host_io_violation.go must be flagged,
-// example_legitimate.go must not. The fixtures directory is
-// excluded from the repository-wide scan so these tests can probe
-// the rule directly without polluting production.
+// expected: every negative fixture must be flagged, every positive
+// fixture must not. The fixtures directory is excluded from the
+// repository-wide scan so these tests can probe the rule directly
+// without polluting production.
 func TestArchitecture_HostPrimitiveFixtures(t *testing.T) {
 	t.Parallel()
 
@@ -1146,16 +1146,96 @@ func TestArchitecture_HostPrimitiveFixtures(t *testing.T) {
 		violationByFile[v[:idx]] = append(violationByFile[v[:idx]], v[idx+1:])
 	}
 
-	// Negative fixture: must be flagged.
-	negativeFixture := filepath.Join("tests", "contract", "fixtures", "example_host_io_violation.go")
-	if len(violationByFile[negativeFixture]) == 0 {
-		t.Errorf("expected %q to be flagged by the denylist; got none", negativeFixture)
+	// Negative fixtures: each MUST be flagged.
+	negativeFixtures := []string{
+		"example_host_io_violation.go",
+		"example_cmd_host_io_violation.go",
+		"example_test_host_exec_violation_test.go",
+	}
+	for _, name := range negativeFixtures {
+		fixture := filepath.Join("tests", "contract", "fixtures", name)
+		if len(violationByFile[fixture]) == 0 {
+			t.Errorf("expected %q to be flagged by the denylist; got none", fixture)
+		}
 	}
 
-	// Positive fixture: must NOT be flagged.
+	// Positive fixture: MUST NOT be flagged.
 	positiveFixture := filepath.Join("tests", "contract", "fixtures", "example_legitimate.go")
 	if len(violationByFile[positiveFixture]) > 0 {
 		t.Errorf("did not expect %q to be flagged; got %v", positiveFixture, violationByFile[positiveFixture])
+	}
+}
+
+// TestArchitecture_CLIPrimitivesAllowed verifies that the standard CLI
+// primitives (os.Args, os.Stdout, os.Stderr, os.Exit) are NOT in any
+// denylist and therefore do not require an allowlist exemption.
+// cmd/capagent/main.go uses these primitives and must remain free of
+// host-IO flags from the scanner.
+func TestArchitecture_CLIPrimitivesAllowed(t *testing.T) {
+	t.Parallel()
+
+	cliPrimitives := []string{
+		"os.Args",
+		"os.Stdout",
+		"os.Stderr",
+		"os.Exit",
+	}
+	for _, sel := range cliPrimitives {
+		if stringSliceContainsSet(sel, hostPrimitiveDenylist) {
+			t.Errorf("%q is in the file-IO denylist; should be permitted for CLI", sel)
+		}
+		if stringSliceContainsSet(sel, hostAmbientEnvDenylist) {
+			t.Errorf("%q is in the ambient-env denylist; should be permitted for CLI", sel)
+		}
+	}
+}
+
+// TestArchitecture_TestFileAmbientEnvAllowed verifies that ambient
+// environment access is permitted inside _test.go files. The
+// plan §2.2 keeps this single test-file exemption for ambient env
+// only; file-IO and os/exec remain forbidden in test files.
+func TestArchitecture_TestFileAmbientEnvAllowed(t *testing.T) {
+	t.Parallel()
+
+	// Synthesize a fake "is test" code path: parse an in-memory
+	// source that uses os.Getenv inside a _test.go-styled helper.
+	src := `package fixtures
+import "os"
+func helper() string { return os.Getenv("HOME") }
+`
+	fset := token.NewFileSet()
+	node, err := parser.ParseFile(fset, "fake_test.go", src, 0)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+
+	// Mimic the scanner's per-file denylist application.
+	isTest := true
+	var matchedAmbient bool
+	ast.Inspect(node, func(n ast.Node) bool {
+		sel, ok := n.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		ident, ok := sel.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+		if ident.Name != "os" {
+			return true
+		}
+		fullSel := "os." + sel.Sel.Name
+		if stringSliceContainsSet(fullSel, hostAmbientEnvDenylist) {
+			matchedAmbient = true
+			if !isTest {
+				t.Errorf("ambient-env %q in non-test code: scanner should flag", fullSel)
+			}
+		}
+		return true
+	})
+
+	if !matchedAmbient {
+		t.Fatalf("test source did not reference any ambient-env selector")
 	}
 }
 
@@ -1270,14 +1350,12 @@ func scanDirForHostIOViolations(rootDir string) ([]string, error) {
 			return true
 		})
 
-		if !isTest {
-			for _, imp := range node.Imports {
-				importPath := strings.Trim(imp.Path.Value, `"`)
-				if stringSliceContains(hostExecDenylist, importPath) {
-					violations = append(violations, fmt.Sprintf("%s: import %s", relPath, importPath))
-				}
-			}
+		for _, imp := range node.Imports {
+		importPath := strings.Trim(imp.Path.Value, `"`)
+		if stringSliceContains(hostExecDenylist, importPath) {
+			violations = append(violations, fmt.Sprintf("%s: import %s", relPath, importPath))
 		}
+	}
 
 		return nil
 	})
