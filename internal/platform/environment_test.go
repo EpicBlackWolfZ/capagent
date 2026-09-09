@@ -162,7 +162,10 @@ func TestMemFileInfo_Methods(t *testing.T) {
 	}
 }
 
-// TestMemDirEntry_Accessors verifies the DirEntry Type() accessor.
+// TestMemDirEntry_Accessors verifies that the DirEntry accessors surface
+// the documented kinds for regular files, directories, and symlinks, and
+// that Info() returns an error because MemPlatformReader does not
+// implement the FileInfo construction path.
 func TestMemDirEntry_Accessors(t *testing.T) {
 	t.Parallel()
 
@@ -170,16 +173,33 @@ func TestMemDirEntry_Accessors(t *testing.T) {
 	mem.AddDir("/d", 0o755)
 	mem.AddFile("/d/file", []byte("x"), 0o644)
 	mem.AddDir("/d/sub", 0o755)
+	mem.AddSymlink("/d/link", "file")
 
 	entries, err := mem.ReadDir("/d")
 	if err != nil {
 		t.Fatalf("ReadDir: %v", err)
 	}
 
+	wantKind := map[string]struct {
+		isDir bool
+		mode  os.FileMode
+	}{
+		"file": {isDir: false, mode: 0},
+		"sub":  {isDir: true, mode: os.ModeDir},
+		"link": {isDir: false, mode: os.ModeSymlink},
+	}
 	for _, e := range entries {
-		_ = e.Name()
-		_ = e.IsDir()
-		_ = e.Type()
+		want, ok := wantKind[e.Name()]
+		if !ok {
+			t.Errorf("unexpected entry %q", e.Name())
+			continue
+		}
+		if e.IsDir() != want.isDir {
+			t.Errorf("%s IsDir = %v, want %v", e.Name(), e.IsDir(), want.isDir)
+		}
+		if e.Type() != want.mode {
+			t.Errorf("%s Type() = %v, want %v", e.Name(), e.Type(), want.mode)
+		}
 		// Info() is intentionally not supported (returns error).
 		if _, err := e.Info(); err == nil {
 			t.Errorf("Info() for %q returned nil error", e.Name())
@@ -187,9 +207,10 @@ func TestMemDirEntry_Accessors(t *testing.T) {
 	}
 }
 
-// TestMemPlatformReader_NormalizeEmptyPath ensures that the normalize helper
-// rejects empty paths. Each constructor that calls normalize has a branch
-// for the empty-path case.
+// TestMemPlatformReader_NormalizeEmptyPath ensures that the normalize
+// helper rejects empty paths across every reader entry point. Each
+// constructor (AddFile/AddDir/AddSymlink/AddError) calls normalize, so
+// an empty path must not silently produce a stored entry.
 func TestMemPlatformReader_NormalizeEmptyPath(t *testing.T) {
 	t.Parallel()
 
@@ -199,7 +220,6 @@ func TestMemPlatformReader_NormalizeEmptyPath(t *testing.T) {
 	mem.AddSymlink("", "target")
 	mem.AddError("", nil)
 
-	// None of the above should panic or store entries.
 	if _, err := mem.ReadFile(""); err == nil {
 		t.Error("ReadFile on empty path returned nil error")
 	}
@@ -211,31 +231,6 @@ func TestMemPlatformReader_NormalizeEmptyPath(t *testing.T) {
 	}
 	if _, err := mem.Readlink(""); err == nil {
 		t.Error("Readlink on empty path returned nil error")
-	}
-}
-
-// TestMemPlatformReader_DirEntryType exercises the memDirEntry.Type()
-// accessor for each kind branch (regular, directory, symlink).
-func TestMemPlatformReader_DirEntryType(t *testing.T) {
-	t.Parallel()
-
-	mem := platform.NewMemPlatformReader()
-	mem.AddDir("/d", 0o755)
-	mem.AddFile("/d/regular", []byte("x"), 0o644)
-	mem.AddDir("/d/subdir", 0o755)
-	mem.AddSymlink("/d/link", "regular")
-
-	entries, err := mem.ReadDir("/d")
-	if err != nil {
-		t.Fatalf("ReadDir: %v", err)
-	}
-	typesSeen := make(map[string]bool)
-	for _, e := range entries {
-		typesSeen[e.Name()] = true
-		_ = e.Type()
-	}
-	if !typesSeen["regular"] || !typesSeen["subdir"] || !typesSeen["link"] {
-		t.Errorf("ReadDir entries = %v, want regular/subdir/link", typesSeen)
 	}
 }
 
@@ -275,9 +270,11 @@ func TestOSPlatformReader_SymlinkReadFollowsTarget(t *testing.T) {
 	}
 }
 
-// TestMemPlatformReader_StatCyclicBranch verifies the cyclic-symlink branch
-// in Stat (the cycle happens at a depth that exceeds the recursion check).
-func TestMemPlatformReader_StatCyclicBranch(t *testing.T) {
+// TestMemPlatformReader_StatSelfLoop covers the self-referential
+// symlink case for Stat (a distinct shape from the 2-node cycle covered
+// by reader_test.go). The link target is its own directory entry, so
+// resolveSymlinkChain must terminate with ELOOP rather than panicking.
+func TestMemPlatformReader_StatSelfLoop(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()

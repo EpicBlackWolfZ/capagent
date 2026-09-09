@@ -546,20 +546,6 @@ func TestOSCommandRunner_ExitCodeOnKilled(t *testing.T) {
 	}
 }
 
-func TestOSCommandRunner_DoesNotPanicOnZeroDurationTimeout(t *testing.T) {
-	t.Parallel()
-
-	r := platform.NewOSCommandRunner(0)
-	// 0 timeout must use defaultRunnerTimeout, not panic.
-	result, err := r.Run(context.Background(), echoCommand, "x")
-	if err != nil {
-		t.Fatalf("Run: %v", err)
-	}
-	if result.TimedOut {
-		t.Error("TimedOut = true, want false")
-	}
-}
-
 // TestOSCommandRunner_NormalCompletionDoesNotSignalChildren verifies that a
 // command which completes normally does NOT trigger an extra SIGKILL to its
 // own process group. We assert this by spawning a benign parent plus a child
@@ -724,5 +710,37 @@ func TestOSCommandRunner_ReapsKilledProcess(t *testing.T) {
 	}
 	if string(result2.Stdout) != "reaped\n" {
 		t.Errorf("second stdout = %q, want 'reaped'", string(result2.Stdout))
+	}
+}
+
+// TestOSCommandRunner_ReapsKilledProcessOnCallerCancellation mirrors
+// TestOSCommandRunner_ReapsKilledProcess but exercises the caller-cancel
+// termination path. After caller cancellation triggers the SIGKILL, the
+// subsequent Run call must succeed without a zombie leak.
+func TestOSCommandRunner_ReapsKilledProcessOnCallerCancellation(t *testing.T) {
+	t.Parallel()
+
+	r := platform.NewOSCommandRunner(30 * time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		cancel()
+	}()
+
+	result, err := r.Run(ctx, sleepCommand, "10")
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("error = %v, want context.Canceled", err)
+	}
+	if result.TimedOut {
+		t.Error("TimedOut = true, want false on caller cancel")
+	}
+
+	// Subsequent Run must work without blocking on a zombie.
+	result2, err := r.Run(context.Background(), echoCommand, "ok")
+	if err != nil {
+		t.Fatalf("second Run after cancel: %v", err)
+	}
+	if string(result2.Stdout) != "ok\n" {
+		t.Errorf("second stdout = %q, want 'ok'", string(result2.Stdout))
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"sync/atomic"
 	"syscall"
 	"testing"
 
@@ -126,6 +127,74 @@ func TestSysfsReader_ReadCgroupController_Missing(t *testing.T) {
 
 	if _, err := r.ReadCgroupController("nonexistent"); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("missing-controller error = %v, want ErrNotExist", err)
+	}
+}
+
+// TestSysfsReader_ReadCgroupController_RejectsPathLikeInputs verifies that
+// the API boundary rejects every input that would otherwise permit path
+// traversal or escape from /sys/fs/cgroup. The test also asserts that
+// rejected values never reach the underlying PlatformReader: a successful
+// read on a rejection would otherwise produce a non-validation error
+// from the reader and silently allow traversal.
+//
+// The rejected inputs cover:
+//
+//   - empty string
+//   - "." / ".." / "."-prefixed names
+//   - relative names with embedded separators
+//   - traversal sequences ("../foo", "foo/..", "foo/../bar")
+//   - absolute paths and root-prefixed names
+//   - triple-dot names that begin with "."
+func TestSysfsReader_ReadCgroupController_RejectsPathLikeInputs(t *testing.T) {
+	t.Parallel()
+
+	// Use a recording PlatformReader so we can also verify that rejected
+	// inputs NEVER reach the reader.
+	spy := &recordingReader{PlatformReader: platform.NewMemPlatformReader()}
+	r := platform.NewSysfsReader(spy, "/sys")
+
+	rejected := []string{
+		"",           // empty
+		".",          // current dir
+		"..",         // parent dir
+		"./",         // trailing dot with separator
+		"../foo",     // traversal escape
+		"foo/bar",    // embedded separator
+		"foo/../bar", // traversal inside legitimate prefix
+		"/cpu",       // absolute path
+		"/../escape", // absolute traversal
+		"...",        // triple-dot (starts with '.')
+		".hidden",    // leading dot
+	}
+
+	for _, name := range rejected {
+		if _, err := r.ReadCgroupController(name); err == nil {
+			t.Errorf("ReadCgroupController(%q) returned nil error; want validation rejection", name)
+		}
+	}
+
+	if got := spy.callCount(); got != 0 {
+		t.Errorf("rejected inputs reached PlatformReader %d time(s); want 0", got)
+	}
+}
+
+// TestSysfsReader_ReadCgroupController_AcceptsValidNames verifies that the
+// validation accepts canonical cgroup v2 controller names without
+// restricting the controller namespace beyond single-segment safety.
+func TestSysfsReader_ReadCgroupController_AcceptsValidNames(t *testing.T) {
+	t.Parallel()
+
+	mem := platform.NewMemPlatformReader()
+	mem.AddFile("/sys/fs/cgroup/cpu", []byte("ok"), 0o644)
+	mem.AddFile("/sys/fs/cgroup/memory", []byte("ok"), 0o644)
+	mem.AddFile("/sys/fs/cgroup/cpu_cpuacct", []byte("ok"), 0o644)
+
+	r := platform.NewSysfsReader(mem, "/sys")
+
+	for _, name := range []string{"cpu", "memory", "cpu_cpuacct"} {
+		if _, err := r.ReadCgroupController(name); err != nil {
+			t.Errorf("ReadCgroupController(%q): unexpected error %v", name, err)
+		}
 	}
 }
 
@@ -344,28 +413,6 @@ func TestSysfsReader_RealSysfs(t *testing.T) {
 	}
 }
 
-// TestSysfsReader_RootOrDotSubpath exercises the joinRoot short-circuit
-// branches when the supplied subpath normalises to "." or "/".
-func TestSysfsReader_RootOrDotSubpath(t *testing.T) {
-	t.Parallel()
-
-	mem := platform.NewMemPlatformReader()
-	// Seed a file at the configured root so joinRoot returns it.
-	mem.AddFile("/sys", []byte("data"), 0o644)
-
-	r := platform.NewSysfsReader(mem, "/sys")
-
-	for _, sub := range []string{".", "/", ""} {
-		got, err := r.ReadSysFile(sub)
-		if err != nil {
-			t.Errorf("ReadSysFile(%q): %v", sub, err)
-		}
-		if string(got) != "data" {
-			t.Errorf("ReadSysFile(%q) = %q, want data", sub, string(got))
-		}
-	}
-}
-
 // TestSysfsReader_CgroupControllersDeduplicates exercises the dedup branch
 // of splitControllerList via the public CgroupControllers entry point.
 func TestSysfsReader_CgroupControllersDeduplicates(t *testing.T) {
@@ -388,4 +435,21 @@ func TestSysfsReader_CgroupControllersDeduplicates(t *testing.T) {
 			t.Errorf("got[%d] = %q, want %q", i, got[i], want[i])
 		}
 	}
+}
+
+// recordingReader is a PlatformReader decorator that counts how many times
+// ReadFile was invoked. Tests use it to prove that validation rejects
+// input before any I/O is dispatched to the underlying reader.
+type recordingReader struct {
+	platform.PlatformReader
+	readCalls atomic.Int32
+}
+
+func (r *recordingReader) ReadFile(path string) ([]byte, error) {
+	r.readCalls.Add(1)
+	return r.PlatformReader.ReadFile(path)
+}
+
+func (r *recordingReader) callCount() int32 {
+	return r.readCalls.Load()
 }

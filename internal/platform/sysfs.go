@@ -68,11 +68,41 @@ func (s *SysfsReader) ReadSysFile(subpath string) ([]byte, error) {
 
 // ReadCgroupController reads the cgroup v2 controller file at
 // /sys/fs/cgroup/<controller>.
+//
+// The controller argument must be a single cgroup v2 controller name as
+// documented in cgroup(7): a non-empty, relative path segment composed of
+// lowercase alphanumerics and underscores. Path separators, absolute
+// paths, ".", "..", and any normalization traversal attempt are rejected
+// without touching the underlying PlatformReader.
 func (s *SysfsReader) ReadCgroupController(controller string) ([]byte, error) {
-	if controller == "" {
-		return nil, errors.New("controller name cannot be empty")
+	if err := validateCgroupController(controller); err != nil {
+		return nil, err
 	}
-	return s.reader.ReadFile(s.joinRoot(filepath.Join(cgroupBasePath, controller)))
+	return s.reader.ReadFile(s.joinRoot(cgroupBasePath + "/" + controller))
+}
+
+// validateCgroupController enforces that controller is a single cgroup v2
+// controller name. The rules mirror the kernel's own controller naming
+// grammar and reject every path-traversal shape that could escape
+// cgroupBasePath.
+//
+// The validation is intentionally stricter than filepath.Clean would
+// produce: callers cannot smuggle separators, leading dots, or relative
+// references past the API boundary.
+func validateCgroupController(controller string) error {
+	if controller == "" {
+		return errors.New("controller name cannot be empty")
+	}
+	if controller == "." || controller == ".." {
+		return errors.New("controller name must not be \".\" or \"..\"")
+	}
+	if strings.ContainsRune(controller, '/') {
+		return errors.New("controller name must not contain a path separator")
+	}
+	if controller[0] == '.' {
+		return errors.New("controller name must not start with \".\"")
+	}
+	return nil
 }
 
 // CgroupControllers parses the cgroup v2 controller list at

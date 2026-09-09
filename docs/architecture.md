@@ -261,9 +261,11 @@ or CLI packages.
   or `ProbeSkipped` cascades to transitive dependents as `ProbeSkipped` with
   `ErrDependencyFailed`. Dependents are NEVER marked `ProbeCancelled`; only
   direct cancellation propagates that status.
-- Concurrency cap is configurable via `WithMaxConcurrency(n ≥ 1)`. Effective
-  worker pool is `min(maxConcurrency, runnableProbes)`. Empty registries
-  return an empty slice without spawning goroutines.
+- Concurrency cap is configurable via `WithMaxConcurrency(n ≥ 1)`. Worker
+  count is capped at `min(maxConcurrency, number of registered probes)`.
+  Workers block while no probe is currently runnable and wake when work
+  becomes available. Empty registries return an empty slice without
+  spawning goroutines.
 - Output is canonically sorted by `ResolvedPlan()` order regardless of
   completion timing — concurrent execution never perturbs result order.
 
@@ -280,6 +282,15 @@ orchestrator and each probe:
   subsequent probes from being scheduled. Returning `ctx.Err()`
   (verbatim or wrapped via `fmt.Errorf("%w", ...)` or `errors.Is`) is
   classified as `ProbeCancelled` by the orchestrator.
+
+**Concurrency responsibilities.** Each registered `Probe` instance is
+executed at most once per `Orchestrator.Run`. Sibling probes may execute
+concurrently with one another, so the `platform.Environment` and its
+dependencies may be accessed concurrently from multiple probe goroutines.
+Probes MAY mutate their own internal state freely, but they MUST NOT
+mutate shared dependencies (e.g. `platform.Environment` fields) unless
+those dependencies explicitly document that they are safe for concurrent
+mutation.
 
 A directly cancelled probe is recorded as `ProbeCancelled`; transitive
 dependents of a cancelled, failed, or skipped probe are recorded as

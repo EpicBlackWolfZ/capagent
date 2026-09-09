@@ -9,8 +9,8 @@ package platform
 // Environment is a value type whose fields are reference-typed pointers
 // and interfaces. The Environment value itself is not deeply immutable:
 // the fields it carries (e.g. *ProcfsReader, *SysfsReader) are shared
-// references that may be observed by sibling probes executed concurrently
-// by the orchestrator.
+// references that may be observed concurrently by sibling probes executed
+// in parallel by the orchestrator.
 //
 // Probes MUST NOT mutate shared dependencies unless those dependencies
 // explicitly document that they are safe for concurrent mutation. The

@@ -31,14 +31,26 @@ var (
 // A probe is identified by a unique ID, declares zero or more dependencies
 // on other probe IDs, and produces an Observation describing what it measured.
 //
-// Implementations MUST be safe for concurrent use by the orchestrator;
-// multiple probes from different goroutines may call into the same shared
-// platform.Environment concurrently.
+// # Execution contract
+//
+// The orchestrator invokes a registered Probe instance at most once per
+// Run; sibling probes may execute concurrently with one another. Because
+// of that, the platform.Environment and its dependencies may be observed
+// concurrently from multiple probe goroutines even though each individual
+// Probe value is not re-entered by the orchestrator itself.
+//
+// Implementations therefore MUST NOT assume single-goroutine access to
+// shared dependencies. They MAY freely mutate their own internal state,
+// but they MUST NOT mutate shared dependencies (e.g. platform.Environment
+// fields) unless those dependencies explicitly document that they are
+// safe for concurrent mutation.
+//
+// # Cancellation contract
 //
 // Cancellation responsibilities are split between the orchestrator and the
 // probe:
 //
-//   - Orchestrator: propagates a context.Context to every Probe.Run call,
+//   - Orchestrator: propagates a context.Context to every Probe.Run call
 //     and classifies cooperative cancellation by inspecting the returned
 //     error against ctx.Err().
 //   - Probe: Probe.Run implementations MUST observe ctx.Done() and return
@@ -48,11 +60,6 @@ var (
 //     goroutine and prevent subsequent probes from being scheduled.
 //     Returning ctx.Err() (verbatim or wrapped via fmt.Errorf("%w", ...)
 //     or errors.Is) is classified as ProbeCancelled by the orchestrator.
-//
-// Probes MUST NOT mutate shared dependencies (e.g. platform.Environment
-// fields) unless those dependencies explicitly support concurrent mutation.
-// The Environment fields are reference-typed: probes receive pointers that
-// may be observed by sibling probes.
 type Probe interface {
 	// ID returns the unique, stable identifier for this probe.
 	// The returned string must be a valid, non-empty probe ID and must

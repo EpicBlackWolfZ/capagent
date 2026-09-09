@@ -56,9 +56,14 @@ func TestOrchestrator_CancellationBeforeExecution(t *testing.T) {
 func TestOrchestrator_CancellationReturnsWrappedErr(t *testing.T) {
 	t.Parallel()
 
+	started := make(chan struct{})
+
 	r := probe.NewRegistry()
 	if err := r.Register(&fakeProbe{
 		id: "wrap",
+		startHook: func() {
+			close(started)
+		},
 		run: func(ctx context.Context, env platform.Environment) (model.Observation, error) {
 			<-ctx.Done()
 			return model.Observation{}, fmt.Errorf("interrupted: %w", ctx.Err())
@@ -68,17 +73,30 @@ func TestOrchestrator_CancellationReturnsWrappedErr(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(30 * time.Millisecond)
-		cancel()
-	}()
-
-	o, err := probe.NewOrchestrator(r)
+	o, err := probe.NewOrchestrator(r, probe.WithMaxConcurrency(1))
 	if err != nil {
 		t.Fatalf("NewOrchestrator: %v", err)
 	}
 
-	results := o.Run(ctx, newEnv())
+	done := make(chan []probe.ProbeResult, 1)
+	go func() {
+		done <- o.Run(ctx, newEnv())
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("probe did not start in time")
+	}
+	cancel()
+
+	var results []probe.ProbeResult
+	select {
+	case results = <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return within 2s")
+	}
+
 	if results[0].Status != probe.ProbeCancelled {
 		t.Errorf("Status = %v, want ProbeCancelled", results[0].Status)
 	}
@@ -92,9 +110,14 @@ func TestOrchestrator_CancellationReturnsWrappedErr(t *testing.T) {
 func TestOrchestrator_CancellationReturnsDirectErr(t *testing.T) {
 	t.Parallel()
 
+	started := make(chan struct{})
+
 	r := probe.NewRegistry()
 	if err := r.Register(&fakeProbe{
 		id: "direct",
+		startHook: func() {
+			close(started)
+		},
 		run: func(ctx context.Context, env platform.Environment) (model.Observation, error) {
 			<-ctx.Done()
 			return model.Observation{}, ctx.Err()
@@ -104,17 +127,30 @@ func TestOrchestrator_CancellationReturnsDirectErr(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(30 * time.Millisecond)
-		cancel()
-	}()
-
-	o, err := probe.NewOrchestrator(r)
+	o, err := probe.NewOrchestrator(r, probe.WithMaxConcurrency(1))
 	if err != nil {
 		t.Fatalf("NewOrchestrator: %v", err)
 	}
 
-	results := o.Run(ctx, newEnv())
+	done := make(chan []probe.ProbeResult, 1)
+	go func() {
+		done <- o.Run(ctx, newEnv())
+	}()
+
+	select {
+	case <-started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("probe did not start in time")
+	}
+	cancel()
+
+	var results []probe.ProbeResult
+	select {
+	case results = <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return within 2s")
+	}
+
 	if results[0].Status != probe.ProbeCancelled {
 		t.Errorf("Status = %v, want ProbeCancelled", results[0].Status)
 	}
@@ -129,9 +165,14 @@ func TestOrchestrator_CancellationReturnsDirectErr(t *testing.T) {
 func TestOrchestrator_CancelledDependencySkipsDependents(t *testing.T) {
 	t.Parallel()
 
+	aStarted := make(chan struct{})
+
 	r := probe.NewRegistry()
 	if err := r.Register(&fakeProbe{
 		id: "A",
+		startHook: func() {
+			close(aStarted)
+		},
 		run: func(ctx context.Context, env platform.Environment) (model.Observation, error) {
 			<-ctx.Done()
 			return model.Observation{}, ctx.Err()
@@ -144,17 +185,30 @@ func TestOrchestrator_CancelledDependencySkipsDependents(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(30 * time.Millisecond)
-		cancel()
-	}()
-
-	o, err := probe.NewOrchestrator(r)
+	o, err := probe.NewOrchestrator(r, probe.WithMaxConcurrency(1))
 	if err != nil {
 		t.Fatalf("NewOrchestrator: %v", err)
 	}
 
-	results := o.Run(ctx, newEnv())
+	done := make(chan []probe.ProbeResult, 1)
+	go func() {
+		done <- o.Run(ctx, newEnv())
+	}()
+
+	select {
+	case <-aStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("A did not start in time")
+	}
+	cancel()
+
+	var results []probe.ProbeResult
+	select {
+	case results = <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return within 2s")
+	}
+
 	a := findResult(results, "A")
 	if a == nil || a.Status != probe.ProbeCancelled {
 		t.Errorf("A.Status = %v, want ProbeCancelled", a)
@@ -168,11 +222,29 @@ func TestOrchestrator_CancelledDependencySkipsDependents(t *testing.T) {
 	}
 }
 
-// TestOrchestrator_IndependentBranchesContinueAfterCancellation verifies
-// that cancellation of one branch does not abort sibling probes that are
-// unrelated to the cancelled dependency chain.
-func TestOrchestrator_IndependentBranchesContinueAfterCancellation(t *testing.T) {
+// TestOrchestrator_IndependentBranchContinuesAfterCancellation is the
+// deterministic counterpart to the weaker
+// TestOrchestrator_IndependentBranchesContinueAfterCancellation. It uses
+// explicit start/completion signaling rather than time.Sleep to prove
+// the stronger invariant:
+//
+//   - An independent probe that has been observed running at the moment
+//     of caller cancellation is still permitted to complete normally and
+//     be classified as ProbeSucceeded.
+//
+// Steps:
+//
+//  1. Register A (cancellable) and X (independent, blocks on release).
+//  2. Wait until X is running (xStarted).
+//  3. Cancel the context. A must observe cancellation and become
+//     ProbeCancelled.
+//  4. Release X. X must complete and be classified as ProbeSucceeded,
+//     even though the context is already cancelled.
+func TestOrchestrator_IndependentBranchContinuesAfterCancellation(t *testing.T) {
 	t.Parallel()
+
+	xStarted := make(chan struct{})
+	xRelease := make(chan struct{})
 
 	r := probe.NewRegistry()
 	if err := r.Register(&fakeProbe{
@@ -184,38 +256,67 @@ func TestOrchestrator_IndependentBranchesContinueAfterCancellation(t *testing.T)
 	}); err != nil {
 		t.Fatalf("Register A: %v", err)
 	}
-	if err := r.Register(&fakeProbe{id: "X"}); err != nil {
+	if err := r.Register(&fakeProbe{
+		id: "X",
+		run: func(ctx context.Context, env platform.Environment) (model.Observation, error) {
+			close(xStarted)
+			select {
+			case <-xRelease:
+				return model.Observation{ID: "X", ProbeID: "X"}, nil
+			case <-ctx.Done():
+				return model.Observation{ID: "X", ProbeID: "X"}, nil
+			}
+		},
+	}); err != nil {
 		t.Fatalf("Register X: %v", err)
-	}
-	if err := r.Register(&fakeProbe{id: "Y"}); err != nil {
-		t.Fatalf("Register Y: %v", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(30 * time.Millisecond)
-		cancel()
-	}()
-
-	o, err := probe.NewOrchestrator(r)
+	o, err := probe.NewOrchestrator(r, probe.WithMaxConcurrency(4))
 	if err != nil {
 		t.Fatalf("NewOrchestrator: %v", err)
 	}
 
-	results := o.Run(ctx, newEnv())
+	done := make(chan []probe.ProbeResult, 1)
+	go func() {
+		done <- o.Run(ctx, newEnv())
+	}()
+
+	// Step 2: wait until X is actually running.
+	select {
+	case <-xStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("X did not start in time")
+	}
+
+	// Step 3: cancel. X is still blocked on xRelease so cancel does not
+	// cause its run to return yet; A will observe the cancellation.
+	cancel()
+
+	// Step 4: release X. X completes normally regardless of the already
+	// cancelled context.
+	close(xRelease)
+
+	// Collect results.
+	var results []probe.ProbeResult
+	select {
+	case results = <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return within 2s")
+	}
+
 	for _, res := range results {
 		switch res.ProbeID {
 		case "A":
 			if res.Status != probe.ProbeCancelled {
 				t.Errorf("A.Status = %v, want ProbeCancelled", res.Status)
 			}
-		case "X", "Y":
-			// X and Y may have already finished before cancel fires,
-			// in which case they are ProbeSucceeded. Otherwise they
-			// become ProbeCancelled because ctx was cancelled while
-			// they were running.
-			if res.Status != probe.ProbeSucceeded && res.Status != probe.ProbeCancelled {
-				t.Errorf("%s.Status = %v, want Succeeded or Cancelled", res.ProbeID, res.Status)
+			if !errors.Is(res.Err, context.Canceled) {
+				t.Errorf("A.Err = %v, want wraps context.Canceled", res.Err)
+			}
+		case "X":
+			if res.Status != probe.ProbeSucceeded {
+				t.Errorf("X.Status = %v, want ProbeSucceeded", res.Status)
 			}
 		}
 	}
@@ -241,8 +342,14 @@ func TestOrchestrator_IndependentBranchesContinueAfterCancellation(t *testing.T)
 //  1. Directly interrupted probe  -> ProbeCancelled.
 //  2. Direct dependent of cancelled -> ProbeSkipped with ErrDependencyFailed.
 //  3. Unrelated sibling             -> ProbeSucceeded (not poisoned).
+//
+// Synchronization: X uses a completeHook to signal completion. The cancel
+// goroutine waits on that signal so cancellation is applied AFTER X has
+// already finished, eliminating any reliance on wall-clock sleeps.
 func TestOrchestrator_CancellationFanOutGraph(t *testing.T) {
 	t.Parallel()
+
+	xDone := make(chan struct{})
 
 	r := probe.NewRegistry()
 	if err := r.Register(&fakeProbe{id: "A",
@@ -259,24 +366,41 @@ func TestOrchestrator_CancellationFanOutGraph(t *testing.T) {
 	if err := r.Register(&fakeProbe{id: "C", deps: []string{"A"}}); err != nil {
 		t.Fatalf("Register C: %v", err)
 	}
-	if err := r.Register(&fakeProbe{id: "X"}); err != nil {
+	if err := r.Register(&fakeProbe{
+		id: "X",
+		completeHook: func(_ probe.ProbeResult) {
+			close(xDone)
+		},
+	}); err != nil {
 		t.Fatalf("Register X: %v", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		// Wait long enough for X to definitely finish (it has no deps and
-		// runs immediately on the worker pool).
-		time.Sleep(50 * time.Millisecond)
-		cancel()
-	}()
-
-	o, err := probe.NewOrchestrator(r)
+	o, err := probe.NewOrchestrator(r, probe.WithMaxConcurrency(4))
 	if err != nil {
 		t.Fatalf("NewOrchestrator: %v", err)
 	}
 
-	results := o.Run(ctx, newEnv())
+	done := make(chan []probe.ProbeResult, 1)
+	go func() {
+		done <- o.Run(ctx, newEnv())
+	}()
+
+	// Wait for X to actually complete before cancelling. The remaining
+	// probes (A, B, C) are processed deterministically from this point.
+	select {
+	case <-xDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("X did not complete in time")
+	}
+	cancel()
+
+	var results []probe.ProbeResult
+	select {
+	case results = <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return within 2s")
+	}
 
 	want := map[string]struct {
 		status probe.ProbeStatus

@@ -70,8 +70,14 @@ func TestScheduler_Barrier_FailurePropagatesAsSkipped(t *testing.T) {
 // dependent is skipped with ErrDependencyFailed (NOT cancelled).
 //
 // Graph: A -> C, B -> C. A succeeds; B is cancelled; C is Skipped.
+//
+// Synchronization is achieved via a startHook on B (signalled when B
+// actually begins executing) rather than a time.Sleep so the cancellation
+// is deterministically applied while B is in-flight.
 func TestScheduler_Barrier_CancellationPropagatesAsSkipped(t *testing.T) {
 	t.Parallel()
+
+	bStarted := make(chan struct{})
 
 	r := probe.NewRegistry()
 	if err := r.Register(&fakeProbe{id: "A"}); err != nil {
@@ -79,6 +85,9 @@ func TestScheduler_Barrier_CancellationPropagatesAsSkipped(t *testing.T) {
 	}
 	if err := r.Register(&fakeProbe{
 		id: "B",
+		startHook: func() {
+			close(bStarted)
+		},
 		run: func(ctx context.Context, env platform.Environment) (model.Observation, error) {
 			<-ctx.Done()
 			return model.Observation{}, ctx.Err()
@@ -91,17 +100,31 @@ func TestScheduler_Barrier_CancellationPropagatesAsSkipped(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(30 * time.Millisecond)
-		cancel()
-	}()
-
-	o, err := probe.NewOrchestrator(r)
+	o, err := probe.NewOrchestrator(r, probe.WithMaxConcurrency(4))
 	if err != nil {
 		t.Fatalf("NewOrchestrator: %v", err)
 	}
 
-	results := o.Run(ctx, newEnv())
+	done := make(chan []probe.ProbeResult, 1)
+	go func() {
+		done <- o.Run(ctx, newEnv())
+	}()
+
+	// Wait until B is actually running, then cancel deterministically.
+	select {
+	case <-bStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("B did not start in time")
+	}
+	cancel()
+
+	var results []probe.ProbeResult
+	select {
+	case results = <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Run did not return within 2s")
+	}
+
 	a := findResult(results, "A")
 	if a == nil {
 		t.Fatalf("A result missing")
