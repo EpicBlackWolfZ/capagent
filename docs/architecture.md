@@ -364,6 +364,18 @@ then performs fd-relative I/O via direct `unix.*` syscalls
 every open; lexical `ValidateSubpath` is the first-layer rejection
 predicate but is not the security boundary.
 
+**Adapter paths and roots:** `NewProcfsReader(reader)` and
+`NewSysfsReader(reader)` derive their root from the supplied `ScopedReader`.
+The environment selects `/proc` and `/sys` when it creates those readers;
+adapters cannot advertise an independently configured root. Public subpath
+methods validate the original input and forward accepted bytes unchanged.
+`.` names the scoped root; empty, absolute (including `/`), NUL-containing,
+and lexically escaping subpaths are rejected before file I/O. Backslash is
+an ordinary Linux filename byte. In particular, `link/../value` must resolve
+the link before its parent component; adapters must not clean or join away
+that meaning. `ReadSelf` validates its argument then prefixes `self/` literally.
+Its confinement boundary is the proc reader root, not a separate self subtree.
+
 **FD ownership:** the implementation never wraps an openat2 FD in
 `*os.File`. Each per-operation FD is owned exclusively by
 `readSubpath`, whose deferred `unix.Close(fd)` is the only close
@@ -381,17 +393,31 @@ counter. `ReadDir` uses `AT_SYMLINK_NOFOLLOW` for child metadata so
 child symlinks are never followed even when their target lies outside
 the root, and pre-computes each entry's `FileInfo` so `DirEntry.Info()`
 performs no further host I/O after the directory FD has been closed.
+All filesystem readers return directory snapshots sorted lexically by name.
+The captured metadata remains usable after mutation, deletion, or reader close.
+A child disappearing with `ENOENT` between enumeration and metadata capture
+may be skipped. Other metadata failures discard the enumeration and return an
+error preserving the underlying errno through `errors.Is`; successful absence
+must not represent permission denial or I/O failure.
 
 **Error mapping:** magic-link rejection via `RESOLVE_NO_MAGICLINKS`
 is surfaced as `syscall.ELOOP` (not `ErrSubpathEscape`), per the
 corrected semantics. Pre-5.6 kernels return `ErrSymlinkUnsupported`
 from `NewScopedOSReader`; capagent targets Linux 5.6+ as the
-documented minimum. The OS-vs-memory discrepancy for absolute
-symlink targets outside root (OS reinterprets absolute targets
-relative to the scoped root,
-returning `ErrNotExist` if the reinterpreted path is absent; memory
-returns `ErrSubpathEscape` via an explicit lexical check) is
-documented and tested.
+documented minimum. Both memory readers traverse pathname components in order,
+including intermediate links and trailing-slash directory requirements. Parent
+directories must exist in fixtures. Relative unscoped memory keys inhabit a
+virtual namespace independent of the process working directory.
+
+Absolute-link semantics intentionally differ: the OS scoped reader interprets
+absolute targets relative to its root, while the scoped memory reader interprets
+them as paths in the backing virtual tree and rejects traversal outside its
+root. Thus even an absolute target spelled under the memory root may name a
+different OS-scoped path. Memory rejects symlink traversal above the root rather
+than emulating the kernel's root-clamping behavior, and does not model Linux
+magic links. The unscoped memory reader uses physical absolute target semantics;
+both OS readers delegate pathname resolution to the kernel. These distinctions
+are explicit regression cases rather than claims of complete emulation.
 
 **Architecture enforcement.** The AST-based host-IO denylist test
 (`TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform`) detects configured

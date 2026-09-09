@@ -109,7 +109,9 @@ func TestMemPlatformReader_SymlinkVariations(t *testing.T) {
 		{
 			name: "relative symlink to regular file",
 			setup: func(m *platform.MemPlatformReader) {
+				fixtureParents(m, "/dir/real")
 				m.AddFile("/dir/real", []byte(testPayload), 0o644)
+				fixtureParents(m, "/dir/link")
 				m.AddSymlink("/dir/link", "real")
 			},
 			path:     "/dir/link",
@@ -119,6 +121,7 @@ func TestMemPlatformReader_SymlinkVariations(t *testing.T) {
 		{
 			name: "absolute symlink to regular file",
 			setup: func(m *platform.MemPlatformReader) {
+				fixtureParents(m, "/elsewhere/real")
 				m.AddFile("/elsewhere/real", []byte(testPayload), 0o644)
 				m.AddSymlink(symlinkTestPath, "/elsewhere/real")
 			},
@@ -220,6 +223,7 @@ func TestMemPlatformReader_DepthLimit(t *testing.T) {
 		name := string(rune('a' + i))
 		m.AddSymlink("/chain/"+name, string(rune('a'+next)))
 	}
+	fixtureParents(m, "/chain/r")
 	m.AddFile("/chain/r", []byte("z"), 0o644)
 
 	if _, err := m.ReadFile("/chain/a"); !errors.Is(err, syscall.ELOOP) {

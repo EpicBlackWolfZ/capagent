@@ -86,7 +86,7 @@ func NewTestEnvironment(mem *MemPlatformReader, runner CommandRunner) Environmen
 	}
 	procScoped := NewScopedMemReader(defaultProcRoot, backing)
 	sysScoped := NewScopedMemReader(defaultSysRoot, backing)
-	procfs := NewProcfsReader(procScoped, defaultProcRoot)
-	sysfs := NewSysfsReader(sysScoped, defaultSysRoot)
+	procfs := NewProcfsReader(procScoped)
+	sysfs := NewSysfsReader(sysScoped)
 	return NewEnvironment(backing, procfs, sysfs, runner)
 }

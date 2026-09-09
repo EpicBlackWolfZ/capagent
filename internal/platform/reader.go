@@ -1,12 +1,10 @@
 package platform
 
 import (
-	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 	"syscall"
@@ -14,8 +12,8 @@ import (
 )
 
 // maxSymlinkDepth bounds the number of symlink hops ReadFile and Stat may
-// traverse before reporting syscall.ELOOP. The value mirrors the POSIX
-// SYMLOOP_MAX convention used by the Linux kernel.
+// traverse before reporting syscall.ELOOP. This memory limit is lower
+// than the Linux kernel pathname resolution limit of 40 hops.
 const maxSymlinkDepth = 16
 
 // defaultSymlinkMode is the mode bitmask used for newly created symlink
@@ -47,19 +45,12 @@ type VirtualFile struct {
 	ForcedErr error
 }
 
-// memDirEntry is a lightweight os.DirEntry implementation backed by a VirtualFile.
-type memDirEntry struct {
-	name  string
-	mode  os.FileMode
-	kind  VirtualFileKind
-	isDir bool
-}
-
-func (e *memDirEntry) Name() string      { return e.name }
-func (e *memDirEntry) IsDir() bool       { return e.isDir }
-func (e *memDirEntry) Type() os.FileMode { return e.kind.modeType() }
-func (e *memDirEntry) Info() (os.FileInfo, error) {
-	return nil, errors.New("memDirEntry.Info not implemented")
+// size reports deterministic virtual metadata; directory sizes remain zero.
+func (v *VirtualFile) size() int64 {
+	if v.Kind == FileKindSymlink {
+		return int64(len(v.Target))
+	}
+	return int64(len(v.Content))
 }
 
 // memFileInfo is a lightweight os.FileInfo implementation backed by a VirtualFile.
@@ -77,21 +68,12 @@ func (i *memFileInfo) ModTime() time.Time { return time.Time{} }
 func (i *memFileInfo) IsDir() bool        { return i.isDir }
 func (i *memFileInfo) Sys() any           { return nil }
 
-func (k VirtualFileKind) modeType() os.FileMode {
-	switch k {
-	case FileKindDirectory:
-		return os.ModeDir
-	case FileKindSymlink:
-		return os.ModeSymlink
-	default:
-		return 0
-	}
-}
-
 // PlatformReader is the canonical filesystem abstraction for capagent probes.
 //
 // Implementations MUST emulate POSIX semantics for type mismatches
 // (e.g. read on a directory returns EISDIR) and symlink loops (ELOOP).
+// ReadDir returns sorted eager metadata; only disappearing children (ENOENT)
+// may be skipped. Other metadata failures return no entries and a wrapped error.
 // Implementations are NOT required to be safe for concurrent use; callers
 // that need concurrent access must serialize calls externally.
 type PlatformReader interface {
@@ -113,17 +95,28 @@ func NewOSPlatformReader() *OSPlatformReader {
 
 // ReadFile reads the entire file at path and returns its bytes.
 func (r *OSPlatformReader) ReadFile(path string) ([]byte, error) {
-	return readFileFollowing(path, 0)
+	// Preserve kernel pathname resolution, including dot-dot within link targets.
+	return os.ReadFile(path) //nolint:gosec // Trusted host paths; untrusted subpaths use ScopedReader.
 }
 
 // Stat returns the FileInfo for path, following symlinks.
 func (r *OSPlatformReader) Stat(path string) (os.FileInfo, error) {
-	return statFollowing(path, 0)
+	return os.Stat(path)
 }
 
 // ReadDir returns the sorted directory entries at path.
 func (r *OSPlatformReader) ReadDir(path string) ([]os.DirEntry, error) {
-	return os.ReadDir(path)
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	names := make([]string, 0, len(entries))
+	byName := make(map[string]os.DirEntry, len(entries))
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+		byName[entry.Name()] = entry
+	}
+	return captureDirectory(names, func(name string) (os.FileInfo, error) { return byName[name].Info() })
 }
 
 // Readlink returns the symlink target without resolving it.
@@ -131,65 +124,13 @@ func (r *OSPlatformReader) Readlink(path string) (string, error) {
 	return os.Readlink(path)
 }
 
-// readFileFollowing performs os.Stat-then-ReadFile while resolving symlinks
-// up to maxSymlinkDepth hops. A loop or excessive depth surfaces as syscall.ELOOP.
-func readFileFollowing(path string, depth int) ([]byte, error) {
-	if depth > maxSymlinkDepth {
-		return nil, syscall.ELOOP
-	}
-	info, err := os.Lstat(path)
-	if err != nil {
-		return nil, err
-	}
-	if info.Mode()&os.ModeSymlink != 0 {
-		target, lerr := os.Readlink(path)
-		if lerr != nil {
-			return nil, lerr
-		}
-		return readFileFollowing(resolveAgainstDir(path, target), depth+1)
-	}
-	if info.IsDir() {
-		return nil, syscall.EISDIR
-	}
-	// PlatformReader abstracts arbitrary path reads by design; callers are
-	// responsible for input sanitisation.
-	return os.ReadFile(path) //nolint:gosec // G304: PlatformReader is a path abstraction layer.
-}
-
-// statFollowing resolves symlinks and returns the FileInfo of the target.
-func statFollowing(path string, depth int) (os.FileInfo, error) {
-	if depth > maxSymlinkDepth {
-		return nil, syscall.ELOOP
-	}
-	info, err := os.Lstat(path)
-	if err != nil {
-		return nil, err
-	}
-	if info.Mode()&os.ModeSymlink != 0 {
-		target, lerr := os.Readlink(path)
-		if lerr != nil {
-			return nil, lerr
-		}
-		return statFollowing(resolveAgainstDir(path, target), depth+1)
-	}
-	return info, nil
-}
-
-// resolveAgainstDir resolves a symlink target against the directory of path.
-// Absolute targets are returned verbatim; relative targets are joined with
-// filepath.Dir(path) to honor POSIX semantics.
-func resolveAgainstDir(path, target string) string {
-	if filepath.IsAbs(target) {
-		return filepath.Clean(target)
-	}
-	return filepath.Join(filepath.Dir(path), target)
-}
-
 // MemPlatformReader is an in-memory PlatformReader implementation used as a
 // deterministic test double. It stores a flat map keyed by filepath.Clean
 // absolute or relative paths to VirtualFile entries.
 //
-// MemPlatformReader is safe for concurrent use.
+// Lookup traverses components without cleaning away symlink semantics. Parent
+// directories must be present. Relative keys form a virtual namespace and never
+// consult the process working directory. MemPlatformReader is safe for concurrent use.
 type MemPlatformReader struct {
 	mu    sync.RWMutex
 	files map[string]*VirtualFile
@@ -273,54 +214,18 @@ func (m *MemPlatformReader) AddError(path string, err error) {
 	}
 }
 
-// resolveSymlinkChain walks the symlink chain at clean, returning the final
-// resolved entry plus a "found" boolean. The traversal applies ForcedErr
-// semantics at every node it visits: an entry with ForcedErr set aborts
-// resolution with that error before any further hop is attempted.
-//
-// The boolean indicates whether the final resolved path was located in the
-// virtual tree. When depth exceeds maxSymlinkDepth, syscall.ELOOP is returned.
-//
-// Callers MUST treat ForcedErr as authoritative: even if the entry is itself
-// a symlink, the forced error is reported rather than being masked by the
-// chain's final target.
-func (m *MemPlatformReader) resolveSymlinkChain(clean string, depth int) (*VirtualFile, string, bool, error) {
-	if depth > maxSymlinkDepth {
-		return nil, "", false, syscall.ELOOP
-	}
-	m.mu.RLock()
-	entry, ok := m.files[clean]
-	m.mu.RUnlock()
-	if !ok {
-		return nil, clean, false, nil
-	}
-	if entry.ForcedErr != nil {
-		return nil, "", false, entry.ForcedErr
-	}
-	if entry.Kind != FileKindSymlink {
-		return entry, clean, true, nil
-	}
-	next := filepath.Clean(filepath.Join(filepath.Dir(clean), entry.Target))
-	return m.resolveSymlinkChain(next, depth+1)
-}
-
 // ReadFile returns the content of the file at path. Directories return
 // syscall.EISDIR; symlinks are followed up to maxSymlinkDepth hops; cycles
 // surface as syscall.ELOOP. ForcedErr at any node of the chain aborts with
 // that error verbatim.
 func (m *MemPlatformReader) ReadFile(path string) ([]byte, error) {
-	clean, err := normalize(path)
-	if err != nil {
+	if path == "" {
 		return nil, os.ErrNotExist
 	}
-	entry, resolved, exists, lerr := m.resolveSymlinkChain(clean, 0)
+	entry, _, lerr := m.resolvePath(path, "", true, maxSymlinkDepth)
 	if lerr != nil {
 		return nil, lerr
 	}
-	if !exists {
-		return nil, os.ErrNotExist
-	}
-	_ = resolved
 	if entry.Kind == FileKindDirectory {
 		return nil, syscall.EISDIR
 	}
@@ -331,20 +236,16 @@ func (m *MemPlatformReader) ReadFile(path string) ([]byte, error) {
 // syscall.ELOOP; non-symlink entries use the stored mode and content size.
 // ForcedErr at any node of the chain aborts with that error verbatim.
 func (m *MemPlatformReader) Stat(path string) (os.FileInfo, error) {
-	clean, err := normalize(path)
-	if err != nil {
+	if path == "" {
 		return nil, os.ErrNotExist
 	}
-	entry, resolved, exists, lerr := m.resolveSymlinkChain(clean, 0)
+	entry, _, lerr := m.resolvePath(path, "", true, maxSymlinkDepth)
 	if lerr != nil {
 		return nil, lerr
 	}
-	if !exists {
-		return nil, os.ErrNotExist
-	}
 	return &memFileInfo{
-		name:  filepath.Base(resolved),
-		size:  int64(len(entry.Content)),
+		name:  filepath.Base(path),
+		size:  entry.size(),
 		mode:  entry.Mode,
 		isDir: entry.Kind == FileKindDirectory,
 	}, nil
@@ -355,74 +256,29 @@ func (m *MemPlatformReader) Stat(path string) (os.FileInfo, error) {
 // missing entries return os.ErrNotExist. ForcedErr at any node of the chain
 // aborts with that error verbatim.
 func (m *MemPlatformReader) ReadDir(path string) ([]os.DirEntry, error) {
-	clean, err := normalize(path)
-	if err != nil {
+	if path == "" {
 		return nil, os.ErrNotExist
 	}
-	entry, resolved, exists, lerr := m.resolveSymlinkChain(clean, 0)
+	entry, resolved, lerr := m.resolvePath(path, "", true, maxSymlinkDepth)
 	if lerr != nil {
 		return nil, lerr
-	}
-	if !exists {
-		return nil, os.ErrNotExist
 	}
 	if entry.Kind != FileKindDirectory {
 		return nil, syscall.ENOTDIR
 	}
-	prefix := resolved
-	if !strings.HasSuffix(prefix, string(filepath.Separator)) {
-		prefix += string(filepath.Separator)
-	}
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	names := make(map[string]struct{})
-	for stored := range m.files {
-		if stored == resolved {
-			continue
-		}
-		if !strings.HasPrefix(stored, prefix) {
-			continue
-		}
-		rel := strings.TrimPrefix(stored, prefix)
-		if rel == "" || strings.Contains(rel, string(filepath.Separator)) {
-			continue
-		}
-		names[rel] = struct{}{}
-	}
-	out := make([]os.DirEntry, 0, len(names))
-	for n := range names {
-		childPath := filepath.Join(resolved, n)
-		child := m.files[childPath]
-		if child == nil {
-			continue
-		}
-		out = append(out, &memDirEntry{
-			name:  n,
-			mode:  child.Mode,
-			kind:  child.Kind,
-			isDir: child.Kind == FileKindDirectory,
-		})
-	}
-	sort.Slice(out, func(i, j int) bool { return out[i].Name() < out[j].Name() })
-	return out, nil
+	return m.captureChildren(resolved)
 }
 
 // Readlink returns the raw symlink target stored at path without dereferencing
 // it. Calling Readlink on a non-symlink returns syscall.EINVAL. ForcedErr on
 // the symlink entry itself aborts with that error verbatim.
 func (m *MemPlatformReader) Readlink(path string) (string, error) {
-	clean, err := normalize(path)
+	if path == "" {
+		return "", os.ErrNotExist
+	}
+	entry, _, err := m.resolvePath(path, "", false, maxSymlinkDepth)
 	if err != nil {
-		return "", os.ErrNotExist
-	}
-	m.mu.RLock()
-	entry, ok := m.files[clean]
-	m.mu.RUnlock()
-	if !ok {
-		return "", os.ErrNotExist
-	}
-	if entry.ForcedErr != nil {
-		return "", entry.ForcedErr
+		return "", err
 	}
 	if entry.Kind != FileKindSymlink {
 		return "", syscall.EINVAL
@@ -453,4 +309,31 @@ func (m *MemPlatformReader) Snapshot() map[string]*VirtualFile {
 		out[k] = &copyVF
 	}
 	return out
+}
+
+// captureChildren holds the map lock until all child metadata has been copied.
+func (m *MemPlatformReader) captureChildren(dir string) ([]os.DirEntry, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	prefix := strings.TrimRight(dir, "/") + "/"
+	if dir == "." {
+		prefix = ""
+	}
+	names := make([]string, 0)
+	for path := range m.files {
+		if path == dir || !strings.HasPrefix(path, prefix) {
+			continue
+		}
+		name := strings.TrimPrefix(path, prefix)
+		if name != "" && !strings.Contains(name, "/") {
+			names = append(names, name)
+		}
+	}
+	return captureDirectory(names, func(name string) (os.FileInfo, error) {
+		node := m.files[filepath.Join(dir, name)]
+		if node.ForcedErr != nil {
+			return nil, node.ForcedErr
+		}
+		return &memFileInfo{name: name, size: node.size(), mode: node.Mode, isDir: node.Kind == FileKindDirectory}, nil
+	})
 }

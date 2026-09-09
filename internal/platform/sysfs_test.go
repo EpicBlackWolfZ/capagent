@@ -30,7 +30,7 @@ func mustOSSysfsReader(t *testing.T, root string) *platform.SysfsReader {
 	if err != nil {
 		t.Skipf("ScopedOSReader unavailable: %v", err)
 	}
-	return platform.NewSysfsReader(scoped, root)
+	return platform.NewSysfsReader(scoped)
 }
 
 func TestSysfsReader_CgroupControllers(t *testing.T) {
@@ -67,10 +67,11 @@ func TestSysfsReader_CgroupControllers(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-mem := platform.NewMemPlatformReader()
-		mem.AddFile("/sys/fs/cgroup/cgroup.controllers", []byte(tt.input), 0o644)
+			mem := platform.NewMemPlatformReader()
+			fixtureParents(mem, "/sys/fs/cgroup/cgroup.controllers")
+			mem.AddFile("/sys/fs/cgroup/cgroup.controllers", []byte(tt.input), 0o644)
 
-		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+			r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 			got, err := r.CgroupControllers()
 			if err != nil {
 				t.Fatalf("CgroupControllers: %v", err)
@@ -86,7 +87,7 @@ func TestSysfsReader_CgroupControllersMissingFile(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 	if _, err := r.CgroupControllers(); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("missing-file error = %v, want ErrNotExist", err)
@@ -97,10 +98,12 @@ func TestSysfsReader_ReadCgroupController(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
+	fixtureParents(mem, "/sys/fs/cgroup/cpu")
 	mem.AddFile("/sys/fs/cgroup/cpu", []byte("cpu cgroup controller"), 0o644)
+	fixtureParents(mem, "/sys/fs/cgroup/memory")
 	mem.AddFile("/sys/fs/cgroup/memory", []byte("memory cgroup controller"), 0o644)
 
-	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 	data, err := r.ReadCgroupController(cgroupCPU)
 	if err != nil {
@@ -123,7 +126,7 @@ func TestSysfsReader_ReadCgroupController_Empty(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 	if _, err := r.ReadCgroupController(""); err == nil {
 		t.Error("expected error for empty controller name")
@@ -134,7 +137,7 @@ func TestSysfsReader_ReadCgroupController_Missing(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 	if _, err := r.ReadCgroupController("nonexistent"); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("missing-controller error = %v, want ErrNotExist", err)
@@ -162,7 +165,7 @@ func TestSysfsReader_ReadCgroupController_RejectsPathLikeInputs(t *testing.T) {
 	// Use a recording ScopedReader so we can also verify that rejected
 	// inputs NEVER reach the reader.
 	spy := &recordingScopedReader{ScopedReader: platform.NewScopedMemReader("/sys", platform.NewMemPlatformReader())}
-	r := platform.NewSysfsReader(spy, "/sys")
+	r := platform.NewSysfsReader(spy)
 
 	rejected := []string{
 		"",           // empty
@@ -196,11 +199,14 @@ func TestSysfsReader_ReadCgroupController_AcceptsValidNames(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
+	fixtureParents(mem, "/sys/fs/cgroup/cpu")
 	mem.AddFile("/sys/fs/cgroup/cpu", []byte("ok"), 0o644)
+	fixtureParents(mem, "/sys/fs/cgroup/memory")
 	mem.AddFile("/sys/fs/cgroup/memory", []byte("ok"), 0o644)
+	fixtureParents(mem, "/sys/fs/cgroup/cpu_cpuacct")
 	mem.AddFile("/sys/fs/cgroup/cpu_cpuacct", []byte("ok"), 0o644)
 
-	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 	for _, name := range []string{"cpu", "memory", "cpu_cpuacct"} {
 		if _, err := r.ReadCgroupController(name); err != nil {
@@ -216,10 +222,12 @@ func TestSysfsReader_SELinux(t *testing.T) {
 		t.Parallel()
 
 		mem := platform.NewMemPlatformReader()
+		fixtureParents(mem, "/sys/fs/selinux")
 		mem.AddDir("/sys/fs/selinux", 0o755)
+		fixtureParents(mem, "/sys/fs/selinux/enforce")
 		mem.AddFile("/sys/fs/selinux/enforce", []byte("1\n"), 0o644)
 
-		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 		present, err := r.SELinuxPresent()
 		if err != nil {
@@ -250,10 +258,12 @@ func TestSysfsReader_SELinux(t *testing.T) {
 		t.Parallel()
 
 		mem := platform.NewMemPlatformReader()
+		fixtureParents(mem, "/sys/fs/selinux")
 		mem.AddDir("/sys/fs/selinux", 0o755)
+		fixtureParents(mem, "/sys/fs/selinux/enforce")
 		mem.AddFile("/sys/fs/selinux/enforce", []byte("0\n"), 0o644)
 
-		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 		enforcing, err := r.IsSELinuxEnforcing()
 		if err != nil {
@@ -269,7 +279,7 @@ func TestSysfsReader_SELinux(t *testing.T) {
 
 		mem := platform.NewMemPlatformReader()
 
-		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 		present, err := r.SELinuxPresent()
 		if err != nil {
@@ -300,9 +310,10 @@ func TestSysfsReader_SELinux(t *testing.T) {
 		t.Parallel()
 
 		mem := platform.NewMemPlatformReader()
+		fixtureParents(mem, "/sys/fs/selinux")
 		mem.AddError("/sys/fs/selinux", syscall.EACCES)
 
-		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 		if _, err := r.SELinuxPresent(); !errors.Is(err, syscall.EACCES) {
 			t.Errorf("SELinuxPresent error = %v, want EACCES", err)
@@ -317,9 +328,10 @@ func TestSysfsReader_AppArmor(t *testing.T) {
 		t.Parallel()
 
 		mem := platform.NewMemPlatformReader()
+		fixtureParents(mem, "/sys/kernel/security/apparmor")
 		mem.AddDir("/sys/kernel/security/apparmor", 0o755)
 
-		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 		got, err := r.AppArmorPresent()
 		if err != nil {
@@ -335,7 +347,7 @@ func TestSysfsReader_AppArmor(t *testing.T) {
 
 		mem := platform.NewMemPlatformReader()
 
-		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 		got, err := r.AppArmorPresent()
 		if err != nil {
@@ -350,9 +362,10 @@ func TestSysfsReader_AppArmor(t *testing.T) {
 		t.Parallel()
 
 		mem := platform.NewMemPlatformReader()
+		fixtureParents(mem, "/sys/kernel/security/apparmor")
 		mem.AddError("/sys/kernel/security/apparmor", syscall.EACCES)
 
-		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+		r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 
 		if _, err := r.AppArmorPresent(); !errors.Is(err, syscall.EACCES) {
 			t.Errorf("AppArmorPresent error = %v, want EACCES", err)
@@ -364,9 +377,10 @@ func TestSysfsReader_CustomRoot(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
+	fixtureParents(mem, "/fixtures/sys/fs/cgroup/cgroup.controllers")
 	mem.AddFile("/fixtures/sys/fs/cgroup/cgroup.controllers", []byte(cgroupCPU+" "+cgroupMemory+"\n"), 0o644)
 
-	r := platform.NewSysfsReader(platform.NewScopedMemReader("/fixtures/sys", mem), "/fixtures/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/fixtures/sys", mem))
 	got, err := r.CgroupControllers()
 	if err != nil {
 		t.Fatalf("CgroupControllers: %v", err)
@@ -385,7 +399,7 @@ func TestSysfsReader_DefaultRoot(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
-	r := platform.NewSysfsReader(platform.NewScopedMemReader("", mem), "")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 	if r.Root() != "/sys" {
 		t.Errorf("Root = %q, want /sys", r.Root())
 	}
@@ -394,7 +408,7 @@ func TestSysfsReader_DefaultRoot(t *testing.T) {
 func TestSysfsReader_NilReaderRejected(t *testing.T) {
 	t.Parallel()
 
-	if got := platform.NewSysfsReader(nil, "/sys"); got != nil {
+	if got := platform.NewSysfsReader(nil); got != nil {
 		t.Errorf("NewSysfsReader(nil) = %v, want nil", got)
 	}
 }
@@ -430,9 +444,10 @@ func TestSysfsReader_CgroupControllersDeduplicates(t *testing.T) {
 	t.Parallel()
 
 	mem := platform.NewMemPlatformReader()
+	fixtureParents(mem, "/sys/fs/cgroup/cgroup.controllers")
 	mem.AddFile("/sys/fs/cgroup/cgroup.controllers", []byte("cpu cpu memory cpu memory\n"), 0o644)
 
-	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem), "/sys")
+	r := platform.NewSysfsReader(platform.NewScopedMemReader("/sys", mem))
 	got, err := r.CgroupControllers()
 	if err != nil {
 		t.Fatalf("CgroupControllers: %v", err)

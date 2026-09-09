@@ -80,6 +80,7 @@ func TestMemPlatformReader_ReadFile(t *testing.T) {
 		{
 			name: "regular file read",
 			setup: func(m *platform.MemPlatformReader) {
+				fixtureParents(m, "/etc/os-release")
 				m.AddFile("/etc/os-release", []byte("NAME=test"), 0o644)
 			},
 			path: "/etc/os-release",
@@ -88,6 +89,7 @@ func TestMemPlatformReader_ReadFile(t *testing.T) {
 		{
 			name: "regular file with dotted path normalization",
 			setup: func(m *platform.MemPlatformReader) {
+				fixtureParents(m, "/etc/os-release")
 				m.AddFile("/etc/os-release", []byte("x"), 0o644)
 			},
 			path: "/etc/./os-release",
@@ -138,7 +140,9 @@ func TestMemPlatformReader_ReadFile(t *testing.T) {
 		{
 			name: "cyclic symlink returns ELOOP",
 			setup: func(m *platform.MemPlatformReader) {
+				fixtureParents(m, "/loop/a")
 				m.AddSymlink("/loop/a", "../loop/b")
+				fixtureParents(m, "/loop/b")
 				m.AddSymlink("/loop/b", "../loop/a")
 				m.AddDir("/loop", 0o755)
 			},
@@ -152,6 +156,7 @@ func TestMemPlatformReader_ReadFile(t *testing.T) {
 				for i := 0; i < 18; i++ {
 					m.AddSymlink("/chain/"+string(rune('a'+i)), string(rune('a'+i+1)))
 				}
+				fixtureParents(m, "/chain/s")
 				m.AddFile("/chain/s", []byte("z"), 0o644)
 				m.AddDir("/chain", 0o755)
 			},
@@ -253,7 +258,9 @@ func TestMemPlatformReader_Stat(t *testing.T) {
 			name: "cyclic symlink returns ELOOP",
 			setup: func(m *platform.MemPlatformReader) {
 				m.AddDir("/c", 0o755)
+				fixtureParents(m, "/c/a")
 				m.AddSymlink("/c/a", "b")
+				fixtureParents(m, "/c/b")
 				m.AddSymlink("/c/b", "a")
 			},
 			path:    "/c/a",
@@ -308,8 +315,11 @@ func TestMemPlatformReader_ReadDir(t *testing.T) {
 			name: "enumerate children sorted alphabetically",
 			setup: func(m *platform.MemPlatformReader) {
 				m.AddDir("/etc", 0o755)
+				fixtureParents(m, "/etc/zeta")
 				m.AddFile("/etc/zeta", []byte("z"), 0o644)
+				fixtureParents(m, "/etc/alpha")
 				m.AddFile("/etc/alpha", []byte("a"), 0o644)
+				fixtureParents(m, "/etc/middle")
 				m.AddFile("/etc/middle", []byte("m"), 0o644)
 			},
 			path:      "/etc",
@@ -319,7 +329,9 @@ func TestMemPlatformReader_ReadDir(t *testing.T) {
 			name: "directory entries expose type",
 			setup: func(m *platform.MemPlatformReader) {
 				m.AddDir("/d", 0o755)
+				fixtureParents(m, "/d/file")
 				m.AddFile("/d/file", []byte("f"), 0o644)
+				fixtureParents(m, "/d/subdir")
 				m.AddDir("/d/subdir", 0o755)
 			},
 			path:      "/d",
@@ -353,6 +365,7 @@ func TestMemPlatformReader_ReadDir(t *testing.T) {
 			name: "readdir on symlink to directory works",
 			setup: func(m *platform.MemPlatformReader) {
 				m.AddDir("/realdir", 0o755)
+				fixtureParents(m, "/realdir/child")
 				m.AddFile("/realdir/child", []byte("c"), 0o644)
 				m.AddSymlink("/alias", "realdir")
 			},
@@ -363,6 +376,7 @@ func TestMemPlatformReader_ReadDir(t *testing.T) {
 			name: "forced error propagates",
 			setup: func(m *platform.MemPlatformReader) {
 				m.AddDir("/perm", 0o755)
+				fixtureParents(m, "/perm/secret")
 				m.AddError("/perm/secret", syscall.EACCES)
 			},
 			path:    "/perm/secret",

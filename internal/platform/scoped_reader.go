@@ -5,8 +5,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sort"
-	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -50,7 +48,9 @@ const sentinelClosedRootFD = int64(-1)
 // ScopedReader is the filesystem abstraction that operates under a declared
 // root. All four file methods accept subpaths relative to the root; the
 // reader validates its own subpath arguments via ValidateSubpath before
-// acquiring any file descriptor.
+// acquiring any file descriptor. ReadDir returns sorted eager metadata; only
+// disappearing children (ENOENT) may be skipped. Other metadata failures
+// return no entries and a wrapped error.
 //
 // Implementations:
 //
@@ -102,22 +102,6 @@ func (fi *scopedFileInfo) Mode() os.FileMode  { return fi.mode }
 func (fi *scopedFileInfo) ModTime() time.Time { return fi.modTime }
 func (fi *scopedFileInfo) IsDir() bool        { return fi.isDir }
 func (fi *scopedFileInfo) Sys() any           { return nil }
-
-// scopedDirEntry is the os.DirEntry returned by ScopedReader.ReadDir.
-// Info() returns the eagerly-captured FileInfo without performing host I/O.
-type scopedDirEntry struct {
-	name string
-	info *scopedFileInfo
-}
-
-func (de *scopedDirEntry) Name() string { return de.name }
-func (de *scopedDirEntry) IsDir() bool  { return de.info.IsDir() }
-func (de *scopedDirEntry) Type() os.FileMode {
-	return de.info.Mode().Type()
-}
-func (de *scopedDirEntry) Info() (os.FileInfo, error) {
-	return de.info, nil
-}
 
 // scopedStatMode converts a unix.Stat_t mode field to an os.FileMode with
 // POSIX type bits preserved. Permissions are limited to the low 9 bits
@@ -339,36 +323,18 @@ func (r *ScopedOSReader) ReadDir(subpath string) ([]os.DirEntry, error) {
 		if gerr != nil {
 			return gerr
 		}
-		out := make([]os.DirEntry, 0, len(names))
-		for _, name := range names {
-			// RESOLVE_IN_ROOT is per-open; filtering "." and ".."
-			// before any fstatat prevents accidentally reaching
-			// dirFd's parent (which is outside root).
-			if name == "." || name == ".." {
-				continue
-			}
+		var captureErr error
+		entries, captureErr = captureDirectory(names, func(name string) (os.FileInfo, error) {
 			var st unix.Stat_t
-			if serr := unix.Fstatat(fd, name, &st, unix.AT_SYMLINK_NOFOLLOW); serr != nil {
-				// Entry renamed or deleted between enumeration
-				// and stat. Skip silently; the security invariant
-				// holds because AT_SYMLINK_NOFOLLOW prevents
-				// following the entry's symlink target even if it
-				// was atomically replaced.
-				continue
+			if err := unix.Fstatat(fd, name, &st, unix.AT_SYMLINK_NOFOLLOW); err != nil {
+				return nil, err
 			}
-			out = append(out, &scopedDirEntry{
-				name: name,
-				info: &scopedFileInfo{
-					name:    name,
-					size:    st.Size,
-					mode:    scopedStatMode(st.Mode),
-					modTime: time.Unix(st.Mtim.Sec, st.Mtim.Nsec),
-					isDir:   st.Mode&unix.S_IFMT == unix.S_IFDIR,
-				},
-			})
-		}
-		entries = out
-		return nil
+			return &scopedFileInfo{
+				name: name, size: st.Size, mode: scopedStatMode(st.Mode),
+				modTime: time.Unix(st.Mtim.Sec, st.Mtim.Nsec), isDir: st.Mode&unix.S_IFMT == unix.S_IFDIR,
+			}, nil
+		})
+		return captureErr
 	})
 	if err != nil {
 		return nil, err
@@ -404,6 +370,16 @@ func readDirNames(fd int) ([]string, error) {
 func (r *ScopedOSReader) Readlink(subpath string) (string, error) {
 	var target string
 	err := r.readSubpath(subpath, unix.O_PATH|unix.O_NOFOLLOW, func(fd int) error {
+		// readlinkat(fd, "") reports ENOENT for a non-link descriptor.
+		// Normalize it to Readlink's EINVAL contract without a pathname lookup.
+		var st unix.Stat_t
+		if err := unix.Fstat(fd, &st); err != nil {
+			return err
+		}
+		if st.Mode&unix.S_IFMT != unix.S_IFLNK {
+			return syscall.EINVAL
+		}
+
 		buf := make([]byte, unix.PathMax)
 		n, lerr := unix.Readlinkat(fd, "", buf)
 		if lerr != nil {
@@ -470,13 +446,12 @@ func mapOpenError(err error, subpath string) error {
 //
 // ScopedMemReader preserves:
 //
-//   - explicit per-hop containment checks (resolving symlink targets
-//     lexically against root);
+//   - component-order traversal with explicit per-hop containment checks;
 //   - maxSymlinkDepthMemory-hop application-level counter;
 //   - ForcedErr semantics: if an entry encountered during traversal has
 //     ForcedErr set, that error is returned verbatim;
 //   - the documented OS-vs-memory discrepancy for absolute symlink
-//     targets outside root (the memory reader is stricter).
+//     targets: memory uses backing-tree paths and rejects paths outside root.
 //
 // The memory reader does NOT model Linux magic links; /proc/self is just a
 // regular symlink with a stored target string.
@@ -515,66 +490,6 @@ func (r *ScopedMemReader) Close() error {
 	return nil
 }
 
-// joinAndValidate joins root and subpath, validates the lexically-cleaned
-// result is inside root, and returns the cleaned joined path. The lexical
-// containment check is the first defense; the per-hop symlink walk below
-// is the second.
-func (r *ScopedMemReader) joinAndValidate(subpath string) (string, error) {
-	cleaned := filepath.Clean(subpath)
-	if cleaned == "." || cleaned == "/" {
-		return r.root, nil
-	}
-	joined := filepath.Join(r.root, cleaned)
-	// Belt-and-braces: verify joined is inside root (lexical).
-	if joined != r.root && !strings.HasPrefix(joined, r.root+string(filepath.Separator)) {
-		return "", ErrSubpathEscape
-	}
-	return joined, nil
-}
-
-// resolveMemory walks the symlink chain starting at cleanPath, returning
-// the final resolved entry and the path that entry was looked up under.
-//
-//   - depth: current hop count (start at 0).
-//   - maxDepth: app-level ceiling (maxSymlinkDepthMemory).
-//
-// The walk applies ForcedErr semantics at every node. Symlink targets are
-// containment-checked: an absolute target outside root returns
-// ErrSubpathEscape (the documented OS-vs-memory discrepancy); a relative
-// target is joined with the parent and the same check is applied.
-//
-// errAtMaxDepth is returned when depth exceeds maxDepth.
-func (r *ScopedMemReader) resolveMemory(cleanPath string, depth int) (*VirtualFile, string, error) {
-	if depth > maxSymlinkDepthMemory {
-		return nil, "", syscall.ELOOP
-	}
-	r.mem.mu.RLock()
-	entry, ok := r.mem.files[cleanPath]
-	r.mem.mu.RUnlock()
-	if !ok {
-		return nil, cleanPath, nil
-	}
-	if entry.ForcedErr != nil {
-		return nil, "", entry.ForcedErr
-	}
-	if entry.Kind != FileKindSymlink {
-		return entry, cleanPath, nil
-	}
-	target := entry.Target
-	if filepath.IsAbs(target) {
-		cleaned := filepath.Clean(target)
-		if cleaned != r.root && !strings.HasPrefix(cleaned, r.root+string(filepath.Separator)) {
-			return nil, "", ErrSubpathEscape
-		}
-		return r.resolveMemory(cleaned, depth+1)
-	}
-	next := filepath.Clean(filepath.Join(filepath.Dir(cleanPath), target))
-	if next != r.root && !strings.HasPrefix(next, r.root+string(filepath.Separator)) {
-		return nil, "", ErrSubpathEscape
-	}
-	return r.resolveMemory(next, depth+1)
-}
-
 // ReadFile returns the content of the file at subpath.
 func (r *ScopedMemReader) ReadFile(subpath string) ([]byte, error) {
 	if err := r.checkOpen(); err != nil {
@@ -583,16 +498,9 @@ func (r *ScopedMemReader) ReadFile(subpath string) ([]byte, error) {
 	if err := ValidateSubpath(subpath); err != nil {
 		return nil, err
 	}
-	cleaned, err := r.joinAndValidate(subpath)
-	if err != nil {
-		return nil, err
-	}
-	entry, _, rerr := r.resolveMemory(cleaned, 0)
+	entry, _, rerr := r.mem.resolvePath(subpath, r.root, true, maxSymlinkDepthMemory)
 	if rerr != nil {
 		return nil, rerr
-	}
-	if entry == nil {
-		return nil, os.ErrNotExist
 	}
 	if entry.Kind == FileKindDirectory {
 		return nil, syscall.EISDIR
@@ -608,20 +516,13 @@ func (r *ScopedMemReader) Stat(subpath string) (os.FileInfo, error) {
 	if err := ValidateSubpath(subpath); err != nil {
 		return nil, err
 	}
-	cleaned, err := r.joinAndValidate(subpath)
-	if err != nil {
-		return nil, err
-	}
-	entry, resolved, rerr := r.resolveMemory(cleaned, 0)
+	entry, _, rerr := r.mem.resolvePath(subpath, r.root, true, maxSymlinkDepthMemory)
 	if rerr != nil {
 		return nil, rerr
 	}
-	if entry == nil {
-		return nil, os.ErrNotExist
-	}
 	return &scopedFileInfo{
-		name:    filepath.Base(resolved),
-		size:    int64(len(entry.Content)),
+		name:    filepath.Base(subpath),
+		size:    entry.size(),
 		mode:    entry.Mode,
 		modTime: time.Time{},
 		isDir:   entry.Kind == FileKindDirectory,
@@ -637,68 +538,15 @@ func (r *ScopedMemReader) ReadDir(subpath string) ([]os.DirEntry, error) {
 	if err := ValidateSubpath(subpath); err != nil {
 		return nil, err
 	}
-	cleaned, err := r.joinAndValidate(subpath)
-	if err != nil {
-		return nil, err
-	}
-	entry, resolved, rerr := r.resolveMemory(cleaned, 0)
+	entry, resolved, rerr := r.mem.resolvePath(subpath, r.root, true, maxSymlinkDepthMemory)
 	if rerr != nil {
 		return nil, rerr
-	}
-	if entry == nil {
-		return nil, os.ErrNotExist
 	}
 	if entry.Kind != FileKindDirectory {
 		return nil, syscall.ENOTDIR
 	}
 
-	prefix := resolved
-	if !strings.HasSuffix(prefix, string(filepath.Separator)) {
-		prefix += string(filepath.Separator)
-	}
-
-	r.mem.mu.RLock()
-	defer r.mem.mu.RUnlock()
-
-	seen := make(map[string]*VirtualFile)
-	for stored, vf := range r.mem.files {
-		if stored == resolved {
-			continue
-		}
-		if !strings.HasPrefix(stored, prefix) {
-			continue
-		}
-		rel := strings.TrimPrefix(stored, prefix)
-		if rel == "" || strings.Contains(rel, string(filepath.Separator)) {
-			continue
-		}
-		if rel == "." || rel == ".." {
-			continue
-		}
-		seen[rel] = vf
-	}
-
-	names := make([]string, 0, len(seen))
-	for n := range seen {
-		names = append(names, n)
-	}
-	sort.Strings(names)
-
-	out := make([]os.DirEntry, 0, len(names))
-	for _, n := range names {
-		child := seen[n]
-		out = append(out, &scopedDirEntry{
-			name: n,
-			info: &scopedFileInfo{
-				name:    n,
-				size:    int64(len(child.Content)),
-				mode:    child.Mode,
-				modTime: time.Time{},
-				isDir:   child.Kind == FileKindDirectory,
-			},
-		})
-	}
-	return out, nil
+	return r.mem.captureChildren(resolved)
 }
 
 // Readlink returns the raw symlink target stored at subpath.
@@ -709,18 +557,9 @@ func (r *ScopedMemReader) Readlink(subpath string) (string, error) {
 	if err := ValidateSubpath(subpath); err != nil {
 		return "", err
 	}
-	cleaned, err := r.joinAndValidate(subpath)
+	entry, _, err := r.mem.resolvePath(subpath, r.root, false, maxSymlinkDepthMemory)
 	if err != nil {
 		return "", err
-	}
-	r.mem.mu.RLock()
-	entry, ok := r.mem.files[cleaned]
-	r.mem.mu.RUnlock()
-	if !ok {
-		return "", os.ErrNotExist
-	}
-	if entry.ForcedErr != nil {
-		return "", entry.ForcedErr
 	}
 	if entry.Kind != FileKindSymlink {
 		return "", syscall.EINVAL
