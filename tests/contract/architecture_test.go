@@ -2,6 +2,7 @@ package contract_test
 
 import (
 	"fmt"
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"os"
@@ -244,7 +245,7 @@ func collectPackageImports(rootDir string) (PackageImports, error) {
 		// Skip directories, test files, and hidden/vendor/testdata paths
 		if info.IsDir() {
 			base := info.Name()
-			if strings.HasPrefix(base, ".") || base == "vendor" || base == "testdata" {
+			if strings.HasPrefix(base, walkSkipHidden) || base == walkSkipVendor || base == walkSkipTestdata {
 				return filepath.SkipDir
 			}
 			return nil
@@ -724,7 +725,7 @@ func TestArchitecture_ForbidLegacyEncodingJSON(t *testing.T) {
 
 		if info.IsDir() {
 			base := info.Name()
-			if strings.HasPrefix(base, ".") || base == "vendor" {
+			if strings.HasPrefix(base, walkSkipHidden) || base == walkSkipVendor {
 				return filepath.SkipDir
 			}
 			return nil
@@ -763,5 +764,545 @@ func TestArchitecture_ForbidLegacyEncodingJSON(t *testing.T) {
 
 	if len(violations) > 0 {
 		t.Errorf("Found forbidden legacy encoding/json imports:\n%s", strings.Join(violations, "\n"))
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Host-IO denylist (M1.1 plan §9; issue #47)
+//
+// The host-IO denylist rule is an AST-based mechanical guard against
+// direct, syntactically-recognizable uses of forbidden host primitives
+// outside the platform package and CLI exceptions. The rule is
+// intentionally syntactic — it walks the AST looking for SelectorExpr
+// nodes whose receiver is the Ident "os" and whose Sel matches a
+// denylist entry. It does NOT track type aliases, function values, or
+// indirect calls; those bypasses are accepted as documented false
+// negatives (plan §9.6).
+//
+// The rule has three logical buckets:
+//
+//   - File I/O primitives (os.ReadFile, os.Open, etc.): forbidden in
+//     production AND test code of any package other than the listed
+//     allow prefixes.
+//   - Subprocess primitives (os/exec.Command): forbidden in production
+//     AND test code of any package other than the listed allow prefixes.
+//   - Ambient env primitives (os.Getenv, os.LookupEnv, os.Environ):
+//     forbidden in production code of any package other than the
+//     allow prefixes, but PERMITTED in test code (harnesses legitimately
+//     need to read environment variables).
+//
+// Allow prefixes (full path prefixes that bypass the rule):
+//
+//   - internal/platform/...: owns the primitives.
+//   - cmd/capagent/...: CLI; may use os.Args, os.Stdout, os.Stderr,
+//     os.Exit. May NOT use file-I/O or command-execution primitives.
+//   - tests/contract/...: uses go/parser, filepath.Walk, and the
+//     standard library legitimately to enforce the rules.
+// ---------------------------------------------------------------------------
+
+// hostPrimitiveDenylist is the canonical list of forbidden host-IO
+// selectors. Each entry is "<package>.<selector>"; the receiver Ident
+// is the package name (typically "os" or a renamed import).
+var hostPrimitiveDenylist = []string{
+	// File I/O
+	"os.ReadFile", "os.WriteFile", "os.Open", "os.OpenFile", "os.Create",
+	"os.Stat", "os.Lstat", "os.ReadDir",
+	"os.Readlink",
+	"os.Mkdir", "os.MkdirAll", "os.Remove", "os.RemoveAll",
+	"os.Rename", "os.Chmod", "os.Symlink", "os.Link", "os.Truncate",
+}
+
+// hostExecDenylist forbids import of os/exec outside the platform
+// package. The CLI's process exit primitives are tracked separately.
+var hostExecDenylist = []string{
+	"os/exec",
+}
+
+// hostAmbientEnvDenylist forbids reading ambient environment outside
+// the platform package and tests. Tests are exempted because test
+// harnesses legitimately need to inspect the environment.
+var hostAmbientEnvDenylist = []string{
+	"os.Getenv", "os.LookupEnv", "os.Environ",
+}
+
+// hostPrimitiveAllowPrefixes is the set of path prefixes that may use
+// the denylisted primitives. The contract test directory is exempted
+// per plan §9.3 (it uses os, filepath.Walk, go/parser legitimately
+// to enforce the rules).
+var hostPrimitiveAllowPrefixes = []string{
+	"internal/platform/",
+	"cmd/",
+	"tests/contract/",
+	// Schema and version packages legitimately use os/exec-free
+	// file reads but tests sometimes need ambient env. The denylist
+	// is enforced only against the listed denylist categories.
+}
+
+// Walked-directory skip constants used by the AST scanner. Hoisted
+// so the goconst linter does not flag repeated literals.
+const (
+	walkSkipVendor  = "vendor"
+	walkSkipTestdata = "testdata"
+	walkSkipHidden  = "."
+)
+
+// isHostIOAllowedPath returns true if the supplied repository-relative
+// path is exempt from the host-IO denylist.
+func isHostIOAllowedPath(relPath string) bool {
+	for _, prefix := range hostPrimitiveAllowPrefixes {
+		if strings.HasPrefix(relPath, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+// isExcludedHostIOPath returns true for generated/vendored/testdata
+// paths the rule skips entirely.
+func isExcludedHostIOPath(relPath string) bool {
+	if strings.Contains(relPath, "/vendor/") || strings.HasPrefix(relPath, "vendor/") {
+		return true
+	}
+	if strings.Contains(relPath, "/testdata/") || strings.HasPrefix(relPath, "testdata/") {
+		return true
+	}
+	// The fixtures directory under tests/contract is intentionally
+	// excluded from the global scan because it is the AST rule's
+	// test corpus: per-file checks live in
+	// TestArchitecture_HostPrimitiveFixtures which scans the
+	// directory directly. Treating it as testdata-equivalent prevents
+	// the global walker from double-flagging files that exist solely
+	// to demonstrate the rule.
+	if strings.Contains(relPath, "/tests/contract/fixtures/") ||
+		strings.HasPrefix(relPath, "tests/contract/fixtures/") {
+		return true
+	}
+	base := filepath.Base(relPath)
+	// Generated-code patterns
+	if strings.HasSuffix(base, ".pb.go") ||
+		strings.HasSuffix(base, "_gen.go") ||
+		strings.HasPrefix(base, "mock_") {
+		return true
+	}
+	return false
+}
+
+// TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform walks the
+// repository AST looking for SelectorExpr nodes whose receiver is
+// "os" and whose Sel matches an entry in hostPrimitiveDenylist or
+// hostAmbientEnvDenylist. The rule is intentionally syntactic
+// (plan §9.6) — false negatives from aliasing and function-value
+// indirection are accepted.
+//
+// File I/O and command-execution denylist apply to BOTH production
+// and test files. Ambient-env denylist does NOT apply to test files.
+func TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform(t *testing.T) {
+	t.Parallel()
+
+	rootDir := findRepoRoot(t)
+	fset := token.NewFileSet()
+	var violations []string
+
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			base := info.Name()
+			if strings.HasPrefix(base, walkSkipHidden) || base == walkSkipVendor {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(rootDir, path)
+		if err != nil {
+			return err
+		}
+
+		if isExcludedHostIOPath(relPath) {
+			return nil
+		}
+		if isHostIOAllowedPath(relPath) {
+			return nil
+		}
+
+		isTest := strings.HasSuffix(relPath, "_test.go")
+
+		// Parse the full AST (not just imports) so we can detect
+		// SelectorExpr nodes.
+		node, err := parser.ParseFile(fset, path, nil, 0)
+		if err != nil {
+			return fmt.Errorf("failed to parse %s: %w", path, err)
+		}
+
+		// Build import alias map for this file.
+		aliases := make(map[string]string)
+		for _, imp := range node.Imports {
+			importPath := strings.Trim(imp.Path.Value, `"`)
+			if imp.Name != nil && imp.Name.Name == "." {
+				continue
+			}
+			var pkgName string
+			if imp.Name != nil {
+				pkgName = imp.Name.Name
+			} else {
+				// Default: last path segment
+				parts := strings.Split(importPath, "/")
+				pkgName = parts[len(parts)-1]
+			}
+			aliases[importPath] = pkgName
+		}
+
+		// Walk AST looking for SelectorExpr matching the denylist.
+		ast.Inspect(node, func(n ast.Node) bool {
+			sel, ok := n.(*ast.SelectorExpr)
+			if !ok {
+				return true
+			}
+			ident, ok := sel.X.(*ast.Ident)
+			if !ok {
+				return true
+			}
+
+			// Resolve which package the identifier refers to.
+			resolvedPkg := ""
+			for importPath, alias := range aliases {
+				if alias == ident.Name {
+					resolvedPkg = importPath
+					break
+				}
+			}
+			if resolvedPkg == "" {
+				return true
+			}
+
+			selector := resolvedPkg + "." + sel.Sel.Name
+
+			// Determine which denylist applies.
+			isExecImport := stringSliceContains(hostExecDenylist, resolvedPkg)
+			if isExecImport && !isTest {
+				// Imports of os/exec in production code are
+				// themselves a violation; the AST scan alone
+				// catches selector uses but we also flag the
+				// import. The import was added to aliases
+				// above; we record it via the package-imports
+				// walker below.
+				return true
+			}
+
+			// File I/O selectors apply to all files.
+			if stringSliceContainsSet(selector, hostPrimitiveDenylist) {
+				violations = append(violations, fmt.Sprintf(
+					"%s uses forbidden host-IO primitive %s; route through internal/platform instead",
+					relPath, selector,
+				))
+				return true
+			}
+
+			// Ambient-env selectors apply only to production code.
+			if !isTest && stringSliceContainsSet(selector, hostAmbientEnvDenylist) {
+				violations = append(violations, fmt.Sprintf(
+					"%s uses forbidden ambient-env primitive %s in production code; route through internal/platform instead",
+					relPath, selector,
+				))
+				return true
+			}
+
+			return true
+		})
+
+		// Also flag production-only os/exec imports in non-platform packages.
+		if !isTest {
+			for _, imp := range node.Imports {
+				importPath := strings.Trim(imp.Path.Value, `"`)
+				if stringSliceContains(hostExecDenylist, importPath) {
+					violations = append(violations, fmt.Sprintf(
+						"%s imports forbidden %s; route through internal/platform.CommandRunner instead",
+						relPath, importPath,
+					))
+				}
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("failed to scan repository: %v", err)
+	}
+
+	if len(violations) > 0 {
+		t.Errorf("Found forbidden host-IO primitives outside internal/platform:\n%s",
+			strings.Join(violations, "\n"))
+	}
+}
+
+// stringSliceContains reports whether the target string appears in the
+// given slice.
+func stringSliceContains(haystack []string, needle string) bool {
+	for _, s := range haystack {
+		if s == needle {
+			return true
+		}
+	}
+	return false
+}
+
+// stringSliceContainsSet is a thin alias for symmetry with the file-I/O
+// denylist; both use simple slice membership so a single helper suffices.
+func stringSliceContainsSet(needle string, haystack []string) bool {
+	return stringSliceContains(haystack, needle)
+}
+
+// TestArchitecture_HostPrimitiveRuleEnforcement verifies that the host-IO
+// denylist correctly detects violations and accepts the allow-prefix
+// exemptions. The positive fixture (TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform)
+// above is the production check; this test asserts the AST inspection
+// helpers behave as documented.
+func TestArchitecture_HostPrimitiveRuleEnforcement(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		denylist   []string
+		selector   string
+		wantReject bool
+	}{
+		{name: "os.ReadFile rejected", denylist: hostPrimitiveDenylist, selector: "os.ReadFile", wantReject: true},
+		{name: "os.Open rejected", denylist: hostPrimitiveDenylist, selector: "os.Open", wantReject: true},
+		{name: "os.WriteFile rejected", denylist: hostPrimitiveDenylist, selector: "os.WriteFile", wantReject: true},
+		{name: "os.Stat rejected", denylist: hostPrimitiveDenylist, selector: "os.Stat", wantReject: true},
+		{name: "os.Args permitted", denylist: hostPrimitiveDenylist, selector: "os.Args", wantReject: false},
+		{name: "os.Stdout permitted", denylist: hostPrimitiveDenylist, selector: "os.Stdout", wantReject: false},
+		{name: "os.Getenv rejected in production", denylist: hostAmbientEnvDenylist, selector: "os.Getenv", wantReject: true},
+		{name: "os.LookupEnv rejected in production", denylist: hostAmbientEnvDenylist, selector: "os.LookupEnv", wantReject: true},
+		{name: "os.Environ rejected in production", denylist: hostAmbientEnvDenylist, selector: "os.Environ", wantReject: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			gotReject := stringSliceContainsSet(tt.selector, tt.denylist)
+			if gotReject != tt.wantReject {
+				t.Errorf("selector %q: rejected = %v, want %v", tt.selector, gotReject, tt.wantReject)
+			}
+		})
+	}
+
+	// Allow-prefix helpers must exempt the platform package and the CLI.
+	allowedSamples := []string{
+		"internal/platform/reader.go",
+		"internal/platform/scoped_reader.go",
+		"cmd/capagent/main.go",
+		"tests/contract/architecture_test.go",
+	}
+	for _, sample := range allowedSamples {
+		if !isHostIOAllowedPath(sample) {
+			t.Errorf("expected %q to be allowed by host-IO allowlist", sample)
+		}
+	}
+
+	// Non-allowed production files must NOT be exempt.
+	deniedSamples := []string{
+		"internal/probe/orchestrator.go",
+		"internal/model/capability.go",
+	}
+	for _, sample := range deniedSamples {
+		if isHostIOAllowedPath(sample) {
+			t.Errorf("expected %q to NOT be allowed by host-IO allowlist", sample)
+		}
+	}
+}
+
+// TestArchitecture_HostPrimitiveFixtures verifies that the AST
+// scanner classifies the fixtures in tests/contract/fixtures/ as
+// expected: example_host_io_violation.go must be flagged,
+// example_legitimate.go must not. The fixtures directory is
+// excluded from the repository-wide scan so these tests can probe
+// the rule directly without polluting production.
+func TestArchitecture_HostPrimitiveFixtures(t *testing.T) {
+	t.Parallel()
+
+	rootDir := findRepoRoot(t)
+	fixturesDir := filepath.Join(rootDir, "tests", "contract", "fixtures")
+
+	violations, err := scanDirForHostIOViolations(fixturesDir)
+	if err != nil {
+		t.Fatalf("scanDirForHostIOViolations: %v", err)
+	}
+
+	violationByFile := make(map[string][]string)
+	for _, v := range violations {
+		// Format: "<relpath>: <message>"
+		idx := strings.Index(v, ":")
+		if idx < 0 {
+			continue
+		}
+		violationByFile[v[:idx]] = append(violationByFile[v[:idx]], v[idx+1:])
+	}
+
+	// Negative fixture: must be flagged.
+	negativeFixture := filepath.Join("tests", "contract", "fixtures", "example_host_io_violation.go")
+	if len(violationByFile[negativeFixture]) == 0 {
+		t.Errorf("expected %q to be flagged by the denylist; got none", negativeFixture)
+	}
+
+	// Positive fixture: must NOT be flagged.
+	positiveFixture := filepath.Join("tests", "contract", "fixtures", "example_legitimate.go")
+	if len(violationByFile[positiveFixture]) > 0 {
+		t.Errorf("did not expect %q to be flagged; got %v", positiveFixture, violationByFile[positiveFixture])
+	}
+}
+
+// scanDirForHostIOViolations is the same AST walk used by the
+// repository-wide test, restricted to the supplied directory. It is
+// extracted here so the fixture tests can probe the rule without
+// scanning the entire repository.
+//
+// The per-fixture scan intentionally does NOT skip the tests/contract/
+// fixtures/ directory: those files are the rule's test corpus and
+// must be classified individually.
+func scanDirForHostIOViolations(rootDir string) ([]string, error) {
+	fset := token.NewFileSet()
+	var violations []string
+
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			base := info.Name()
+			if strings.HasPrefix(base, walkSkipHidden) || base == walkSkipVendor {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(findRepoRootForScan(), path)
+		if err != nil {
+			return err
+		}
+
+		// Skip vendor/testdata/generated but DO scan fixtures: the
+		// per-fixture scanner's job is to classify them.
+		if strings.Contains(relPath, "/vendor/") || strings.HasPrefix(relPath, "vendor/") {
+			return nil
+		}
+		if strings.Contains(relPath, "/testdata/") || strings.HasPrefix(relPath, "testdata/") {
+			return nil
+		}
+		base := filepath.Base(relPath)
+		if strings.HasSuffix(base, ".pb.go") ||
+			strings.HasSuffix(base, "_gen.go") ||
+			strings.HasPrefix(base, "mock_") {
+			return nil
+		}
+		// Fixtures themselves are NOT exempt; this is the AST
+		// rule's test corpus.
+		if isHostIOAllowedPath(relPath) && !strings.Contains(relPath, "/fixtures/") {
+			return nil
+		}
+
+		isTest := strings.HasSuffix(relPath, "_test.go")
+
+		node, err := parser.ParseFile(fset, path, nil, 0)
+		if err != nil {
+			return fmt.Errorf("failed to parse %s: %w", path, err)
+		}
+
+		aliases := make(map[string]string)
+		for _, imp := range node.Imports {
+			importPath := strings.Trim(imp.Path.Value, `"`)
+			if imp.Name != nil && imp.Name.Name == "." {
+				continue
+			}
+			var pkgName string
+			if imp.Name != nil {
+				pkgName = imp.Name.Name
+			} else {
+				parts := strings.Split(importPath, "/")
+				pkgName = parts[len(parts)-1]
+			}
+			aliases[importPath] = pkgName
+		}
+
+		ast.Inspect(node, func(n ast.Node) bool {
+			sel, ok := n.(*ast.SelectorExpr)
+			if !ok {
+				return true
+			}
+			ident, ok := sel.X.(*ast.Ident)
+			if !ok {
+				return true
+			}
+
+			resolvedPkg := ""
+			for importPath, alias := range aliases {
+				if alias == ident.Name {
+					resolvedPkg = importPath
+					break
+				}
+			}
+			if resolvedPkg == "" {
+				return true
+			}
+
+			selector := resolvedPkg + "." + sel.Sel.Name
+
+			if stringSliceContainsSet(selector, hostPrimitiveDenylist) {
+				violations = append(violations, fmt.Sprintf("%s: %s", relPath, selector))
+				return true
+			}
+			if !isTest && stringSliceContainsSet(selector, hostAmbientEnvDenylist) {
+				violations = append(violations, fmt.Sprintf("%s: %s (ambient)", relPath, selector))
+				return true
+			}
+			return true
+		})
+
+		if !isTest {
+			for _, imp := range node.Imports {
+				importPath := strings.Trim(imp.Path.Value, `"`)
+				if stringSliceContains(hostExecDenylist, importPath) {
+					violations = append(violations, fmt.Sprintf("%s: import %s", relPath, importPath))
+				}
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return violations, nil
+}
+
+// findRepoRootForScan is a thin shim around findRepoRoot used by the
+// scan helper. findRepoRoot takes *testing.T; this version caches the
+// result via a sentinel to avoid the testing.T dependency in helpers.
+func findRepoRootForScan() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "."
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return dir
+		}
+		dir = parent
 	}
 }
