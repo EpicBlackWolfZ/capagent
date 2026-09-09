@@ -7,6 +7,11 @@ import (
 	"github.com/EpicBlackWolfZ/capagent/internal/platform"
 )
 
+// Reused literal names hoisted to constants for the goconst linter.
+const (
+	scopedReaderEtcPasswd = "/etc/passwd"
+)
+
 // TestValidateSubpath verifies the lexical rejection/acceptance rules
 // documented in docs/security/m1.1-filesystem-hardening-plan.md §4.3.
 func TestValidateSubpath(t *testing.T) {
@@ -38,7 +43,7 @@ func TestValidateSubpath(t *testing.T) {
 		// Absolute paths (any form starting with '/').
 		{name: "absolute root rejected", subpath: "/", wantErr: platform.ErrAbsoluteSubpath},
 		{name: "absolute double-slash rejected", subpath: "//", wantErr: platform.ErrAbsoluteSubpath},
-		{name: "absolute /etc/passwd rejected", subpath: "/etc/passwd", wantErr: platform.ErrAbsoluteSubpath},
+		{name: "absolute /etc/passwd rejected", subpath: scopedReaderEtcPasswd, wantErr: platform.ErrAbsoluteSubpath},
 
 		// Escape attempts.
 		{name: "parent reference rejected", subpath: "..", wantErr: platform.ErrSubpathEscape},
