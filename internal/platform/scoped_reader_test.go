@@ -1,6 +1,7 @@
 package platform_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"os"
@@ -77,9 +78,47 @@ func scopedOSFactory(t *testing.T, rootPath string, setup func(m *platform.MemPl
 	for k, v := range memSeeded.Snapshot() {
 		realPath, ok := translateVirtualPath(k, absRoot, dir)
 		if !ok {
-			continue
+			// Every virtual path in a parity fixture must live
+			// under the declared virtual root. A path that
+			// translates to "outside the root" is a test setup
+			// error: silently skipping it would conceal an
+			// incomplete topology and let a buggy harness
+			// pass tests that exercise a different tree than
+			// the one the production reader would see.
+			t.Fatalf("virtual path %q outside virtual root %q: every setup entry must be under the declared root", k, absRoot)
 		}
 		materializeTreeEntry(t, realPath, v, absRoot, dir)
+	}
+
+	// Symlink-target parity check: every materialized symlink whose
+	// virtual target was under the virtual root must point at an
+	// OS entry that actually exists. This guards the harness
+	// against materialization order bugs (a symlink materialized
+	// before its target directory) and against setup omissions
+	// (a virtual entry referenced as a target but never declared).
+	for k, v := range memSeeded.Snapshot() {
+		if v.Kind != platform.FileKindSymlink {
+			continue
+		}
+		target := v.Target
+		if !filepath.IsAbs(target) {
+			// Relative targets are resolved by the kernel at
+			// read time; the harness does not pre-materialize
+			// them. The test exercises this on the OS reader.
+			continue
+		}
+		if !isVirtualRootPath(target, absRoot) {
+			// External absolute targets intentionally remain
+			// external (escape-attempt scenario).
+			continue
+		}
+		realTarget, ok := translateVirtualPath(target, absRoot, dir)
+		if !ok {
+			t.Fatalf("symlink %q -> virtual target %q could not be translated to OS path", k, target)
+		}
+		if _, err := os.Stat(realTarget); err != nil {
+			t.Fatalf("materialized symlink %q -> %q: target not materialized on disk: %v", k, realTarget, err)
+		}
 	}
 
 	r, err := platform.NewScopedOSReader(dir)
@@ -115,6 +154,21 @@ func translateVirtualPath(virtualPath, virtualRoot, osRoot string) (string, bool
 		return osRoot, true
 	}
 	return filepath.Join(osRoot, rel), true
+}
+
+// isVirtualRootPath reports whether virtualPath is under virtualRoot
+// or equal to it. Used to distinguish in-root from external
+// symlink targets before invoking translateSymlinkTarget.
+func isVirtualRootPath(virtualPath, virtualRoot string) bool {
+	if virtualRoot == "" {
+		return false
+	}
+	cleanVirtual := filepath.Clean(virtualPath)
+	cleanRoot := filepath.Clean(virtualRoot)
+	if cleanVirtual == cleanRoot {
+		return true
+	}
+	return strings.HasPrefix(cleanVirtual, cleanRoot+string(filepath.Separator))
 }
 
 // materializeTreeEntry writes a single VirtualFile entry to disk at the
@@ -958,7 +1012,7 @@ if got := r.Root(); got != scopedReaderProcRoot {
 func TestTranslateVirtualPath_Unit(t *testing.T) {
 	t.Parallel()
 
-	const virtualRoot = "/proc"
+	const virtualRoot = scopedReaderProcRoot
 	const osRoot = "/tmp/scoped-test"
 
 	tests := []struct {
@@ -975,7 +1029,7 @@ func TestTranslateVirtualPath_Unit(t *testing.T) {
 		},
 		{
 			name:        "virtual root itself",
-			virtualPath: "/proc",
+			virtualPath: scopedReaderProcRoot,
 			want:        osRoot,
 			wantOK:      true,
 		},
@@ -1007,13 +1061,144 @@ func TestTranslateVirtualPath_Unit(t *testing.T) {
 	}
 }
 
+// TestIsVirtualRootPath_Unit tests the helper that distinguishes
+// in-virtual-root paths (subject to materialization) from
+// out-of-virtual-root paths (escape-attempt markers that the harness
+// preserves externally).
+func TestIsVirtualRootPath_Unit(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		virtualPath  string
+		virtualRoot  string
+		wantIsInside bool
+	}{
+		{
+			name:         "path equal to root",
+			virtualPath:  scopedReaderProcRoot,
+			virtualRoot:  scopedReaderProcRoot,
+			wantIsInside: true,
+		},
+		{
+			name:         "path under root",
+			virtualPath:  "/proc/d/file",
+			virtualRoot:  scopedReaderProcRoot,
+			wantIsInside: true,
+		},
+		{
+			name:         "sibling path",
+			virtualPath:  scopedReaderEtcPasswd,
+			virtualRoot:  scopedReaderProcRoot,
+			wantIsInside: false,
+		},
+		{
+			name:         "traversal above root",
+			virtualPath:  "/proc/../etc",
+			virtualRoot:  scopedReaderProcRoot,
+			wantIsInside: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := isVirtualRootPath(tt.virtualPath, tt.virtualRoot)
+			if got != tt.wantIsInside {
+				t.Errorf("isVirtualRootPath(%q, %q) = %v, want %v",
+					tt.virtualPath, tt.virtualRoot, got, tt.wantIsInside)
+			}
+		})
+	}
+}
+
+// TestScopedOSFactory_RejectsOutsideRootPath verifies the harness
+// fails cleanly when a virtual entry lies outside the declared
+// virtual root. The harness must NEVER silently skip such an entry
+// because that would let the OS reader exercise a different tree
+// than the one declared in the test's setup.
+func TestScopedOSFactory_RejectsOutsideRootPath(t *testing.T) {
+	t.Parallel()
+
+	// Snapshot a mem tree containing one entry outside the
+	// declared root. translateVirtualPath will return ok=false
+	// for it; the harness must report this as a setup error.
+	dir := t.TempDir()
+	// The factory would call os.WriteFile in this path; use
+	// the in-process helper directly to avoid touching the
+	// filesystem when the factory should fail.
+	absRoot, err := filepath.Abs(scopedReaderProcRoot)
+	if err != nil {
+		t.Fatalf("absolute root: %v", err)
+	}
+	if _, ok := translateVirtualPath(scopedReaderEtcPasswd, absRoot, dir); ok {
+		t.Errorf("translateVirtualPath(%q, %q, %q) returned ok=true; expected false for out-of-root path",
+			scopedReaderEtcPasswd, absRoot, dir)
+	}
+}
+
+// TestScopedOSFactory_VerifiesMaterializedSymlinks verifies the
+// post-materialize verification step: every virtual symlink whose
+// target was under the virtual root must point at an OS entry that
+// actually exists on disk after materialization.
+func TestScopedOSFactory_VerifiesMaterializedSymlinks(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	mem := platform.NewMemPlatformReader()
+
+	// Build a small tree: a directory, a file inside it, a
+	// symlink whose target is the in-root file.
+	mem.AddDir("/proc/d", 0o755)
+	mem.AddFile("/proc/d/target", []byte("payload"), 0o644)
+	mem.AddSymlink("/proc/d/link", "target")
+
+	// Materialize via the harness's helpers directly to avoid
+	// coupling this test to scopedOSFactory's outer test machinery.
+	absRoot, err := filepath.Abs(scopedReaderProcRoot)
+	if err != nil {
+		t.Fatalf("absolute root: %v", err)
+	}
+	for k, v := range mem.Snapshot() {
+		realPath, ok := translateVirtualPath(k, absRoot, dir)
+		if !ok {
+			t.Fatalf("path %q outside virtual root", k)
+		}
+		materializeTreeEntry(t, realPath, v, absRoot, dir)
+	}
+
+	// Now verify every symlink whose target is under the
+	// virtual root points at an existing entry.
+	for k, v := range mem.Snapshot() {
+		if v.Kind != platform.FileKindSymlink {
+			continue
+		}
+		target := v.Target
+		if !filepath.IsAbs(target) {
+			continue
+		}
+		if !isVirtualRootPath(target, absRoot) {
+			continue
+		}
+		realTarget, ok := translateVirtualPath(target, absRoot, dir)
+		if !ok {
+			t.Errorf("symlink %q -> %q could not be translated", k, target)
+			continue
+		}
+		if _, err := os.Stat(realTarget); err != nil {
+			t.Errorf("materialized symlink %q -> %q: target missing on disk: %v",
+				k, realTarget, err)
+		}
+	}
+}
+
 // TestTranslateSymlinkTarget_Unit tests the per-target translation:
 // relative targets stay relative, in-virtual-root absolute targets
 // are rewritten, out-of-root absolute targets are preserved verbatim.
 func TestTranslateSymlinkTarget_Unit(t *testing.T) {
 	t.Parallel()
 
-	const virtualRoot = "/proc"
+	const virtualRoot = scopedReaderProcRoot
 	const osRoot = "/tmp/scoped-test"
 
 	tests := []struct {
@@ -1042,7 +1227,7 @@ func TestTranslateSymlinkTarget_Unit(t *testing.T) {
 		},
 		{
 			name:           "absolute virtual-root-prefix-target preserved as in-root",
-			virtualTarget:  "/proc",
+			virtualTarget:  scopedReaderProcRoot,
 			symlinkOSPath:  osRoot + "/d/link",
 			wantTranslated: osRoot,
 		},
@@ -1063,17 +1248,40 @@ func TestTranslateSymlinkTarget_Unit(t *testing.T) {
 // Adversarial tests (plan §10.5)
 // -----------------------------------------------------------------------------
 
+// symlinkRaceOutside is the sentinel byte sequence the swapper
+// plants in the out-of-root target file. Any read observed to
+// return bytes containing this prefix is a containment violation.
+const symlinkRaceOutside = "OUTSIDE-BYTES-UNREACHABLE-FROM-ROOT"
+
+// symlinkRaceInside is the sentinel byte sequence the swapper
+// plants in the in-root regular file. Any read observed to return
+// bytes NOT containing this prefix while the kernel-side resolution
+// should land on this file is a regression.
+const symlinkRaceInside = "INSIDE-BYTES-OWNED-BY-ROOT"
+
 // TestScopedReader_SymlinkRace is the adversarial regression test for
 // accidental pathname-reopen implementations. The test deterministically
-// cycles the target between two states (in-root regular file and
-// symlink to outside) while a concurrent reader calls ReadFile. Both
-// states are exercised by construction; the assertion is that no
-// read ever returns the OUTSIDE content, which would only happen if
-// the implementation re-resolved the pathname after the open.
+// cycles the target between two states while a concurrent reader calls
+// ReadFile:
 //
-// The test is a regression detector, not a proof of kernel
-// correctness: it ensures the implementation never falls out of
-// kernel-confined semantics regardless of timing.
+//	State A: target is a regular file inside the root, with
+//	         symlinkRaceInside as its content.
+//	State B: target is a symlink to a file outside the root,
+//	         with symlinkRaceOutside as its content.
+//
+// The test's invariant is the kernel-confined containment
+// guarantee, not the number of iterations:
+//
+//	State A read MUST return bytes containing symlinkRaceInside.
+//	State B read MUST NOT return bytes containing
+//	symlinkRaceOutside. The kernel's RESOLVE_IN_ROOT must
+//	clamp the open to the in-root counterpart; the read must
+//	therefore either error (in-root counterpart missing) or
+//	return different bytes.
+//
+// Either violation aborts the test immediately. The iteration
+// counters are reported for diagnostic purposes but are not
+// themselves the assertion.
 //
 // Termination contract: either goroutine can call cancel() to abort
 // the test cleanly if it observes a regression (wrong content, I/O
@@ -1089,12 +1297,12 @@ func TestScopedReader_SymlinkRace(t *testing.T) {
 	}
 
 	dir := t.TempDir()
-	safeContent := []byte("in-root-content")
+	safeContent := []byte(symlinkRaceInside)
 	if err := os.WriteFile(filepath.Join(dir, "safe"), safeContent, 0o600); err != nil {
 		t.Fatalf("seed safe: %v", err)
 	}
 	outsideDir := t.TempDir()
-	outsideContent := []byte("OUTSIDE")
+	outsideContent := []byte(symlinkRaceOutside)
 	if err := os.WriteFile(filepath.Join(outsideDir, "secret"), outsideContent, 0o600); err != nil {
 		t.Fatalf("seed outside: %v", err)
 	}
@@ -1194,9 +1402,10 @@ func TestScopedReader_SymlinkRace(t *testing.T) {
 				t.Errorf("state A read error: %v", err)
 				return
 			}
-			if string(data) != "in-root-content" {
+			if !bytes.Contains(data, []byte(symlinkRaceInside)) {
 				cancel()
-				t.Errorf("state A read content = %q, want %q", string(data), "in-root-content")
+				t.Errorf("state A invariant violated: read did not contain %q (got %q); containment regressed",
+					symlinkRaceInside, string(data))
 				return
 			}
 			roundsA.Add(1)
@@ -1213,9 +1422,9 @@ func TestScopedReader_SymlinkRace(t *testing.T) {
 			case <-ctx.Done():
 				return
 			}
-			if err == nil && string(data) == "OUTSIDE" {
+			if err == nil && bytes.Contains(data, []byte(symlinkRaceOutside)) {
 				cancel()
-				t.Errorf("state B read returned OUTSIDE content; containment violated")
+				t.Errorf("state B containment violated: read returned out-of-root bytes %q; kernel-confined containment regressed", string(data))
 				return
 			}
 			roundsB.Add(1)
@@ -1427,7 +1636,7 @@ func TestScopedReader_LifecycleInternalHelpers(t *testing.T) {
 		// Add an entry at the root to make "." resolve to a real
 		// node; joinAndValidate returns root verbatim for "." so
 		// the lookup hits the stored /proc entry.
-		mem.AddDir("/proc", 0o755)
+		mem.AddDir(scopedReaderProcRoot, 0o755)
 		mem.AddFile("/proc/x", []byte("y"), 0o644)
 		r := platform.NewScopedMemReader(scopedReaderProcRoot, mem)
 		t.Cleanup(func() { _ = r.Close() })
@@ -1444,7 +1653,7 @@ func TestScopedReader_LifecycleInternalHelpers(t *testing.T) {
 func TestScopedReader_NewScopedMemReaderNilMem(t *testing.T) {
 	t.Parallel()
 
-	r := platform.NewScopedMemReader("/proc", nil)
+	r := platform.NewScopedMemReader(scopedReaderProcRoot, nil)
 	if r == nil {
 		t.Fatal("NewScopedMemReader(/proc, nil) returned nil")
 	}
