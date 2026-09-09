@@ -32,7 +32,13 @@ Root being able to read a user file or connect to a socket does not establish th
 
 ## Resource ownership and cancellation
 
-The runner currently caps retained stdout and stderr at 1 MiB each and applies a default 30-second execution timer. It uses a separate process group and signals that group on cancellation. This does not yet guarantee a bounded return when a detached descendant retains an output pipe; bounded drain and cleanup semantics are tracked in [#37](https://github.com/EpicBlackWolfZ/capagent/issues/37).
+The runner caps retained stdout and stderr at 1 MiB each and applies a default 30-second execution timer. Each buffer starts with 4 KiB capacity and grows within its cap. Temporary growth allocations and returned output copies are additional memory; these limits are not a total process-memory budget. Probe concurrency defaults to `min(runtime.NumCPU(), 8)`, with a minimum of one. Explicit positive `WithMaxConcurrency` values can exceed that default; zero and negative overrides are rejected.
+
+The runner signals its separate process group on cancellation and reaps its direct child. A 250 ms pipe-drain budget starts on cancellation or observed direct-child exit, whichever occurs first. Expiry closes lingering runner pipes, including those held by descendants that escape into another session. This budget is subject to kernel and scheduling delays, rather than a hard real-time guarantee. Closing pipes does not prove escaped descendants have terminated; successful completion does not trigger an extra group signal.
+
+Retained output remains available on errors. A successful child exit with expired drain returns `exec.ErrWaitDelay`; a nonzero exit retains its exit error and code. Observable caller cancellation takes precedence over internal timeout, which takes precedence over execution errors. `TimedOut` identifies only the selected internal timeout. Byte-cap truncation flags mean actual bytes were discarded beyond the cap; they do not certify completeness after a timeout or drain error. ExitCode zero alone is not success: startup failures also retain the zero-value code and return an error.
+
+Scoped root and operation descriptors are opened atomically with `O_CLOEXEC`, including when the kernel allocates FD 0. They remain usable by their parent owner and cannot survive exec as implicitly inherited handles. Explicitly duplicating or transferring a descriptor is outside this guarantee.
 
 Filesystem calls currently lack the resource/cancellation contract required by [#57](https://github.com/EpicBlackWolfZ/capagent/issues/57). Do not assume a Go context can forcibly interrupt arbitrary blocking kernel I/O. Limits must be defined for supported filesystems, file types, bytes, entries and parser inputs.
 

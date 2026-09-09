@@ -326,14 +326,31 @@ fixtures, while probes receive only the measurement interfaces.
 
 **`internal/platform` CommandRunner process-group lifecycle.**
 `OSCommandRunner` creates each subprocess in its own process group via
-`Setpgid`. When timeout or caller cancellation interrupts execution, the
-runner terminates the entire process group and waits for the process to
-be reaped. Normally completing commands are not signalled after
-completion. This does not prove that all descendants have exited. Bounded
-pipe-drain handling remains open in [#37](https://github.com/EpicBlackWolfZ/capagent/issues/37). Timeout-vs-caller-cancellation precedence: when both events
-become observable before result classification, caller cancellation wins.
-`TimedOut` is set to `true` only when the internal timeout is the
-selected termination reason.
+`Setpgid`. Timeout or caller cancellation signals the owned group; `Run`
+reaps the direct child and joins its cancellation-forwarding goroutine and
+any started timer callback. Normally completing commands are not signalled
+after completion. This does not prove that all descendants have exited.
+
+The default execution timeout is 30 seconds. `Cmd.WaitDelay` adds a 250 ms
+budget for lingering pipes after cancellation or observed direct-child exit,
+whichever occurs first. Pipe closure bounds drain even when a descendant
+changes session, subject to kernel/scheduling delays; it does not promise
+termination of escaped descendants. A successful exit with expired drain
+returns `exec.ErrWaitDelay`; nonzero exit preserves `*exec.ExitError`.
+Retained prefixes remain available on errors. Caller cancellation observable
+at classification wins over internal timeout, followed by execution errors.
+`TimedOut` is true only when the internal timeout is selected. ExitCode zero
+alone cannot establish success, including on startup failure.
+
+Each output stream retains at most 1 MiB. Buffers begin at 4 KiB and grow
+geometrically with backing capacity clamped to that limit. Returned copies
+and temporary growth allocations are additional memory. Truncation flags
+indicate discarded bytes beyond the cap, not general stream completeness.
+An empty write at the exact cap does not mark truncation.
+
+The orchestrator defaults to `max(1, min(runtime.NumCPU(), 8))` workers.
+This conservative resource default is overridable with any positive
+`WithMaxConcurrency` value; invalid explicit values remain errors.
 
 **`internal/platform` ScopedReader filesystem-security boundary (M1.1).**
 `ScopedReader` is the canonical filesystem abstraction for untrusted
@@ -353,7 +370,9 @@ predicate but is not the security boundary.
 path. Callbacks perform fd-relative I/O via direct syscalls; they
 must not close the FD. This ownership rule prevents double-close;
 FD 0 is a valid descriptor and is treated symmetrically with any
-other non-sentinel FD value.
+other non-sentinel FD value. Both root and per-operation opens atomically
+include `O_CLOEXEC`, so exec does not leak implicitly inherited scoped
+handles. No post-open flag mutation or additional close owner is needed.
 
 **Symlink semantics:** the OS reader delegates symlink traversal to
 the kernel (SYMLOOP_MAX = 40 hops); the memory reader maintains an
