@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -119,6 +120,11 @@ func (b *boundedBuffer) Truncated() bool {
 // timer expires first, ExecResult.TimedOut is true and the returned error
 // is context.DeadlineExceeded. When the caller's ctx is cancelled first,
 // TimedOut is false and the returned error is ctx.Err().
+//
+// Process-group cleanup: a SIGKILL is delivered to the entire process group
+// ONLY when execution was interrupted (internal timeout or caller
+// cancellation). Commands that complete normally are NOT signalled again;
+// the subprocess group is left intact because it has already exited.
 func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) (ExecResult, error) {
 	if ctx == nil {
 		ctx = context.Background()
@@ -153,6 +159,21 @@ func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) 
 
 	cmd := exec.CommandContext(internalCtx, name, args...) //nolint:gosec // G204: CommandRunner is a subprocess abstraction layer.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	// Override the default Cancel to terminate the entire process group
+	// (not only the immediate child). Without this, a forked grand-child
+	// inheriting the runner's stdout/stderr pipes can keep them open,
+	// preventing cmd.Wait from returning after the immediate child has
+	// been signalled.
+	cmd.Cancel = func() error {
+		if cmd.Process == nil {
+			return os.ErrProcessDone
+		}
+		// Best-effort signal to the entire process group. The error is
+		// intentionally ignored: ESRCH simply means the group is already
+		// gone, and any other error is non-actionable here.
+		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		return cmd.Process.Kill()
+	}
 
 	stdoutBuf := newBoundedBuffer(maxRunnerOutputBytes)
 	stderrBuf := newBoundedBuffer(maxRunnerOutputBytes)
@@ -165,12 +186,6 @@ func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) 
 	// timer has already fired or been stopped; either way we cannot undo
 	// internalTimedOut, so ignore the return value here.
 	timer.Stop()
-
-	// Ensure the entire process group is dead; exec.CommandContext only
-	// signals the immediate child.
-	if cmd.Process != nil {
-		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
-	}
 
 	result := ExecResult{
 		Stdout:          stdoutBuf.Bytes(),

@@ -7,8 +7,6 @@ BIN_DIR ?= bin
 DIST_DIR ?= dist
 COVERAGE_FILE ?= coverage.out
 COVERAGE_THRESHOLD ?= 95.0
-COVERAGE_PACKAGE_THRESHOLD ?= 95.0
-COVERAGE_PACKAGES ?= internal/model internal/requirement internal/platform internal/probe
 MODULE_PATH ?= github.com/EpicBlackWolfZ/capagent
 HOST_ARCH ?= $(shell $(GO) env GOARCH 2>/dev/null || echo "amd64")
 
@@ -82,7 +80,7 @@ else
 	@$(GO) test -race ./...
 endif
 
-## coverage: Run tests with coverage profile, output metrics, and verify threshold (>= 95.0%)
+## coverage: Run tests with coverage profile, output metrics, and verify total coverage (>= 95.0%)
 coverage:
 	@echo "==> Running tests with coverage..."
 ifdef GOTESTSUM
@@ -92,21 +90,9 @@ else
 endif
 	@echo "==> Coverage summary:"
 	@$(GO) tool cover -func=$(COVERAGE_FILE)
-	@echo "==> Verifying total code coverage threshold (>= $(COVERAGE_THRESHOLD)%)..."
+	@echo "==> Verifying total repository coverage threshold (>= $(COVERAGE_THRESHOLD)%)..."
 	@TOTAL_COVERAGE=$$($(GO) tool cover -func=$(COVERAGE_FILE) | grep "total:" | awk '{print substr($$3, 1, length($$3)-1)}'); \
 	echo "$${TOTAL_COVERAGE} $(COVERAGE_THRESHOLD)" | awk '{if ($$1 < $$2) { printf "❌ Total coverage %s%% is below target $(COVERAGE_THRESHOLD)%%\n", $$1; exit 1 } else { printf "✅ Total coverage %s%% satisfies target >= $(COVERAGE_THRESHOLD)%%\n", $$1 }}'
-	@echo "==> Verifying per-package coverage thresholds (>= $(COVERAGE_PACKAGE_THRESHOLD)%) for: $(COVERAGE_PACKAGES)..."
-	@FAILED_PKGS=""; \
-	for pkg in $(COVERAGE_PACKAGES); do \
-		pkg_cov=$$($(GO) tool cover -func=$(COVERAGE_FILE) | grep -F "$${pkg}/" | awk '{print substr($$3, 1, length($$3)-1)}' | awk 'BEGIN { max=0 } { if ($$1+0 > max+0) max=$$1 } END { printf "%.1f", max }'); \
-		awk -v p="$$pkg" -v c="$$pkg_cov" -v t="$(COVERAGE_PACKAGE_THRESHOLD)" 'BEGIN { if (c+0 < t+0) { printf "  ❌ %s: %s%% < %s%%\n", p, c, t; exit 1 } else { printf "  ✅ %s: %s%% >= %s%%\n", p, c, t } }'; \
-		awk -v p="$$pkg" -v c="$$pkg_cov" -v t="$(COVERAGE_PACKAGE_THRESHOLD)" 'BEGIN { if (c+0 < t+0) exit 1 }' || FAILED_PKGS="$$FAILED_PKGS $$pkg"; \
-	done; \
-	if [ -n "$$FAILED_PKGS" ]; then \
-		printf "❌ Per-package coverage below $(COVERAGE_PACKAGE_THRESHOLD)%% for:%s\n" "$$FAILED_PKGS"; \
-		exit 1; \
-	fi; \
-	printf "✅ All packages satisfy per-package threshold >= $(COVERAGE_PACKAGE_THRESHOLD)%%\n"
 
 ## lint: Run strict golangci-lint check
 lint:

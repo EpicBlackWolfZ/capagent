@@ -259,19 +259,31 @@ or CLI packages.
 - A dependent becomes runnable **only** after all its declared prerequisites
   finish with `ProbeSucceeded`. Prerequisite `ProbeFailed`, `ProbeCancelled`,
   or `ProbeSkipped` cascades to transitive dependents as `ProbeSkipped` with
-  `ErrDependencyFailed`.
+  `ErrDependencyFailed`. Dependents are NEVER marked `ProbeCancelled`; only
+  direct cancellation propagates that status.
 - Concurrency cap is configurable via `WithMaxConcurrency(n ≥ 1)`. Effective
   worker pool is `min(maxConcurrency, runnableProbes)`. Empty registries
   return an empty slice without spawning goroutines.
 - Output is canonically sorted by `ResolvedPlan()` order regardless of
   completion timing — concurrent execution never perturbs result order.
 
+**Cancellation contract.** Probe.Run implementations are expected to honor
+ctx.Done() and return promptly when the context is cancelled. The
+orchestrator cannot forcibly interrupt arbitrary Go code that ignores its
+context; a probe that blocks indefinitely will block its worker goroutine
+and prevent subsequent probes from being scheduled. Returning ctx.Err()
+(verbatim or wrapped via fmt.Errorf("%w", ...)) is classified as
+ProbeCancelled by the orchestrator.
+
 **Environment injection.** All probe `Run` invocations receive a
 `platform.Environment` value containing a `PlatformReader`, `ProcfsReader`,
-`SysfsReader`, and `CommandRunner`. The environment is immutable; probes MUST
-NOT mutate any reader state. Test doubles (`MemPlatformReader`,
-`FakeCommandRunner`) are the canonical way to make probe behavior fully
-deterministic in unit tests.
+`SysfsReader`, and `CommandRunner`. The Environment value itself is not
+deeply immutable: its fields are reference-typed pointers and interfaces
+that may be observed by sibling probes executed concurrently. Probes MUST
+NOT mutate shared dependencies unless those dependencies explicitly
+document that they are safe for concurrent mutation. Test doubles
+(`MemPlatformReader`, `FakeCommandRunner`) are the canonical way to make
+probe behavior fully deterministic in unit tests.
 
 ---
 

@@ -17,6 +17,13 @@ import (
 //	[Resolved]  --Resolve()-->   no-op (idempotent)
 //
 // Once a registry has reached Resolved, its execution plan MUST NOT change.
+// The plan returned by ResolvedPlan() is byte-identical across calls for
+// the lifetime of the resolved registry; subsequent Register calls are
+// rejected with ErrRegistryResolved.
+//
+// Concurrency: Registry is safe for concurrent use. Reads (Get, All,
+// ResolvedPlan) may proceed in parallel; Register and Resolve serialize
+// against each other and against reads.
 type Registry struct {
 	mu sync.RWMutex
 

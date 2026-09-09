@@ -112,20 +112,35 @@ type probeState struct {
 }
 
 // runQueue is a slice-backed FIFO queue with a non-blocking push and a
-// blocking pop. Closed queues cause push to become a no-op and pop to
-// return false, allowing workers to exit cleanly.
+// blocking pop. The synchronization primitive is sync.Cond so that wakeups
+// cannot be lost between an item becoming available and a consumer noticing.
+//
+// Semantics:
+//
+//   - push() appends atomically while holding the queue lock and broadcasts
+//     a wakeup so any blocked pop() call observes the new item.
+//   - pop() blocks until an item is available or the queue is closed and
+//     drained; it returns (id, true) for each dequeued item and ("", false)
+//     once the queue has been closed and fully drained.
+//   - close() marks the queue closed and wakes every blocked worker.
+//   - close() is idempotent; a second call is a no-op.
+//   - push() after close() is a no-op; the caller cannot panic the queue.
 type runQueue struct {
 	mu     sync.Mutex
+	cond   *sync.Cond
 	items  []string
-	wake   chan struct{}
 	closed bool
 }
 
 func newRunQueue() *runQueue {
-	return &runQueue{wake: make(chan struct{}, 1)}
+	q := &runQueue{}
+	q.cond = sync.NewCond(&q.mu)
+	return q
 }
 
-// push enqueues id; if the queue has been closed, push is a no-op.
+// push enqueues id; if the queue has been closed, push is a no-op. push
+// broadcasts a wakeup so that any consumer blocked in pop() re-checks the
+// queue state.
 func (q *runQueue) push(id string) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -133,38 +148,27 @@ func (q *runQueue) push(id string) {
 		return
 	}
 	q.items = append(q.items, id)
-}
-
-// notifyOne wakes at most one blocked pop caller. Safe to call after push.
-func (q *runQueue) notifyOne() {
-	select {
-	case q.wake <- struct{}{}:
-	default:
-	}
+	q.cond.Broadcast()
 }
 
 // pop blocks until an item is available or the queue is closed and drained.
 // Returns (id, true) for each dequeued item, or ("", false) once the queue
 // is closed and fully drained.
 func (q *runQueue) pop() (string, bool) {
-	for {
-		q.mu.Lock()
-		if len(q.items) > 0 {
-			id := q.items[0]
-			q.items = q.items[1:]
-			q.mu.Unlock()
-			return id, true
-		}
-		closed := q.closed
-		q.mu.Unlock()
-		if closed {
-			return "", false
-		}
-		<-q.wake
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	for len(q.items) == 0 && !q.closed {
+		q.cond.Wait()
 	}
+	if len(q.items) == 0 {
+		return "", false
+	}
+	id := q.items[0]
+	q.items = q.items[1:]
+	return id, true
 }
 
-// close marks the queue as closed and wakes any blocked workers. Idempotent.
+// close marks the queue as closed and wakes every blocked worker. Idempotent.
 func (q *runQueue) close() {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -172,7 +176,7 @@ func (q *runQueue) close() {
 		return
 	}
 	q.closed = true
-	close(q.wake)
+	q.cond.Broadcast()
 }
 
 // schedulerContext bundles per-Run mutable state.
@@ -191,9 +195,18 @@ type schedulerContext struct {
 // by registry.ResolvedPlan() regardless of execution completion order.
 //
 // An empty registry yields an empty result without spawning goroutines.
-// Direct context cancellation marks active and queued probes as
-// ProbeCancelled; dependents of cancelled, failed, or skipped probes are
-// ProbeSkipped with ErrDependencyFailed.
+//
+// Cancellation contract:
+//
+//   - Direct context cancellation marks active and queued probes as
+//     ProbeCancelled; their Err is ctx.Err().
+//   - Dependents of cancelled, failed, or skipped probes are ProbeSkipped
+//     with ErrDependencyFailed. They are NEVER ProbeCancelled.
+//   - Probe.Run implementations are expected to honor ctx.Done(). A probe
+//     that blocks indefinitely will block its worker goroutine; the
+//     orchestrator cannot forcibly interrupt arbitrary Go code.
+//   - Returning ctx.Err() (or any error that wraps it via fmt.Errorf("%w", ...)
+//     or errors.Is) is classified as ProbeCancelled by the orchestrator.
 func (o *Orchestrator) Run(ctx context.Context, env platform.Environment) []ProbeResult {
 	plan, err := o.registry.ResolvedPlan()
 	if err != nil || len(plan) == 0 {
@@ -218,7 +231,6 @@ func (o *Orchestrator) Run(ctx context.Context, env platform.Environment) []Prob
 	for _, id := range plan {
 		if states[id].remainingDeps == 0 {
 			queue.push(id)
-			queue.notifyOne()
 		}
 	}
 
@@ -374,12 +386,10 @@ func (o *Orchestrator) recordFinal(sc *schedulerContext, id string, result Probe
 		sc.finalized.Add(1)
 	}
 
-	// Enqueue newly runnable probes outside the critical section.
+	// Enqueue newly runnable probes outside the critical section. push()
+	// broadcasts a wakeup so any blocked consumer re-checks the queue.
 	for _, dep := range newlyRunnable {
 		sc.queue.push(dep)
-	}
-	if len(newlyRunnable) > 0 {
-		sc.queue.notifyOne()
 	}
 
 	o.signalCompletion(sc, totalProbes)

@@ -13,12 +13,12 @@ import (
 
 // Cgroup controller names used repeatedly in sysfs tests.
 const (
-	cgroupCPU     = "cpu"
-	cgroupMemory  = "memory"
-	cgroupPids    = "pids"
-	cgroupIO      = "io"
-	cgroupCpuset  = "cpuset"
-	cgroupRdma    = "rdma"
+	cgroupCPU    = "cpu"
+	cgroupMemory = "memory"
+	cgroupPids   = "pids"
+	cgroupIO     = "io"
+	cgroupCpuset = "cpuset"
+	cgroupRdma   = "rdma"
 )
 
 func TestSysfsReader_CgroupControllers(t *testing.T) {

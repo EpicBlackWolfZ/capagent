@@ -4,7 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -142,14 +146,14 @@ func TestOSCommandRunner_TruncatesLongStdout(t *testing.T) {
 	const totalBytes = 2 * 1024 * 1024
 	r := platform.NewOSCommandRunner(10 * time.Second)
 	result, err := r.Run(context.Background(), "/bin/sh", "-c",
-		"head -c "+itoa(totalBytes)+" /dev/zero")
+		"head -c "+strconv.Itoa(totalBytes)+" /dev/zero")
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	if !result.StdoutTruncated {
 		t.Errorf("StdoutTruncated = false, want true (got %d bytes)", len(result.Stdout))
 	}
-	if len(result.Stdout) != (1<<20) {
+	if len(result.Stdout) != (1 << 20) {
 		t.Errorf("len(Stdout) = %d, want %d", len(result.Stdout), 1<<20)
 	}
 	if result.TimedOut {
@@ -166,14 +170,14 @@ func TestOSCommandRunner_TruncatesLongStderr(t *testing.T) {
 	const totalBytes = 2 * 1024 * 1024
 	r := platform.NewOSCommandRunner(10 * time.Second)
 	result, err := r.Run(context.Background(), "/bin/sh", "-c",
-		"head -c "+itoa(totalBytes)+" /dev/zero >&2")
+		"head -c "+strconv.Itoa(totalBytes)+" /dev/zero >&2")
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 	if !result.StderrTruncated {
 		t.Errorf("StderrTruncated = false, want true (got %d bytes)", len(result.Stderr))
 	}
-	if len(result.Stderr) != (1<<20) {
+	if len(result.Stderr) != (1 << 20) {
 		t.Errorf("len(Stderr) = %d, want %d", len(result.Stderr), 1<<20)
 	}
 }
@@ -221,30 +225,6 @@ func TestOSCommandRunner_InternalTimeoutTrumpsNoExternalCancel(t *testing.T) {
 	if !result.TimedOut {
 		t.Error("TimedOut = false, want true")
 	}
-}
-
-// itoa converts an int to its decimal string representation. Implemented
-// locally to avoid pulling strconv into the test for a trivial need.
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
-	}
-	negative := n < 0
-	if negative {
-		n = -n
-	}
-	var buf [20]byte
-	i := len(buf)
-	for n > 0 {
-		i--
-		buf[i] = byte('0' + n%10)
-		n /= 10
-	}
-	if negative {
-		i--
-		buf[i] = '-'
-	}
-	return string(buf[i:])
 }
 
 func TestFakeCommandRunner_RegisterAndMatch(t *testing.T) {
@@ -473,11 +453,169 @@ func TestOSCommandRunner_DoesNotPanicOnZeroDurationTimeout(t *testing.T) {
 	}
 }
 
-func TestOSCommandRunner_RespectsSyscallImport(t *testing.T) {
+// TestOSCommandRunner_NormalCompletionDoesNotSignalChildren verifies that a
+// command which completes normally does NOT trigger an extra SIGKILL to its
+// own process group. We assert this by spawning a benign parent plus a child
+// that writes a sentinel file after sleeping a short time; if the runner
+// sent an extra signal at end-of-Run, the child would be killed before
+// writing the sentinel.
+func TestOSCommandRunner_NormalCompletionDoesNotSignalChildren(t *testing.T) {
 	t.Parallel()
 
-	// This test exists only to assert that the syscall package is
-	// imported (used for process-group kill). Without it the build would
-	// fail with "imported and not used".
-	var _ = syscall.Kill
+	if _, err := exec.LookPath("/bin/sh"); err != nil {
+		t.Skipf("/bin/sh not available: %v", err)
+	}
+
+	dir := t.TempDir()
+	sentinel := filepath.Join(dir, "sentinel")
+
+	// Parent exits cleanly after child finishes. Child writes the
+	// sentinel then exits. If the runner sends an extra signal to the
+	// process group after the parent exits, the child would be killed
+	// before writing the file.
+	script := fmt.Sprintf(`(sleep 0.05; echo alive > %s) & wait`, sentinel)
+	r := platform.NewOSCommandRunner(5 * time.Second)
+	result, err := r.Run(context.Background(), "/bin/sh", "-c", script)
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if result.ExitCode != 0 {
+		t.Errorf("ExitCode = %d, want 0", result.ExitCode)
+	}
+	data, readErr := os.ReadFile(sentinel)
+	if readErr != nil {
+		t.Fatalf("child did not write sentinel: %v (extra SIGKILL likely killed it)", readErr)
+	}
+	if strings.TrimSpace(string(data)) != "alive" {
+		t.Errorf("sentinel = %q, want 'alive'", string(data))
+	}
+}
+
+// TestOSCommandRunner_KillsDescendantsOnTimeout verifies that the entire
+// process group is killed when the internal timeout fires. We spawn a shell
+// that detaches a sleep child writing its PID to a file; after the timeout,
+// we probe the child PID with signal 0 to confirm it is no longer alive.
+func TestOSCommandRunner_KillsDescendantsOnTimeout(t *testing.T) {
+	t.Parallel()
+
+	if _, err := exec.LookPath("/bin/sh"); err != nil {
+		t.Skipf("/bin/sh not available: %v", err)
+	}
+
+	dir := t.TempDir()
+	pidFile := filepath.Join(dir, "child.pid")
+
+	// Detach a sleep child and record its PID. The parent shell waits
+	// long enough that the runner's internal timeout will fire first.
+	// The sleep child writes its PID into pidFile so the test can probe
+	// it after the kill. Using a sentinel "ready" file ensures the sleep
+	// child is running before we attempt to kill it.
+	script := fmt.Sprintf(
+		`/bin/sleep 30 & echo $! > %s; touch %s; wait`,
+		pidFile, filepath.Join(dir, "ready"),
+	)
+	r := platform.NewOSCommandRunner(200 * time.Millisecond)
+	result, err := r.Run(context.Background(), "/bin/sh", "-c", script)
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("error = %v, want DeadlineExceeded", err)
+	}
+	if !result.TimedOut {
+		t.Error("TimedOut = false, want true")
+	}
+
+	// Give the killed children a brief moment to be reaped.
+	time.Sleep(50 * time.Millisecond)
+
+	raw, readErr := os.ReadFile(pidFile)
+	if readErr != nil {
+		t.Fatalf("child PID file not written: %v", readErr)
+	}
+	pid, parseErr := strconv.Atoi(strings.TrimSpace(string(raw)))
+	if parseErr != nil {
+		t.Fatalf("invalid child PID %q: %v", string(raw), parseErr)
+	}
+
+	// Probe the child with signal 0. If the process group was killed,
+	// the child is gone and kill returns ESRCH.
+	if probeErr := syscall.Kill(pid, 0); probeErr == nil {
+		t.Errorf("descendant PID %d survived process-group kill", pid)
+	} else if !errors.Is(probeErr, syscall.ESRCH) {
+		t.Errorf("kill(0) on descendant PID %d returned unexpected error: %v", pid, probeErr)
+	}
+}
+
+// TestOSCommandRunner_KillsDescendantsOnCallerCancellation verifies that
+// caller-context cancellation also terminates the entire process group.
+func TestOSCommandRunner_KillsDescendantsOnCallerCancellation(t *testing.T) {
+	t.Parallel()
+
+	if _, err := exec.LookPath("/bin/sh"); err != nil {
+		t.Skipf("/bin/sh not available: %v", err)
+	}
+
+	dir := t.TempDir()
+	pidFile := filepath.Join(dir, "child.pid")
+
+	script := fmt.Sprintf(
+		`/bin/sleep 30 & echo $! > %s; touch %s; wait`,
+		pidFile, filepath.Join(dir, "ready"),
+	)
+	r := platform.NewOSCommandRunner(30 * time.Second)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(150 * time.Millisecond)
+		cancel()
+	}()
+
+	result, err := r.Run(ctx, "/bin/sh", "-c", script)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("error = %v, want context.Canceled", err)
+	}
+	if result.TimedOut {
+		t.Error("TimedOut = true, want false on caller cancellation")
+	}
+
+	time.Sleep(50 * time.Millisecond)
+
+	raw, readErr := os.ReadFile(pidFile)
+	if readErr != nil {
+		t.Fatalf("child PID file not written: %v", readErr)
+	}
+	pid, parseErr := strconv.Atoi(strings.TrimSpace(string(raw)))
+	if parseErr != nil {
+		t.Fatalf("invalid child PID %q: %v", string(raw), parseErr)
+	}
+	if probeErr := syscall.Kill(pid, 0); probeErr == nil {
+		t.Errorf("descendant PID %d survived process-group kill", pid)
+	} else if !errors.Is(probeErr, syscall.ESRCH) {
+		t.Errorf("kill(0) on descendant PID %d returned unexpected error: %v", pid, probeErr)
+	}
+}
+
+// TestOSCommandRunner_ReapsKilledProcess verifies that a process killed by
+// SIGKILL is reaped (no zombie) once Run returns. We rely on the absence of
+// any visible side effect: if Run returned without blocking indefinitely,
+// the kernel reaped the child. The PID file path also serves to ensure we
+// can spawn the process without errors.
+func TestOSCommandRunner_ReapsKilledProcess(t *testing.T) {
+	t.Parallel()
+
+	r := platform.NewOSCommandRunner(60 * time.Millisecond)
+	result, err := r.Run(context.Background(), sleepCommand, "10")
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("error = %v, want DeadlineExceeded", err)
+	}
+	if !result.TimedOut {
+		t.Error("TimedOut = false, want true")
+	}
+	// Calling Run again must work and must not block. If the previous
+	// child were not reaped, the runner would deadlock on the new process.
+	result2, err := r.Run(context.Background(), echoCommand, "reaped")
+	if err != nil {
+		t.Fatalf("second Run: %v", err)
+	}
+	if string(result2.Stdout) != "reaped\n" {
+		t.Errorf("second stdout = %q, want 'reaped'", string(result2.Stdout))
+	}
 }

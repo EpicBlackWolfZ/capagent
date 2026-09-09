@@ -55,10 +55,12 @@ type memDirEntry struct {
 	isDir bool
 }
 
-func (e *memDirEntry) Name() string               { return e.name }
-func (e *memDirEntry) IsDir() bool                { return e.isDir }
-func (e *memDirEntry) Type() os.FileMode          { return e.kind.modeType() }
-func (e *memDirEntry) Info() (os.FileInfo, error) { return nil, errors.New("memDirEntry.Info not implemented") }
+func (e *memDirEntry) Name() string      { return e.name }
+func (e *memDirEntry) IsDir() bool       { return e.isDir }
+func (e *memDirEntry) Type() os.FileMode { return e.kind.modeType() }
+func (e *memDirEntry) Info() (os.FileInfo, error) {
+	return nil, errors.New("memDirEntry.Info not implemented")
+}
 
 // memFileInfo is a lightweight os.FileInfo implementation backed by a VirtualFile.
 type memFileInfo struct {
@@ -272,47 +274,53 @@ func (m *MemPlatformReader) AddError(path string, err error) {
 }
 
 // resolveSymlinkChain walks the symlink chain at clean, returning the final
-// resolved path or syscall.ELOOP if the chain exceeds maxSymlinkDepth hops.
+// resolved entry plus a "found" boolean. The traversal applies ForcedErr
+// semantics at every node it visits: an entry with ForcedErr set aborts
+// resolution with that error before any further hop is attempted.
+//
 // The boolean indicates whether the final resolved path was located in the
-// virtual tree.
-func (m *MemPlatformReader) resolveSymlinkChain(clean string, depth int) (string, bool, error) {
+// virtual tree. When depth exceeds maxSymlinkDepth, syscall.ELOOP is returned.
+//
+// Callers MUST treat ForcedErr as authoritative: even if the entry is itself
+// a symlink, the forced error is reported rather than being masked by the
+// chain's final target.
+func (m *MemPlatformReader) resolveSymlinkChain(clean string, depth int) (*VirtualFile, string, bool, error) {
 	if depth > maxSymlinkDepth {
-		return "", false, syscall.ELOOP
+		return nil, "", false, syscall.ELOOP
 	}
 	m.mu.RLock()
 	entry, ok := m.files[clean]
 	m.mu.RUnlock()
 	if !ok {
-		return clean, false, nil
+		return nil, clean, false, nil
+	}
+	if entry.ForcedErr != nil {
+		return nil, "", false, entry.ForcedErr
 	}
 	if entry.Kind != FileKindSymlink {
-		return clean, true, nil
+		return entry, clean, true, nil
 	}
-	next := filepath.Join(filepath.Dir(clean), entry.Target)
+	next := filepath.Clean(filepath.Join(filepath.Dir(clean), entry.Target))
 	return m.resolveSymlinkChain(next, depth+1)
 }
 
 // ReadFile returns the content of the file at path. Directories return
 // syscall.EISDIR; symlinks are followed up to maxSymlinkDepth hops; cycles
-// surface as syscall.ELOOP.
+// surface as syscall.ELOOP. ForcedErr at any node of the chain aborts with
+// that error verbatim.
 func (m *MemPlatformReader) ReadFile(path string) ([]byte, error) {
 	clean, err := normalize(path)
 	if err != nil {
 		return nil, os.ErrNotExist
 	}
-	resolved, exists, lerr := m.resolveSymlinkChain(clean, 0)
+	entry, resolved, exists, lerr := m.resolveSymlinkChain(clean, 0)
 	if lerr != nil {
 		return nil, lerr
 	}
 	if !exists {
 		return nil, os.ErrNotExist
 	}
-	m.mu.RLock()
-	entry := m.files[resolved]
-	m.mu.RUnlock()
-	if entry.ForcedErr != nil {
-		return nil, entry.ForcedErr
-	}
+	_ = resolved
 	if entry.Kind == FileKindDirectory {
 		return nil, syscall.EISDIR
 	}
@@ -321,25 +329,20 @@ func (m *MemPlatformReader) ReadFile(path string) ([]byte, error) {
 
 // Stat returns FileInfo for path following symlinks. Symlink loops return
 // syscall.ELOOP; non-symlink entries use the stored mode and content size.
+// ForcedErr at any node of the chain aborts with that error verbatim.
 func (m *MemPlatformReader) Stat(path string) (os.FileInfo, error) {
 	clean, err := normalize(path)
 	if err != nil {
 		return nil, os.ErrNotExist
 	}
-	resolved, exists, lerr := m.resolveSymlinkChain(clean, 0)
+	entry, resolved, exists, lerr := m.resolveSymlinkChain(clean, 0)
 	if lerr != nil {
 		return nil, lerr
 	}
 	if !exists {
 		return nil, os.ErrNotExist
 	}
-	m.mu.RLock()
-	entry := m.files[resolved]
-	m.mu.RUnlock()
-	if entry.ForcedErr != nil {
-		return nil, entry.ForcedErr
-	}
-	return &memFileInfo {
+	return &memFileInfo{
 		name:  filepath.Base(resolved),
 		size:  int64(len(entry.Content)),
 		mode:  entry.Mode,
@@ -349,24 +352,19 @@ func (m *MemPlatformReader) Stat(path string) (os.FileInfo, error) {
 
 // ReadDir enumerates sorted child entries of the directory at path. Calling
 // ReadDir on a regular file or symlink-to-file returns syscall.ENOTDIR;
-// missing entries return os.ErrNotExist.
+// missing entries return os.ErrNotExist. ForcedErr at any node of the chain
+// aborts with that error verbatim.
 func (m *MemPlatformReader) ReadDir(path string) ([]os.DirEntry, error) {
 	clean, err := normalize(path)
 	if err != nil {
 		return nil, os.ErrNotExist
 	}
-	resolved, exists, lerr := m.resolveSymlinkChain(clean, 0)
+	entry, resolved, exists, lerr := m.resolveSymlinkChain(clean, 0)
 	if lerr != nil {
 		return nil, lerr
 	}
 	if !exists {
 		return nil, os.ErrNotExist
-	}
-	m.mu.RLock()
-	entry := m.files[resolved]
-	m.mu.RUnlock()
-	if entry.ForcedErr != nil {
-		return nil, entry.ForcedErr
 	}
 	if entry.Kind != FileKindDirectory {
 		return nil, syscall.ENOTDIR
@@ -398,7 +396,7 @@ func (m *MemPlatformReader) ReadDir(path string) ([]os.DirEntry, error) {
 		if child == nil {
 			continue
 		}
-		out = append(out, &memDirEntry {
+		out = append(out, &memDirEntry{
 			name:  n,
 			mode:  child.Mode,
 			kind:  child.Kind,
@@ -410,7 +408,8 @@ func (m *MemPlatformReader) ReadDir(path string) ([]os.DirEntry, error) {
 }
 
 // Readlink returns the raw symlink target stored at path without dereferencing
-// it. Calling Readlink on a non-symlink returns syscall.EINVAL.
+// it. Calling Readlink on a non-symlink returns syscall.EINVAL. ForcedErr on
+// the symlink entry itself aborts with that error verbatim.
 func (m *MemPlatformReader) Readlink(path string) (string, error) {
 	clean, err := normalize(path)
 	if err != nil {

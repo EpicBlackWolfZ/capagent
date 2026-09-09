@@ -32,7 +32,7 @@ func TestProcfsReader_Filesystems(t *testing.T) {
 		want  []platform.FilesystemEntry
 	}{
 		{
-			name: "mixed nodev and regular filesystems",
+			name:  "mixed nodev and regular filesystems",
 			input: "nodev\t" + fsTmpfs + "\nnodev\t" + fsProc + "\nnodev\t" + fsSysfs + "\n\t" + fsExt4 + "\n\t" + fsXfs + "\n",
 			want: []platform.FilesystemEntry{
 				{Name: fsTmpfs, NoDev: true},

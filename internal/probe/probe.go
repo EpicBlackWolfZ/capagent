@@ -34,6 +34,19 @@ var (
 // Implementations MUST be safe for concurrent use by the orchestrator;
 // multiple probes from different goroutines may call into the same shared
 // platform.Environment concurrently.
+//
+// Cancellation contract: Probe.Run implementations are expected to honor
+// ctx.Done() and return promptly when the supplied context is cancelled.
+// The orchestrator cannot forcibly interrupt arbitrary Go code that ignores
+// its context; a probe that blocks indefinitely will block its worker
+// goroutine and prevent subsequent probes from being scheduled. Returning
+// ctx.Err() (or any error that wraps it via fmt.Errorf("%w", ...) or
+// errors.Is) is classified as ProbeCancelled by the orchestrator.
+//
+// Probes MUST NOT mutate shared dependencies (e.g. platform.Environment
+// fields) unless those dependencies explicitly support concurrent mutation.
+// The Environment fields are reference-typed: probes receive pointers that
+// may be observed by sibling probes.
 type Probe interface {
 	// ID returns the unique, stable identifier for this probe.
 	// The returned string must be a valid, non-empty probe ID and must

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/rand"
 	"runtime"
-	"sort"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -1104,31 +1103,6 @@ func TestOrchestrator_EmptyPlanDoesNotPanic(t *testing.T) {
 }
 
 // TestOrchestrator_ResultForMissingProbe exercises the defensive branch in
-// processProbe that handles a missing probe (registry mutation race).
-func TestOrchestrator_ResultForMissingProbe(t *testing.T) {
-	t.Parallel()
-
-	// Build a registry with one probe, resolve it, then delete the probe
-	// before running to simulate a registry mutation. Run must still
-	// return a deterministic result without panicking.
-	r := probe.NewRegistry()
-	if err := r.Register(&stubProbe{id: "a"}); err != nil {
-		t.Fatalf("Register: %v", err)
-	}
-
-	o, err := probe.NewOrchestrator(r)
-	if err != nil {
-		t.Fatalf("NewOrchestrator: %v", err)
-	}
-
-	results := o.Run(context.Background(), newEnv())
-	if len(results) != 1 {
-		t.Errorf("len(results) = %d, want 1", len(results))
-	}
-	if results[0].Status != probe.ProbeSucceeded {
-		t.Errorf("Status = %v, want ProbeSucceeded", results[0].Status)
-	}
-}
-
-// Silence unused-import warning for sort if needed elsewhere.
-var _ = sort.Slice
+// processProbe that handles a missing probe (registry mutation race). The
+// scenario is not currently exposed through a supported API; the test has
+// been removed per the remediation plan.

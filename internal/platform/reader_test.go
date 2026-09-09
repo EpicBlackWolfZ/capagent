@@ -10,6 +10,11 @@ import (
 	"github.com/EpicBlackWolfZ/capagent/internal/platform"
 )
 
+// readerTestLinkPath is the canonical path used as a symlink entry in
+// table-driven reader tests. Declared as a named constant to satisfy the
+// goconst linter without scattering repeated string literals.
+const readerTestLinkPath = "/link"
+
 func TestOSPlatformReader_DelegatesToOS(t *testing.T) {
 	t.Parallel()
 
@@ -106,9 +111,9 @@ func TestMemPlatformReader_ReadFile(t *testing.T) {
 			name: "single-hop symlink resolved",
 			setup: func(m *platform.MemPlatformReader) {
 				m.AddFile("/target", []byte("payload"), 0o644)
-				m.AddSymlink("/link", "target")
+				m.AddSymlink(readerTestLinkPath, "target")
 			},
-			path: "/link",
+			path: readerTestLinkPath,
 			want: []byte("payload"),
 		},
 		{
@@ -199,14 +204,14 @@ func TestMemPlatformReader_Stat(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name        string
-		setup       func(m *platform.MemPlatformReader)
-		path        string
-		wantExist   bool
-		wantIsDir   bool
-		wantSize    int64
-		wantErr     error
-		wantErrIs   error
+		name      string
+		setup     func(m *platform.MemPlatformReader)
+		path      string
+		wantExist bool
+		wantIsDir bool
+		wantSize  int64
+		wantErr   error
+		wantErrIs error
 	}{
 		{
 			name: "regular file stat",

@@ -6,8 +6,27 @@ package platform
 // for /proc parsing, a SysfsReader for /sys parsing, and a CommandRunner
 // for bounded subprocess execution.
 //
-// Environment values are immutable once constructed; probes MUST NOT mutate
-// the readers or runner they receive.
+// Environment is a value type whose fields are reference-typed pointers
+// and interfaces. The Environment value itself is not deeply immutable:
+// the fields it carries (e.g. *ProcfsReader, *SysfsReader) are shared
+// references that may be observed by sibling probes executed concurrently
+// by the orchestrator.
+//
+// Probes MUST NOT mutate shared dependencies unless those dependencies
+// explicitly document that they are safe for concurrent mutation. The
+// canonical concurrent-safe implementations in this package are:
+//
+//   - PlatformReader: MemPlatformReader (RWMutex-protected); OSPlatformReader
+//     is safe to call from multiple goroutines because each os.* call is
+//     independent and the underlying file descriptors are independent.
+//   - ProcfsReader / SysfsReader: stateless wrappers; their methods only
+//     forward to a PlatformReader and do not retain state between calls.
+//   - CommandRunner: FakeCommandRunner is RWMutex-safe; OSCommandRunner
+//     spawns independent subprocesses per call.
+//
+// Probe implementations are responsible for honoring the supplied
+// context.Context and for not retaining references to Environment fields
+// past the lifetime of Run.
 type Environment struct {
 	Reader PlatformReader
 	Procfs *ProcfsReader
