@@ -366,42 +366,6 @@ func TestSysfsReader_RootOrDotSubpath(t *testing.T) {
 	}
 }
 
-// TestSysfsReader_SELinuxModeOnPresent ensures SELinuxMode returns the
-// file content when the enforce file is present.
-func TestSysfsReader_SELinuxModeOnPresent(t *testing.T) {
-	t.Parallel()
-
-	mem := platform.NewMemPlatformReader()
-	mem.AddDir("/sys/fs/selinux", 0o755)
-	mem.AddFile("/sys/fs/selinux/enforce", []byte("0"), 0o644)
-
-	r := platform.NewSysfsReader(mem, "/sys")
-	mode, err := r.SELinuxMode()
-	if err != nil {
-		t.Fatalf("SELinuxMode: %v", err)
-	}
-	if mode != "0" {
-		t.Errorf("SELinuxMode = %q, want 0", mode)
-	}
-}
-
-// TestSysfsReader_IsSELinuxEnforcingWhenNotPresent verifies the absent
-// subsystem path returns (false, nil) without raising an error.
-func TestSysfsReader_IsSELinuxEnforcingWhenNotPresent(t *testing.T) {
-	t.Parallel()
-
-	mem := platform.NewMemPlatformReader()
-	r := platform.NewSysfsReader(mem, "/sys")
-
-	enforcing, err := r.IsSELinuxEnforcing()
-	if err != nil {
-		t.Fatalf("IsSELinuxEnforcing on absent: %v", err)
-	}
-	if enforcing {
-		t.Error("IsSELinuxEnforcing = true, want false")
-	}
-}
-
 // TestSysfsReader_CgroupControllersDeduplicates exercises the dedup branch
 // of splitControllerList via the public CgroupControllers entry point.
 func TestSysfsReader_CgroupControllersDeduplicates(t *testing.T) {

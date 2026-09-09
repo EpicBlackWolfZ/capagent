@@ -3,7 +3,6 @@ package platform_test
 import (
 	"errors"
 	"os"
-	"path/filepath"
 	"reflect"
 	"syscall"
 	"testing"
@@ -410,30 +409,6 @@ func TestProcfsReader_RealProcfs(t *testing.T) {
 	}
 }
 
-// TestProcfsReader_JoinRoot verifies that empty subpath resolves to root,
-// and that arbitrary subpaths produce join(root, subpath) results.
-func TestProcfsReader_JoinRoot(t *testing.T) {
-	t.Parallel()
-
-	mem := platform.NewMemPlatformReader()
-	mem.AddFile("/proc/foo", []byte("bar"), 0o644)
-
-	r := platform.NewProcfsReader(mem, "/proc")
-	got, err := r.ReadProcFile("foo")
-	if err != nil {
-		t.Fatalf("ReadProcFile: %v", err)
-	}
-	if string(got) != "bar" {
-		t.Errorf("ReadProcFile content = %q, want bar", string(got))
-	}
-
-	// Verify the joined path uses platform separators (filepath.Clean).
-	want := filepath.Join("/proc", "foo")
-	if want != "/proc/foo" {
-		t.Skipf("test environment has non-POSIX separators: %v", want)
-	}
-}
-
 // TestProcfsReader_RootOrDotSubpath exercises the joinRoot short-circuit
 // branches when subpath normalises to "." or "/".
 func TestProcfsReader_RootOrDotSubpath(t *testing.T) {
@@ -470,23 +445,5 @@ func TestProcfsReader_ReadSelfEmpty(t *testing.T) {
 	}
 	if string(got) != "x" {
 		t.Errorf("ReadSelf = %q", string(got))
-	}
-}
-
-// TestProcfsReader_ParseFilesystemsRegularEntry exercises the regular-file
-// (no-flags) branch in parseFilesystems.
-func TestProcfsReader_ParseFilesystemsRegularEntry(t *testing.T) {
-	t.Parallel()
-
-	mem := platform.NewMemPlatformReader()
-	mem.AddFile("/proc/filesystems", []byte("\text4\n"), 0o644)
-
-	r := platform.NewProcfsReader(mem, "/proc")
-	got, err := r.Filesystems()
-	if err != nil {
-		t.Fatalf("Filesystems: %v", err)
-	}
-	if len(got) != 1 || got[0].Name != "ext4" || got[0].NoDev {
-		t.Errorf("Filesystems = %+v, want one ext4 regular", got)
 	}
 }

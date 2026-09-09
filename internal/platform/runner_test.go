@@ -138,6 +138,66 @@ func TestOSCommandRunner_AlreadyCancelledContext(t *testing.T) {
 	}
 }
 
+// TestOSCommandRunner_RaceTimeoutVsCancellation exercises the documented
+// precedence rule: when caller context cancellation and the internal
+// timeout become observable simultaneously, caller cancellation wins and
+// TimedOut remains false.
+//
+// The test deliberately schedules both events to fire near-simultaneously
+// rather than asserting a fixed ordering; it then verifies the contractual
+// invariant:
+//
+//   - When ctx.Err() != nil at classification time, the returned error is
+//     ctx.Err() (context.Canceled) and TimedOut is false, regardless of
+//     whether the internal timer also fired.
+//   - When ctx.Err() == nil but internalTimedOut is observable, TimedOut is
+//     true and the returned error is context.DeadlineExceeded.
+//
+// To force a near-simultaneous race, both the internal timeout (50ms) and
+// the caller cancel (also 50ms) are configured to fire at approximately the
+// same wall-clock instant. The test passes as long as the implemented
+// discrimination order holds; it does NOT assume the scheduler will
+// deliver one event before the other.
+func TestOSCommandRunner_RaceTimeoutVsCancellation(t *testing.T) {
+	t.Parallel()
+
+	const iterations = 25
+	for i := 0; i < iterations; i++ {
+		r := platform.NewOSCommandRunner(50 * time.Millisecond)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		// Fire caller cancel at the same approximate instant as the
+		// 50ms internal timer. Whichever the scheduler observes first
+		// is irrelevant to the contract: the test only asserts the
+		// post-classification invariant.
+		go func() {
+			time.Sleep(50 * time.Millisecond)
+			cancel()
+		}()
+
+		result, err := r.Run(ctx, sleepCommand, "5")
+
+		switch {
+		case ctx.Err() != nil:
+			// Caller cancellation was observable at classification.
+			if !errors.Is(err, context.Canceled) {
+				t.Fatalf("iter %d: ctx.Err() != nil, error = %v, want context.Canceled", i, err)
+			}
+			if result.TimedOut {
+				t.Errorf("iter %d: ctx.Err() != nil, TimedOut = true; caller cancellation must win", i)
+			}
+		case errors.Is(err, context.DeadlineExceeded):
+			// Internal timeout fired first (or exclusively).
+			if !result.TimedOut {
+				t.Errorf("iter %d: DeadlineExceeded error but TimedOut = false", i)
+			}
+		default:
+			t.Fatalf("iter %d: unexpected classification: err=%v, ctx.Err()=%v, TimedOut=%v",
+				i, err, ctx.Err(), result.TimedOut)
+		}
+	}
+}
+
 func TestOSCommandRunner_TruncatesLongStdout(t *testing.T) {
 	t.Parallel()
 
@@ -179,6 +239,53 @@ func TestOSCommandRunner_TruncatesLongStderr(t *testing.T) {
 	}
 	if len(result.Stderr) != (1 << 20) {
 		t.Errorf("len(Stderr) = %d, want %d", len(result.Stderr), 1<<20)
+	}
+	if result.ExitCode != 0 {
+		t.Errorf("ExitCode = %d, want 0 (process must exit successfully after truncation)", result.ExitCode)
+	}
+}
+
+// TestOSCommandRunner_TruncatesBothStreamsSimultaneously verifies the
+// full output-cap contract for both streams in a single command:
+//
+//   - len(Stdout) is bounded to 1 MiB when the subprocess emits 2 MiB.
+//   - len(Stderr) is bounded to 1 MiB when the subprocess emits 2 MiB.
+//   - StdoutTruncated is true when stdout exceeded the cap.
+//   - StderrTruncated is true when stderr exceeded the cap.
+//   - The subprocess still exits successfully (ExitCode == 0); the runner
+//     does NOT terminate it just because its output exceeded the cap.
+func TestOSCommandRunner_TruncatesBothStreamsSimultaneously(t *testing.T) {
+	t.Parallel()
+
+	const totalBytes = 2 * 1024 * 1024
+	// Two parallel background processes: one floods stdout, one floods stderr.
+	// `wait` blocks until both finish so the runner captures full output.
+	script := "head -c " + strconv.Itoa(totalBytes) + " /dev/zero & head -c " +
+		strconv.Itoa(totalBytes) + " /dev/zero >&2 & wait"
+
+	r := platform.NewOSCommandRunner(10 * time.Second)
+	result, err := r.Run(context.Background(), "/bin/sh", "-c", script)
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	if len(result.Stdout) > (1 << 20) {
+		t.Errorf("len(Stdout) = %d, want <= %d", len(result.Stdout), 1<<20)
+	}
+	if len(result.Stderr) > (1 << 20) {
+		t.Errorf("len(Stderr) = %d, want <= %d", len(result.Stderr), 1<<20)
+	}
+	if !result.StdoutTruncated {
+		t.Errorf("StdoutTruncated = false, want true (got %d bytes)", len(result.Stdout))
+	}
+	if !result.StderrTruncated {
+		t.Errorf("StderrTruncated = false, want true (got %d bytes)", len(result.Stderr))
+	}
+	if result.TimedOut {
+		t.Error("TimedOut = true, want false (truncation must not trip timeout)")
+	}
+	if result.ExitCode != 0 {
+		t.Errorf("ExitCode = %d, want 0 (process must exit successfully after truncation)", result.ExitCode)
 	}
 }
 

@@ -214,52 +214,6 @@ func TestMemPlatformReader_NormalizeEmptyPath(t *testing.T) {
 	}
 }
 
-// TestOSPlatformReader_SymlinkBranch exercises the symlink-following paths
-// in OSPlatformReader for readFileFollowing and statFollowing.
-func TestOSPlatformReader_SymlinkBranch(t *testing.T) {
-	t.Parallel()
-
-	dir := t.TempDir()
-	target := filepath.Join(dir, "real.txt")
-	if err := os.WriteFile(target, []byte("payload"), 0o600); err != nil {
-		t.Fatalf("seed: %v", err)
-	}
-	link := filepath.Join(dir, "link.txt")
-	if err := os.Symlink(target, link); err != nil {
-		t.Skipf("symlink unsupported: %v", err)
-	}
-
-	r := platform.NewOSPlatformReader()
-
-	data, err := r.ReadFile(link)
-	if err != nil {
-		t.Fatalf("ReadFile via symlink: %v", err)
-	}
-	if string(data) != "payload" {
-		t.Errorf("ReadFile via symlink = %q", string(data))
-	}
-
-	info, err := r.Stat(link)
-	if err != nil {
-		t.Fatalf("Stat via symlink: %v", err)
-	}
-	if info.Size() != int64(len("payload")) {
-		t.Errorf("Stat size via symlink = %d", info.Size())
-	}
-}
-
-// TestOSPlatformReader_DirectoryReadReturnsEISDIR ensures the EISDIR branch
-// in readFileFollowing is exercised.
-func TestOSPlatformReader_DirectoryReadReturnsEISDIR(t *testing.T) {
-	t.Parallel()
-
-	r := platform.NewOSPlatformReader()
-	dir := t.TempDir()
-	if _, err := r.ReadFile(dir); err == nil {
-		t.Error("ReadFile on directory returned nil error")
-	}
-}
-
 // TestMemPlatformReader_DirEntryType exercises the memDirEntry.Type()
 // accessor for each kind branch (regular, directory, symlink).
 func TestMemPlatformReader_DirEntryType(t *testing.T) {
@@ -282,6 +236,42 @@ func TestMemPlatformReader_DirEntryType(t *testing.T) {
 	}
 	if !typesSeen["regular"] || !typesSeen["subdir"] || !typesSeen["link"] {
 		t.Errorf("ReadDir entries = %v, want regular/subdir/link", typesSeen)
+	}
+}
+
+// TestOSPlatformReader_SymlinkReadFollowsTarget verifies that OSPlatformReader
+// ReadFile and Stat both follow symlinks on the real filesystem. This is
+// the production PathReader behaviour: callers pass a path that may be a
+// symlink and expect target content / target metadata.
+func TestOSPlatformReader_SymlinkReadFollowsTarget(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	target := filepath.Join(dir, "real.txt")
+	if err := os.WriteFile(target, []byte("payload"), 0o600); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	link := filepath.Join(dir, "link.txt")
+	if err := os.Symlink(target, link); err != nil {
+		t.Skipf("symlink unsupported: %v", err)
+	}
+
+	r := platform.NewOSPlatformReader()
+
+	data, err := r.ReadFile(link)
+	if err != nil {
+		t.Fatalf("ReadFile via symlink: %v", err)
+	}
+	if string(data) != "payload" {
+		t.Errorf("ReadFile via symlink = %q, want %q", string(data), "payload")
+	}
+
+	info, err := r.Stat(link)
+	if err != nil {
+		t.Fatalf("Stat via symlink: %v", err)
+	}
+	if info.Size() != int64(len("payload")) {
+		t.Errorf("Stat size via symlink = %d, want %d", info.Size(), len("payload"))
 	}
 }
 

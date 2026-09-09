@@ -121,10 +121,19 @@ func (b *boundedBuffer) Truncated() bool {
 // is context.DeadlineExceeded. When the caller's ctx is cancelled first,
 // TimedOut is false and the returned error is ctx.Err().
 //
+// Timeout vs. caller-cancellation precedence: when both the caller context
+// and the internal timeout become observable before result classification,
+// the caller context wins. TimedOut is set to true ONLY when the internal
+// timeout is the selected termination reason; if the caller context
+// cancelled first, TimedOut remains false even if the internal timer would
+// subsequently have fired.
+//
 // Process-group cleanup: a SIGKILL is delivered to the entire process group
-// ONLY when execution was interrupted (internal timeout or caller
-// cancellation). Commands that complete normally are NOT signalled again;
-// the subprocess group is left intact because it has already exited.
+// ONLY when execution is interrupted (internal timeout or caller
+// cancellation). The runner's CommandContext cancellation hook terminates
+// the entire process group and waits for the process to be reaped. Normally
+// completing commands are NOT signalled after completion; the subprocess
+// group is left intact because it has already exited.
 func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) (ExecResult, error) {
 	if ctx == nil {
 		ctx = context.Background()
@@ -202,8 +211,14 @@ func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) 
 	}
 
 	// Discrimination order: parent cancellation > internal timeout > exit
-	// status error. This guarantees that if both happened, the parent
-	// intent wins (matching AGENTS.md invariant).
+	// status error.
+	//
+	// Precedence rule: when both caller cancellation and the internal
+	// timeout become observable before result classification, caller
+	// cancellation wins. TimedOut is set to true ONLY when the internal
+	// timeout is the selected termination reason; if the caller context
+	// was cancelled first, TimedOut remains false even if the internal
+	// timer would subsequently have fired.
 	if ctxErr := ctx.Err(); ctxErr != nil {
 		return result, ctxErr
 	}

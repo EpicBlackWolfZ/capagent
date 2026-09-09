@@ -267,13 +267,24 @@ or CLI packages.
 - Output is canonically sorted by `ResolvedPlan()` order regardless of
   completion timing — concurrent execution never perturbs result order.
 
-**Cancellation contract.** Probe.Run implementations are expected to honor
-ctx.Done() and return promptly when the context is cancelled. The
-orchestrator cannot forcibly interrupt arbitrary Go code that ignores its
-context; a probe that blocks indefinitely will block its worker goroutine
-and prevent subsequent probes from being scheduled. Returning ctx.Err()
-(verbatim or wrapped via fmt.Errorf("%w", ...)) is classified as
-ProbeCancelled by the orchestrator.
+**Cancellation responsibilities.** Cancellation is split between the
+orchestrator and each probe:
+
+- **Orchestrator.** Propagates a `context.Context` to every `Probe.Run`
+  call, and classifies cooperative cancellation by inspecting the
+  returned error against `ctx.Err()`. The orchestrator cannot forcibly
+  terminate arbitrary Go code executing inside `Probe.Run`.
+- **Probe.** `Probe.Run` implementations MUST observe `ctx.Done()` and
+  return promptly when the supplied context is cancelled. A probe that
+  blocks indefinitely will block its worker goroutine and prevent
+  subsequent probes from being scheduled. Returning `ctx.Err()`
+  (verbatim or wrapped via `fmt.Errorf("%w", ...)` or `errors.Is`) is
+  classified as `ProbeCancelled` by the orchestrator.
+
+A directly cancelled probe is recorded as `ProbeCancelled`; transitive
+dependents of a cancelled, failed, or skipped probe are recorded as
+`ProbeSkipped` with `ErrDependencyFailed`. Dependents are NEVER marked
+`ProbeCancelled`; only direct cancellation propagates that status.
 
 **Environment injection.** All probe `Run` invocations receive a
 `platform.Environment` value containing a `PlatformReader`, `ProcfsReader`,
@@ -284,6 +295,17 @@ NOT mutate shared dependencies unless those dependencies explicitly
 document that they are safe for concurrent mutation. Test doubles
 (`MemPlatformReader`, `FakeCommandRunner`) are the canonical way to make
 probe behavior fully deterministic in unit tests.
+
+**`internal/platform` CommandRunner process-group lifecycle.**
+`OSCommandRunner` creates each subprocess in its own process group via
+`Setpgid`. When timeout or caller cancellation interrupts execution, the
+runner terminates the entire process group and waits for the process to
+be reaped. Normally completing commands are not signalled after
+completion; the subprocess group is left intact because it has already
+exited. Timeout-vs-caller-cancellation precedence: when both events
+become observable before result classification, caller cancellation wins.
+`TimedOut` is set to `true` only when the internal timeout is the
+selected termination reason.
 
 ---
 

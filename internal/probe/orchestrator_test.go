@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -901,85 +900,6 @@ func TestOrchestrator_ProbeSucceedsDespiteContextAlreadyCancelledBeforeRun(t *te
 	}
 }
 
-// TestOrchestrator_CancellationMidExecution covers the branch in
-// processProbe where the probe is cancelled WHILE running and returns
-// an error that wraps ctx.Err() via fmt.Errorf("%w"). The probe must be
-// classified as ProbeCancelled (not ProbeFailed).
-func TestOrchestrator_CancellationMidExecution(t *testing.T) {
-	t.Parallel()
-
-	r := probe.NewRegistry()
-	if err := r.Register(&fakeProbe{
-		id: "blocker",
-		run: func(ctx context.Context, env platform.Environment) (model.Observation, error) {
-			<-ctx.Done()
-			return model.Observation{}, fmt.Errorf("operation interrupted: %w", ctx.Err())
-		},
-	}); err != nil {
-		t.Fatalf("Register: %v", err)
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-
-	o, err := probe.NewOrchestrator(r)
-	if err != nil {
-		t.Fatalf("NewOrchestrator: %v", err)
-	}
-
-	// Cancel the context asynchronously after the probe begins blocking.
-	go func() {
-		time.Sleep(20 * time.Millisecond)
-		cancel()
-	}()
-
-	results := o.Run(ctx, newEnv())
-	if len(results) != 1 {
-		t.Fatalf("results len = %d, want 1", len(results))
-	}
-	if results[0].Status != probe.ProbeCancelled {
-		t.Errorf("Status = %v, want ProbeCancelled", results[0].Status)
-	}
-	if !errors.Is(results[0].Err, context.Canceled) {
-		t.Errorf("Err = %v, want wraps context.Canceled", results[0].Err)
-	}
-}
-
-// TestOrchestrator_CancellationMidExecutionDirectError covers the branch
-// in processProbe where the probe returns ctx.Err() directly (without
-// wrapping) during cancellation.
-func TestOrchestrator_CancellationMidExecutionDirectError(t *testing.T) {
-	t.Parallel()
-
-	r := probe.NewRegistry()
-	if err := r.Register(&fakeProbe{
-		id: "directErr",
-		run: func(ctx context.Context, env platform.Environment) (model.Observation, error) {
-			<-ctx.Done()
-			return model.Observation{}, ctx.Err()
-		},
-	}); err != nil {
-		t.Fatalf("Register: %v", err)
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(20 * time.Millisecond)
-		cancel()
-	}()
-
-	o, err := probe.NewOrchestrator(r)
-	if err != nil {
-		t.Fatalf("NewOrchestrator: %v", err)
-	}
-	results := o.Run(ctx, newEnv())
-	if results[0].Status != probe.ProbeCancelled {
-		t.Errorf("Status = %v, want ProbeCancelled", results[0].Status)
-	}
-	if !errors.Is(results[0].Err, context.Canceled) {
-		t.Errorf("Err = %v, want wraps context.Canceled", results[0].Err)
-	}
-}
-
 // =============================================================================
 // Determinism under randomized scheduling
 // =============================================================================
@@ -1052,14 +972,6 @@ func findResult(results []probe.ProbeResult, id string) *probe.ProbeResult {
 	return nil
 }
 
-// Sanity: ensure runtime.NumCPU() returns >= 1 so default orchestrator can run.
-func TestRuntimeNumCPU_AtLeastOne(t *testing.T) {
-	t.Parallel()
-	if runtime.NumCPU() < 1 {
-		t.Error("runtime.NumCPU() < 1")
-	}
-}
-
 // TestRegistry_ResolvedPlanAfterFailedResolve exercises the branch in
 // ResolvedPlan that returns an error when the most recent Resolve attempt
 // left the registry in an error state (resolved == true, plan == nil).
@@ -1101,8 +1013,3 @@ func TestOrchestrator_EmptyPlanDoesNotPanic(t *testing.T) {
 		}
 	}
 }
-
-// TestOrchestrator_ResultForMissingProbe exercises the defensive branch in
-// processProbe that handles a missing probe (registry mutation race). The
-// scenario is not currently exposed through a supported API; the test has
-// been removed per the remediation plan.

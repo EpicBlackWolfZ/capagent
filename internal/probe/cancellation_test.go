@@ -168,57 +168,6 @@ func TestOrchestrator_CancelledDependencySkipsDependents(t *testing.T) {
 	}
 }
 
-// TestOrchestrator_DirectCancellationSkipsDependents verifies that when a
-// probe is directly interrupted by caller context cancellation, its
-// dependents become ProbeSkipped (NOT ProbeCancelled).
-func TestOrchestrator_DirectCancellationSkipsDependents(t *testing.T) {
-	t.Parallel()
-
-	r := probe.NewRegistry()
-	if err := r.Register(&fakeProbe{
-		id: "A",
-		run: func(ctx context.Context, env platform.Environment) (model.Observation, error) {
-			<-ctx.Done()
-			return model.Observation{}, ctx.Err()
-		},
-	}); err != nil {
-		t.Fatalf("Register A: %v", err)
-	}
-	if err := r.Register(&fakeProbe{id: "B", deps: []string{"A"}}); err != nil {
-		t.Fatalf("Register B: %v", err)
-	}
-	if err := r.Register(&fakeProbe{id: "C", deps: []string{"B"}}); err != nil {
-		t.Fatalf("Register C: %v", err)
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		time.Sleep(30 * time.Millisecond)
-		cancel()
-	}()
-
-	o, err := probe.NewOrchestrator(r)
-	if err != nil {
-		t.Fatalf("NewOrchestrator: %v", err)
-	}
-
-	results := o.Run(ctx, newEnv())
-	want := map[string]probe.ProbeStatus{
-		"A": probe.ProbeCancelled,
-		"B": probe.ProbeSkipped,
-		"C": probe.ProbeSkipped,
-	}
-	for id, expectedStatus := range want {
-		res := findResult(results, id)
-		if res == nil {
-			t.Fatalf("missing result for %s", id)
-		}
-		if res.Status != expectedStatus {
-			t.Errorf("%s.Status = %v, want %v", id, res.Status, expectedStatus)
-		}
-	}
-}
-
 // TestOrchestrator_IndependentBranchesContinueAfterCancellation verifies
 // that cancellation of one branch does not abort sibling probes that are
 // unrelated to the cancelled dependency chain.
@@ -268,6 +217,87 @@ func TestOrchestrator_IndependentBranchesContinueAfterCancellation(t *testing.T)
 			if res.Status != probe.ProbeSucceeded && res.Status != probe.ProbeCancelled {
 				t.Errorf("%s.Status = %v, want Succeeded or Cancelled", res.ProbeID, res.Status)
 			}
+		}
+	}
+}
+
+// TestOrchestrator_CancellationFanOutGraph is a compact end-to-end test
+// that verifies the full cancellation classification in a single graph:
+//
+//	┌→ B
+//	A ─┤
+//	└→ C
+//
+//	X  (independent sibling)
+//
+// A is directly cancelled by caller context, so its status is ProbeCancelled.
+// B and C are direct dependents of A and must become ProbeSkipped (NOT
+// ProbeCancelled). X is an unrelated sibling registered before A so it has
+// plenty of time to complete normally; X must succeed to prove that
+// cancellation does not globally poison unrelated work.
+//
+// This single test consolidates three distinct invariants:
+//
+//  1. Directly interrupted probe  -> ProbeCancelled.
+//  2. Direct dependent of cancelled -> ProbeSkipped with ErrDependencyFailed.
+//  3. Unrelated sibling             -> ProbeSucceeded (not poisoned).
+func TestOrchestrator_CancellationFanOutGraph(t *testing.T) {
+	t.Parallel()
+
+	r := probe.NewRegistry()
+	if err := r.Register(&fakeProbe{id: "A",
+		run: func(ctx context.Context, env platform.Environment) (model.Observation, error) {
+			<-ctx.Done()
+			return model.Observation{}, ctx.Err()
+		},
+	}); err != nil {
+		t.Fatalf("Register A: %v", err)
+	}
+	if err := r.Register(&fakeProbe{id: "B", deps: []string{"A"}}); err != nil {
+		t.Fatalf("Register B: %v", err)
+	}
+	if err := r.Register(&fakeProbe{id: "C", deps: []string{"A"}}); err != nil {
+		t.Fatalf("Register C: %v", err)
+	}
+	if err := r.Register(&fakeProbe{id: "X"}); err != nil {
+		t.Fatalf("Register X: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		// Wait long enough for X to definitely finish (it has no deps and
+		// runs immediately on the worker pool).
+		time.Sleep(50 * time.Millisecond)
+		cancel()
+	}()
+
+	o, err := probe.NewOrchestrator(r)
+	if err != nil {
+		t.Fatalf("NewOrchestrator: %v", err)
+	}
+
+	results := o.Run(ctx, newEnv())
+
+	want := map[string]struct {
+		status probe.ProbeStatus
+		errIs  error
+	}{
+		"A": {status: probe.ProbeCancelled, errIs: context.Canceled},
+		"B": {status: probe.ProbeSkipped, errIs: probe.ErrDependencyFailed},
+		"C": {status: probe.ProbeSkipped, errIs: probe.ErrDependencyFailed},
+		"X": {status: probe.ProbeSucceeded},
+	}
+	for _, res := range results {
+		w, ok := want[res.ProbeID]
+		if !ok {
+			t.Errorf("unexpected probe result: %s", res.ProbeID)
+			continue
+		}
+		if res.Status != w.status {
+			t.Errorf("%s.Status = %v, want %v", res.ProbeID, res.Status, w.status)
+		}
+		if w.errIs != nil && !errors.Is(res.Err, w.errIs) {
+			t.Errorf("%s.Err = %v, want wraps %v", res.ProbeID, res.Err, w.errIs)
 		}
 	}
 }

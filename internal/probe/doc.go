@@ -19,4 +19,17 @@
 //     ProbeCancelled).
 //   - Returns results in canonical DAG order regardless of completion times,
 //     making output deterministic and reproducible.
+//
+// Cancellation responsibilities:
+//
+//   - Orchestrator: propagates a context.Context to every Probe.Run call
+//     and classifies cooperative cancellation by inspecting the returned
+//     error against ctx.Err().
+//   - Probe: Probe.Run implementations are expected to honor ctx.Done()
+//     and return promptly when the supplied context is cancelled. The
+//     orchestrator cannot forcibly terminate arbitrary Go code executing
+//     inside Probe.Run; a probe that blocks indefinitely will block its
+//     worker goroutine. Returning ctx.Err() (verbatim or wrapped via
+//     fmt.Errorf("%w", ...) or errors.Is) is classified as ProbeCancelled
+//     by the orchestrator.
 package probe
