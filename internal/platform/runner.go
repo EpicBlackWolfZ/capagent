@@ -18,15 +18,25 @@ import (
 // truncation flag is set to true.
 const maxRunnerOutputBytes = 1 << 20
 
+const (
+	initialRunnerOutputBytes = 4 << 10
+	outputGrowthFactor       = 2
+)
+
 // defaultRunnerTimeout is the internal subprocess timeout applied when
 // OSCommandRunner.defaultTimeout is zero or negative.
 const defaultRunnerTimeout = 30 * time.Second
 
+// runnerWaitDelay bounds pipe draining after cancellation or direct-child exit.
+// Escaped descendants may outlive this budget; closing pipes does not kill them.
+const runnerWaitDelay = 250 * time.Millisecond
+
 // ExecResult captures the bounded outcome of a subprocess invocation.
 //
 // The semantics of Truncated flags are: bytes beyond maxRunnerOutputBytes
-// for that stream have been discarded; the subprocess itself still ran to
-// completion (or was killed by timeout/cancellation).
+// for that stream have been discarded. They do not certify complete output
+// after an execution/drain error. ExitCode is meaningful only with the error:
+// startup failure retains zero, as does successful exit with a drain error.
 type ExecResult struct {
 	Stdout          []byte
 	Stderr          []byte
@@ -40,7 +50,8 @@ type ExecResult struct {
 // CommandRunner is the canonical subprocess execution abstraction for capagent probes.
 //
 // Implementations MUST bound per-stream output, distinguish caller context
-// cancellation from internal timeout, and never leak subprocess resources.
+// cancellation from internal timeout, bound pipe draining, and reap their
+// direct child. Process-group cleanup cannot terminate escaped descendants.
 type CommandRunner interface {
 	Run(ctx context.Context, name string, args ...string) (ExecResult, error)
 }
@@ -72,7 +83,7 @@ type boundedBuffer struct {
 
 func newBoundedBuffer(capacity int) *boundedBuffer {
 	return &boundedBuffer{
-		data:     make([]byte, 0, capacity),
+		data:     make([]byte, 0, min(initialRunnerOutputBytes, capacity)),
 		capacity: capacity,
 	}
 }
@@ -83,21 +94,22 @@ func (b *boundedBuffer) Write(p []byte) (int, error) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	if b.truncated {
+	if b.truncated || len(p) == 0 {
 		return len(p), nil
 	}
 
-	avail := b.capacity - len(b.data)
-	if avail <= 0 {
-		b.truncated = true
-		return len(p), nil
+	retained := min(len(p), b.capacity-len(b.data))
+	needed := len(b.data) + retained
+	if needed > cap(b.data) {
+		// Explicit growth keeps backing capacity within the same hard limit
+		// as retained length; append's automatic growth can overshoot it.
+		capacity := min(b.capacity, max(needed, cap(b.data)*outputGrowthFactor))
+		data := make([]byte, len(b.data), capacity)
+		copy(data, b.data)
+		b.data = data
 	}
-	if len(p) <= avail {
-		b.data = append(b.data, p...)
-		return len(p), nil
-	}
-	b.data = append(b.data, p[:avail]...)
-	b.truncated = true
+	b.data = append(b.data, p[:retained]...)
+	b.truncated = retained < len(p)
 	return len(p), nil
 }
 
@@ -115,11 +127,9 @@ func (b *boundedBuffer) Truncated() bool {
 	return b.truncated
 }
 
-// Run executes the named binary under a context that combines caller
-// cancellation with the configured internal timeout. When the internal
-// timer expires first, ExecResult.TimedOut is true and the returned error
-// is context.DeadlineExceeded. When the caller's ctx is cancelled first,
-// TimedOut is false and the returned error is ctx.Err().
+// Run executes the named binary with a caller context and internal timeout.
+// An observable caller cancellation returns ctx.Err() with TimedOut false;
+// otherwise an internal timeout returns DeadlineExceeded with TimedOut true.
 //
 // Timeout vs. caller-cancellation precedence: when both the caller context
 // and the internal timeout become observable before result classification,
@@ -131,9 +141,11 @@ func (b *boundedBuffer) Truncated() bool {
 // Process-group cleanup: a SIGKILL is delivered to the entire process group
 // ONLY when execution is interrupted (internal timeout or caller
 // cancellation). The runner's CommandContext cancellation hook terminates
-// the entire process group and waits for the process to be reaped. Normally
-// completing commands are NOT signalled after completion; the subprocess
-// group is left intact because it has already exited.
+// owned process group; cmd.Run reaps the direct child. Normally completing
+// commands are not signalled after completion. Descendants may still exist.
+// Pipe draining ends within runnerWaitDelay of cancellation or observed child
+// exit, subject to kernel/scheduling delays. A successful exit with expired
+// drain returns exec.ErrWaitDelay; a nonzero exit retains its ExitError.
 func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) (ExecResult, error) {
 	if ctx == nil {
 		ctx = context.Background()
@@ -149,10 +161,16 @@ func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) 
 	// Internal context decoupled from parent so we can attribute the
 	// cancellation source deterministically.
 	internalCtx, internalCancel := context.WithCancel(context.Background())
-	defer internalCancel()
+
+	forwarded := make(chan struct{})
+	defer func() {
+		internalCancel()
+		<-forwarded
+	}()
 
 	// Propagate caller cancellation into internalCtx.
 	go func() {
+		defer close(forwarded)
 		select {
 		case <-ctx.Done():
 			internalCancel()
@@ -161,13 +179,16 @@ func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) 
 	}()
 
 	var internalTimedOut atomic.Bool
+	timeoutDone := make(chan struct{})
 	timer := time.AfterFunc(timeout, func() {
+		defer close(timeoutDone)
 		internalTimedOut.Store(true)
 		internalCancel()
 	})
 
 	cmd := exec.CommandContext(internalCtx, name, args...) //nolint:gosec // G204: CommandRunner is a subprocess abstraction layer.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.WaitDelay = runnerWaitDelay
 	// Override the default Cancel to terminate the entire process group
 	// (not only the immediate child). Without this, a forked grand-child
 	// inheriting the runner's stdout/stderr pipes can keep them open,
@@ -191,10 +212,11 @@ func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) 
 
 	runErr := cmd.Run()
 
-	// Stop the timer if it hasn't fired yet. Stop returns false if the
-	// timer has already fired or been stopped; either way we cannot undo
-	// internalTimedOut, so ignore the return value here.
-	timer.Stop()
+	// If the callback has started, join it before classifying its outcome.
+	// This prevents a late timeout flag update after Run has returned.
+	if !timer.Stop() {
+		<-timeoutDone
+	}
 
 	result := ExecResult{
 		Stdout:          stdoutBuf.Bytes(),

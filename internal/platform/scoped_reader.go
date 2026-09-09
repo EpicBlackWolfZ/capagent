@@ -162,7 +162,7 @@ type ScopedOSReader struct {
 	root string
 }
 
-// NewScopedOSReader opens root once via openat2(AT_FDCWD, root, O_PATH|O_DIRECTORY,
+// NewScopedOSReader opens root once via openat2(AT_FDCWD, root, O_PATH|O_DIRECTORY|O_CLOEXEC,
 // RESOLVE_NO_MAGICLINKS) and returns a ScopedReader rooted at the resulting
 // inode. The rootfd is held until Close is called.
 //
@@ -173,7 +173,7 @@ func NewScopedOSReader(root string) (ScopedReader, error) {
 		return nil, errors.New("platform: root path cannot be empty")
 	}
 	fd, err := unix.Openat2(unix.AT_FDCWD, root, &unix.OpenHow{
-		Flags:   unix.O_PATH | unix.O_DIRECTORY,
+		Flags:   unix.O_PATH | unix.O_DIRECTORY | unix.O_CLOEXEC,
 		Resolve: unix.RESOLVE_NO_MAGICLINKS,
 	})
 	if err != nil {
@@ -229,7 +229,8 @@ func (r *ScopedOSReader) Close() error {
 
 // readSubpath opens a per-op FD via openat2(rootfd, subpath, flags) and
 // invokes fn(fd). The flag set is supplied by the caller (O_RDONLY,
-// O_PATH, O_RDONLY|O_DIRECTORY, etc.); Resolve is always RESOLVE_IN_ROOT |
+// O_PATH, O_RDONLY|O_DIRECTORY, etc.) with O_CLOEXEC added atomically;
+// Resolve is always RESOLVE_IN_ROOT |
 // RESOLVE_NO_MAGICLINKS.
 //
 // FD ownership: readSubpath is the SOLE owner of the per-operation FD.
@@ -249,7 +250,7 @@ func (r *ScopedOSReader) readSubpath(subpath string, flags uint64, fn func(fd in
 		return err
 	}
 	fd, err := unix.Openat2(rootfd, subpath, &unix.OpenHow{
-		Flags:   flags,
+		Flags:   flags | unix.O_CLOEXEC,
 		Resolve: unix.RESOLVE_IN_ROOT | unix.RESOLVE_NO_MAGICLINKS,
 	})
 	if err != nil {

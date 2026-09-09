@@ -68,6 +68,14 @@ type Orchestrator struct {
 // OrchestratorOption mutates an Orchestrator during construction.
 type OrchestratorOption func(*Orchestrator) error
 
+// defaultConcurrencyCap limits implicit resource use on large hosts. Explicit
+// WithMaxConcurrency values may exceed this conservative default.
+const defaultConcurrencyCap = 8
+
+func defaultConcurrency(cpuCount int) int {
+	return max(1, min(cpuCount, defaultConcurrencyCap))
+}
+
 // WithMaxConcurrency overrides the worker pool size. The supplied value
 // must be >= 1; zero or negative values are rejected at construction time.
 func WithMaxConcurrency(n int) OrchestratorOption {
@@ -82,14 +90,15 @@ func WithMaxConcurrency(n int) OrchestratorOption {
 
 // NewOrchestrator constructs an Orchestrator over registry. Construction
 // immediately invokes registry.Resolve so that cycle or missing-dependency
-// errors are surfaced up front.
+// errors are surfaced up front. The default worker count is min(NumCPU, 8),
+// with a minimum of one; WithMaxConcurrency overrides that safety default.
 func NewOrchestrator(registry *Registry, opts ...OrchestratorOption) (*Orchestrator, error) {
 	if registry == nil {
 		return nil, fmt.Errorf("registry cannot be nil")
 	}
 
 	o := &Orchestrator{
-		maxConcurrency: runtime.NumCPU(),
+		maxConcurrency: defaultConcurrency(runtime.NumCPU()),
 	}
 	for _, opt := range opts {
 		if err := opt(o); err != nil {
