@@ -1,60 +1,75 @@
 package platform
 
-// Environment is the unified injection struct supplied to every Probe.Run
-// invocation. It bundles the OS abstractions probes need to perform their
-// measurements: a PlatformReader for raw filesystem access, a ProcfsReader
-// for /proc parsing, a SysfsReader for /sys parsing, and a CommandRunner
-// for bounded subprocess execution.
-//
-// Environment is a value type whose fields are reference-typed pointers
-// and interfaces. The Environment value itself is not deeply immutable:
-// the fields it carries (e.g. *ProcfsReader, *SysfsReader) are shared
-// references that may be observed concurrently by sibling probes executed
-// in parallel by the orchestrator.
-//
-// Probes MUST NOT mutate shared dependencies unless those dependencies
-// explicitly document that they are safe for concurrent mutation. The
-// canonical concurrent-safe implementations in this package are:
-//
-//   - PlatformReader: MemPlatformReader (RWMutex-protected); OSPlatformReader
-//     is safe to call from multiple goroutines because each os.* call is
-//     independent and the underlying file descriptors are independent.
-//   - ScopedReader: ScopedMemReader (RWMutex-protected); ScopedOSReader
-//     is safe to call from multiple goroutines because each openat2 / fd
-//     operation is independent and Linux fds are safe for concurrent use.
-//   - ProcfsReader / SysfsReader: stateless wrappers; their methods only
-//     forward to a ScopedReader and do not retain state between calls.
-//   - CommandRunner: FakeCommandRunner is RWMutex-safe; OSCommandRunner
-//     spawns independent subprocesses per call.
-//
-// Probe implementations are responsible for honoring the supplied
-// context.Context and for not retaining references to Environment fields
-// past the lifetime of Run.
+// Environment is an owner-constructed, read-only view of shared probe services.
+// Copies share the services, which must support concurrent operations. Owners
+// must not replace or reconfigure services during Run and must close resources
+// only after all runs join. Probes must not retain services beyond Run.
+// Accessors hide concrete setup/teardown handles; operational state such as
+// synchronized command-call recording may still change. Custom providers must
+// honor the same ownership and concurrency contract.
 type Environment struct {
-	Reader PlatformReader
-	Procfs *ProcfsReader
-	Sysfs  *SysfsReader
-	Runner CommandRunner
+	reader PlatformReader
+	procfs ProcfsView
+	sysfs  SysfsView
+	runner CommandRunner
 }
 
-// NewEnvironment constructs an Environment from explicit components. Any
-// nil component is preserved as nil so callers can detect missing
-// dependencies rather than silently substituting defaults.
+// ProcfsView exposes measurements without access to the shared wrapper itself.
+type ProcfsView interface {
+	Root() string
+	ReadProcFile(string) ([]byte, error)
+	ReadSelf(string) ([]byte, error)
+	Mounts() ([]MountEntry, error)
+	Filesystems() ([]FilesystemEntry, error)
+	Cgroups() ([]CgroupEntry, error)
+}
+
+// SysfsView exposes measurements without setup or resource ownership.
+type SysfsView interface {
+	Root() string
+	ReadSysFile(string) ([]byte, error)
+	ReadCgroupController(string) ([]byte, error)
+	CgroupControllers() ([]string, error)
+	SELinuxPresent() (bool, error)
+	SELinuxMode() (string, error)
+	IsSELinuxEnforcing() (bool, error)
+	AppArmorPresent() (bool, error)
+}
+
+// Private forwarding values prevent downcasts to mutable owner-held services.
+type readerView struct{ PlatformReader }
+type runnerView struct{ CommandRunner }
+type procfsView struct{ ProcfsView }
+type sysfsView struct{ SysfsView }
+
+func (e Environment) Reader() PlatformReader { return e.reader }
+func (e Environment) Procfs() ProcfsView     { return e.procfs }
+func (e Environment) Sysfs() SysfsView       { return e.sysfs }
+func (e Environment) Runner() CommandRunner  { return e.runner }
+
+// NewEnvironment wraps explicit services, preserving absent components as nil.
 func NewEnvironment(reader PlatformReader, procfs *ProcfsReader, sysfs *SysfsReader, runner CommandRunner) Environment {
-	return Environment{
-		Reader: reader,
-		Procfs: procfs,
-		Sysfs:  sysfs,
-		Runner: runner,
+	var env Environment
+	if reader != nil {
+		env.reader = readerView{reader}
 	}
+	if procfs != nil {
+		env.procfs = procfsView{procfs}
+	}
+	if sysfs != nil {
+		env.sysfs = sysfsView{sysfs}
+	}
+	if runner != nil {
+		env.runner = runnerView{runner}
+	}
+	return env
 }
 
 // NewTestEnvironment is a convenience constructor that wires a MemPlatformReader
 // to fresh ProcfsReader and SysfsReader instances rooted at "/proc" and "/sys"
 // respectively, paired with the supplied CommandRunner.
 //
-// The PlatformReader field is set to the supplied mem so probe code that
-// still uses Reader can interact with the same in-memory tree. The
+// The Reader accessor delegates to mem so probes can read the same tree. The
 // ProcfsReader/SysfsReader are wired through ScopedMemReader instances
 // that share the mem backing store; this preserves backward-compatible
 // test ergonomics while routing the file methods through the new

@@ -231,7 +231,7 @@ func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) 
 
 // FakeCommandRunner is an in-memory CommandRunner used as a deterministic
 // test double. Each registered (name, args...) tuple returns the
-// preconfigured ExecResult verbatim.
+// preconfigured ExecResult with caller-owned copies of output bytes.
 //
 // FakeCommandRunner is safe for concurrent use.
 type FakeCommandRunner struct {
@@ -268,7 +268,7 @@ func fakeKey(name string, args []string) string {
 	return strings.Join(parts, fakeSeparator)
 }
 
-// Register associates an ExecResult with the (name, args...) tuple.
+// Register associates an ExecResult with the (name, args...) tuple, copying output bytes.
 func (f *FakeCommandRunner) Register(name string, args []string, result ExecResult) {
 	f.RegisterWithError(name, args, result, nil)
 }
@@ -279,7 +279,7 @@ func (f *FakeCommandRunner) RegisterWithError(name string, args []string, result
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	key := fakeKey(name, args)
-	f.results[key] = result
+	f.results[key] = cloneExecResult(result)
 	f.errors[key] = err
 }
 
@@ -293,7 +293,7 @@ func ErrUnmockedCommand() error {
 	return errUnmockedCommand
 }
 
-// Run returns the registered result for (name, args...) and records the
+// Run returns a copy of the registered result for (name, args...) and records the
 // invocation for later inspection. Unmocked calls return ErrUnmockedCommand.
 func (f *FakeCommandRunner) Run(ctx context.Context, name string, args ...string) (ExecResult, error) {
 	f.mu.Lock()
@@ -306,7 +306,7 @@ func (f *FakeCommandRunner) Run(ctx context.Context, name string, args ...string
 	if !hasResult {
 		return ExecResult{}, fmt.Errorf("%w: %s %v", errUnmockedCommand, name, args)
 	}
-	return result, err
+	return cloneExecResult(result), err
 }
 
 // Calls returns a copy of the invocation log recorded so far.
@@ -328,3 +328,10 @@ var (
 	_ CommandRunner = (*OSCommandRunner)(nil)
 	_ CommandRunner = (*FakeCommandRunner)(nil)
 )
+
+// cloneExecResult transfers output ownership without sharing mutable slices.
+func cloneExecResult(result ExecResult) ExecResult {
+	result.Stdout = append([]byte(nil), result.Stdout...)
+	result.Stderr = append([]byte(nil), result.Stderr...)
+	return result
+}

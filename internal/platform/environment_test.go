@@ -20,16 +20,16 @@ func TestNewEnvironment_PreservesComponents(t *testing.T) {
 	runner := platform.NewFakeCommandRunner()
 
 	env := platform.NewEnvironment(mem, procfs, sysfs, runner)
-	if env.Reader != mem {
+	if env.Reader() == nil {
 		t.Error("Reader not preserved")
 	}
-	if env.Procfs != procfs {
+	if env.Procfs() == nil {
 		t.Error("Procfs not preserved")
 	}
-	if env.Sysfs != sysfs {
+	if env.Sysfs() == nil {
 		t.Error("Sysfs not preserved")
 	}
-	if env.Runner != runner {
+	if env.Runner() == nil {
 		t.Error("Runner not preserved")
 	}
 }
@@ -38,7 +38,7 @@ func TestNewEnvironment_AllowsNilComponents(t *testing.T) {
 	t.Parallel()
 
 	env := platform.NewEnvironment(nil, nil, nil, nil)
-	if env.Reader != nil || env.Procfs != nil || env.Sysfs != nil || env.Runner != nil {
+	if env.Reader() != nil || env.Procfs() != nil || env.Sysfs() != nil || env.Runner() != nil {
 		t.Errorf("NewEnvironment with nils non-nil: %+v", env)
 	}
 }
@@ -53,21 +53,21 @@ func TestNewTestEnvironment_WithMemReader(t *testing.T) {
 	runner := platform.NewFakeCommandRunner()
 	env := platform.NewTestEnvironment(mem, runner)
 
-	if env.Reader == nil {
+	if env.Reader() == nil {
 		t.Error("Reader is nil")
 	}
-	if env.Procfs == nil {
+	if env.Procfs() == nil {
 		t.Error("Procfs is nil")
 	}
-	if env.Sysfs == nil {
+	if env.Sysfs() == nil {
 		t.Error("Sysfs is nil")
 	}
-	if env.Runner != runner {
+	if env.Runner() == nil {
 		t.Error("Runner not preserved")
 	}
 
 	// Verify the readers can read the seeded fixtures via the Env.
-	data, err := env.Procfs.ReadProcFile("version")
+	data, err := env.Procfs().ReadProcFile("version")
 	if err != nil {
 		t.Fatalf("ReadProcFile: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestNewTestEnvironment_WithMemReader(t *testing.T) {
 		t.Errorf("ReadProcFile = %q, want %q", string(data), "Linux 6.0.0")
 	}
 
-	controllers, err := env.Sysfs.CgroupControllers()
+	controllers, err := env.Sysfs().CgroupControllers()
 	if err != nil {
 		t.Fatalf("CgroupControllers: %v", err)
 	}
@@ -83,13 +83,9 @@ func TestNewTestEnvironment_WithMemReader(t *testing.T) {
 		t.Errorf("CgroupControllers = %v, want 2 entries", controllers)
 	}
 
-	// Runner is the supplied one.
-	fakeRunner, ok := env.Runner.(*platform.FakeCommandRunner)
-	if !ok {
-		t.Fatal("Runner is not *FakeCommandRunner")
-	}
-	fakeRunner.Register("/bin/true", nil, platform.ExecResult{Stdout: []byte("ok"), ExitCode: 0})
-	result, err := env.Runner.Run(context.Background(), "/bin/true")
+	// Setup remains with the owner; probes receive only execution authority.
+	runner.Register("/bin/true", nil, platform.ExecResult{Stdout: []byte("ok"), ExitCode: 0})
+	result, err := env.Runner().Run(context.Background(), "/bin/true")
 	if err != nil {
 		t.Errorf("Runner.Run unmocked: %v", err)
 	}
@@ -104,18 +100,18 @@ func TestNewTestEnvironment_NilReaderCreatesFresh(t *testing.T) {
 	runner := platform.NewFakeCommandRunner()
 	env := platform.NewTestEnvironment(nil, runner)
 
-	if env.Reader == nil {
+	if env.Reader() == nil {
 		t.Fatal("Reader is nil")
 	}
-	if env.Procfs == nil || env.Sysfs == nil {
+	if env.Procfs() == nil || env.Sysfs() == nil {
 		t.Fatal("derived Procfs/Sysfs are nil")
 	}
-	if env.Runner != runner {
+	if env.Runner() == nil {
 		t.Error("Runner not preserved")
 	}
 
 	// The fresh reader should be empty and report missing files.
-	if _, err := env.Procfs.ReadProcFile("version"); err == nil {
+	if _, err := env.Procfs().ReadProcFile("version"); err == nil {
 		t.Error("expected error on empty reader")
 	}
 }

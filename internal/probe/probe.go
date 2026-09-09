@@ -37,12 +37,14 @@ var (
 // Run; sibling probes may execute concurrently with one another. Because
 // of that, the platform.Environment and its dependencies may be observed
 // concurrently from multiple probe goroutines even though each individual
-// Probe value is not re-entered by the orchestrator itself.
+// Probe value is not re-entered within one Run. Concurrent Run calls (even
+// through different registries) may share instances only if those probes are
+// safely reentrant. Sequential reuse permits probe-local mutable state.
 //
 // Implementations therefore MUST NOT assume single-goroutine access to
-// shared dependencies. They MAY freely mutate their own internal state,
+// shared dependencies. Under sequential reuse they MAY mutate local state,
 // but they MUST NOT mutate shared dependencies (e.g. platform.Environment
-// fields) unless those dependencies explicitly document that they are
+// services) unless those dependencies explicitly document that they are
 // safe for concurrent mutation.
 //
 // # Cancellation contract
@@ -66,6 +68,8 @@ type Probe interface {
 	// remain constant for the lifetime of the probe instance.
 	ID() string
 
+	// Dependencies is captured and copied exactly once by the first Resolve.
+	// Callers must not mutate declarations concurrently with that capture.
 	// Dependencies returns the IDs of probes that must complete with
 	// status ProbeSucceeded before this probe may run. An empty slice means
 	// the probe has no dependencies.
