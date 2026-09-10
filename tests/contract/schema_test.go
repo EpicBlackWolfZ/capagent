@@ -14,7 +14,7 @@ import (
 )
 
 // compileSchema compiles the embedded Schema v1 into a reusable Draft 2020-12 validator.
-func compileSchema(t *testing.T) *jsonschema.Schema {
+func compileSchema(t testing.TB) *jsonschema.Schema {
 	t.Helper()
 
 	c := jsonschema.NewCompiler()

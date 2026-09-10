@@ -30,6 +30,7 @@ REQUIRED = {
     MODULE + '/tests/contract': [
         'TestHardeningHarnessContracts', 'TestChaosCampaign', 'TestChaosFilesystem', 'TestChaosRegistry',
         'TestResourceCommands', 'TestResourceOwnership',
+        'TestFuzzEnvelopeFailures', 'TestWorkflow_FinalHardeningGate', 'TestArchitecture_FuzzHelpersStayTestOnly',
         *['TestResourceGraphs/' + shape + '/' + workers
           for shape in ('flat', 'chain', 'fan-out', 'fan-in', 'diamond') for workers in ('1', '4', '16')],
     ],

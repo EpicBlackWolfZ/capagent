@@ -44,11 +44,21 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: ./.github/actions/setup-tools
         with:
           profile: lint
-      - run: make check-mod lint build-contracts
+      - name: Run shared lint verification
+        run: python3 -B scripts/gate.py stage --stage lint
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: m1.1-lint-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: error
+          path: .work/gate/
+          retention-days: 14
   test:
     name: Unit Tests & Coverage Gate (>= 95%)
     runs-on: ubuntu-latest
@@ -56,34 +66,20 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: '1.27.1'
-      - run: go install gotest.tools/gotestsum@v1.13.0
-      - name: Race tests and exact coverage gates
-        id: unit-tests
-        run: |
-          mkdir -p .work/hardening/ci
-          gotestsum --junitfile junit.xml --jsonfile .work/hardening/ci/events.jsonl --format pkgname -- -race -count=1 -coverprofile=coverage.out -covermode=atomic ./...
-          python3 -B scripts/check-coverage.py coverage.out 95.0 | tee coverage-summary.txt
-          cat coverage-summary.txt >> "$GITHUB_STEP_SUMMARY"
-      - name: Verify hardening evidence from the same test run
-        if: always()
-        env:
-          TEST_EXIT: ${{ steps.unit-tests.outcome == 'success' && '0' || '1' }}
-        run: python3 -B scripts/hardening.py report --events .work/hardening/ci/events.jsonl --output .work/hardening/ci --test-exit "$TEST_EXIT"
+      - name: Run shared test verification
+        run: python3 -B scripts/gate.py stage --stage test
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
-          name: test-results-${{ github.run_attempt }}
+          name: m1.1-test-${{ github.run_attempt }}
           include-hidden-files: true
-          path: |
-            junit.xml
-            coverage.out
-            coverage-summary.txt
-            .work/hardening/ci/events.jsonl
-            .work/hardening/ci/summary.json
+          if-no-files-found: error
+          path: .work/gate/
           retention-days: 14
   vulncheck:
     name: Vulnerability Scan (govulncheck)
@@ -92,12 +88,22 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: '1.27.1'
       - run: go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
-      - run: make vuln
+      - name: Run shared vulncheck verification
+        run: python3 -B scripts/gate.py stage --stage vulncheck
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: m1.1-vulncheck-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: error
+          path: .work/gate/
+          retention-days: 14
   gitleaks:
     name: Secrets Detection (gitleaks)
     runs-on: ubuntu-latest
@@ -111,7 +117,16 @@ jobs:
         with:
           go-version: '1.27.1'
       - run: go install github.com/zricethezav/gitleaks/v8@v8.30.1
-      - run: gitleaks git --redact --no-banner
+      - name: Run shared gitleaks verification
+        run: python3 -B scripts/gate.py stage --stage gitleaks
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: m1.1-gitleaks-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: error
+          path: .work/gate/
+          retention-days: 14
   build:
     name: Build, GoReleaser Snapshot & Self-Bundling Verification
     runs-on: ubuntu-latest
@@ -124,8 +139,16 @@ jobs:
       - uses: ./.github/actions/setup-tools
         with:
           profile: build
-      - name: Rehearse minimal release without publishing
-        run: make release-check
+      - name: Run shared build verification
+        run: python3 -B scripts/gate.py stage --stage build
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: m1.1-build-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: error
+          path: .work/gate/
+          retention-days: 14
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -134,4 +157,61 @@ jobs:
             dist/release-inputs.tar.gz
             dist/verify-*.json
             dist/verified-*.json
+          retention-days: 14
+  fuzz:
+    name: Bounded Fuzz Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+      - name: Run shared fuzz verification
+        run: python3 -B scripts/gate.py stage --stage fuzz
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: m1.1-fuzz-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: error
+          path: .work/gate/
+          retention-days: 14
+  hardening-gate:
+    name: M1.1 Hardening Gate
+    needs: [lint, test, vulncheck, gitleaks, build, fuzz]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        if: always()
+        with:
+          pattern: m1.1-*-${{ github.run_attempt }}
+          merge-multiple: true
+          path: .work/gate/
+      - name: Require complete evidence from this source and workflow attempt
+        if: always()
+        env:
+          CAPAGENT_JOB_RESULTS: >-
+            {"lint":"${{ needs.lint.result }}","test":"${{ needs.test.result }}","vulncheck":"${{ needs.vulncheck.result }}","gitleaks":"${{ needs.gitleaks.result }}","build":"${{ needs.build.result }}","fuzz":"${{ needs.fuzz.result }}"}
+        run: python3 -B scripts/gate.py report
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: m1.1-gate-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            .work/gate/summary.json
+            .work/gate/summary.md
           retention-days: 14

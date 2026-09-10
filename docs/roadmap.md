@@ -6,7 +6,7 @@ This roadmap separates delivered scaffolding from usable product behavior. GitHu
 
 M0 and the initial M1 foundation are delivered. The CLI currently prints help, version information and a startup banner. It does not yet run host evaluation, accept `--json`, or emit capability reports. Schema v1 is a pre-release skeleton, not the final M19 compatibility freeze.
 
-M1.1 remains an open hardening gate. M1.2 introduces an early fixture-backed evaluation path so later host/runtime capabilities share tested context, evidence, requirement and output contracts.
+M1.1 foundation hardening and its [permanent verification gate](testing.md#complete-m11-gate) are implemented. Milestone closure requires the complete gate to pass on the merged commit. M1.2 introduces an early fixture-backed evaluation path so later host/runtime capabilities share tested context, evidence, requirement and output contracts.
 
 Execution support targets **Linux 5.6+ with functioning `openat2` confinement**, on amd64 and arm64. A kernel version alone does not prove the syscall is permitted. Unsupported kernels or policies must produce explicit diagnostics; there is no insecure fallback. Historical RHEL 8 data may be used for parser fixtures, but stock pre-5.6 execution is not a supported target. A broader compatibility policy requires a separate secure implementation and real-host tests.
 
@@ -32,7 +32,7 @@ Pure parser, fixture and domain work may proceed before the hardening gate close
 |---|---|---|
 | [M0 — Architecture & Contract](https://github.com/EpicBlackWolfZ/capagent/milestone/1) | Initial skeleton delivered | Initial models, state algebra and schema skeleton; remaining semantics have explicit follow-ups. |
 | [M1 — Probe Core](https://github.com/EpicBlackWolfZ/capagent/milestone/2) | Initial foundation delivered | Static payload, OS abstractions and scheduler scaffolding; host-report CLI is not delivered. |
-| [M1.1 — Hardening, Security & Performance](https://github.com/EpicBlackWolfZ/capagent/milestone/23) | Active gate | Confinement, descriptor ownership, bounded I/O, parser fidelity, execution/build policy and regression gate. |
+| [M1.1 — Hardening, Security & Performance](https://github.com/EpicBlackWolfZ/capagent/milestone/23) | Implemented; closure requires passing gate | Confinement, descriptor ownership, bounded I/O, parser fidelity, execution/build policy and regression gate. |
 | [M1.2 — Context & Evaluation Slice](https://github.com/EpicBlackWolfZ/capagent/milestone/24) | Queued; pure work may overlap | Typed context/evidence, minimal evaluator/requirements, reusable fixtures, application lifecycle and JSON consumer smoke. |
 | [M2 — Host Facts](https://github.com/EpicBlackWolfZ/capagent/milestone/3) | Queued | First live host probes, mockable syscall adapters and real-host JSON validation. |
 | [M3 — Execution Context](https://github.com/EpicBlackWolfZ/capagent/milestone/4) | Queued | Target identity validation, groups, subordinate ranges, helper metadata, XDG and user systemd. |

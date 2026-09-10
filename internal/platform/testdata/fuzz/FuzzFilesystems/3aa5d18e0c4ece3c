@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("\u0000nodev proc\next4\n")

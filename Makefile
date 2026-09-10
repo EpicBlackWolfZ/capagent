@@ -50,6 +50,11 @@ help:
 	@echo "  build-contracts Run shell/workflow validators and build-security contracts"
 	@echo "  hardening-regressions Run bounded fault/resource regressions and verify their report"
 	@echo "  hardening-stress Run the longer replayable fault/resource profile"
+	@echo "  fuzz-regressions Run the permanent fuzz corpus with race detection"
+	@echo "  fuzz-smoke     Run every fuzz target for 5 seconds"
+	@echo "  fuzz-stress    Run every fuzz target for 60 seconds"
+	@echo "  benchmark-smoke Run the fixed benchmark inventory once"
+	@echo "  hardening-gate Run and report the complete non-publishing M1.1 gate"
 	@echo "  tidy           Run go mod tidy and go mod verify"
 	@echo "  clean          Remove build artifacts, test outputs, and coverage files"
 
@@ -164,3 +169,22 @@ hardening-regressions:
 
 hardening-stress:
 	@python3 -B scripts/hardening.py run --profile stress
+
+.PHONY: fuzz-regressions fuzz-smoke fuzz-stress benchmark-smoke hardening-gate
+
+fuzz-regressions:
+	@python3 -B scripts/fuzzing.py corpus
+
+fuzz-smoke:
+	@python3 -B scripts/fuzzing.py smoke
+
+fuzz-stress:
+	@python3 -B scripts/fuzzing.py stress
+
+benchmark-smoke:
+	@$(GO) test ./internal/platform ./internal/probe -run '^$$' \
+		-bench '^Benchmark(BoundedBuffer|ExecutionPlan|OrchestratorConcurrency|FilesystemRead|FilesystemParser)$$' \
+		-benchtime=1x -benchmem -count=1 -timeout=2m
+
+hardening-gate:
+	@python3 -B scripts/gate.py run

@@ -24,6 +24,10 @@ on:
         description: Campaign watchdog (positive Go duration, at most 20m)
         type: string
         default: '15m'
+      fuzz_target:
+        description: Optional exact fuzz target for replay (empty runs all targets)
+        type: string
+        default: ''
 permissions:
   contents: read
 concurrency:
@@ -58,4 +62,30 @@ jobs:
             .work/hardening/stress/events.jsonl
             .work/hardening/stress/stderr.log
             .work/hardening/stress/summary.json
+          retention-days: 14
+  fuzz:
+    name: Deep bounded fuzz exploration
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+      - name: Run every target within its declared envelope
+        env:
+          FUZZ_TARGET: ${{ inputs.fuzz_target }}
+        run: |
+          args=()
+          if [[ -n "$FUZZ_TARGET" ]]; then args+=(--target "$FUZZ_TARGET"); fi
+          python3 -B scripts/fuzzing.py stress --output .work/fuzz/stress "${args[@]}"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: fuzz-stress-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: .work/fuzz/stress/
           retention-days: 14
