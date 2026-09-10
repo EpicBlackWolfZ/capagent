@@ -11,6 +11,7 @@ import sys
 import tarfile
 import tempfile
 import unittest
+from unittest import mock
 
 SOURCE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SOURCE))
@@ -37,6 +38,17 @@ class ReleaseArtifactsTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+
+    def test_pinned_tool_versions_accept_release_and_source_version_prefixes(self):
+        for version in ('2.18.0', 'v2.18.0'):
+            with self.subTest(version=version), mock.patch.object(self.module, 'command', side_effect=[
+                    'go version go1.27.1 linux/amd64', f'GitVersion:    {version}\n', '{"version":"1.51.1"}']):
+                self.module.verify_tool_versions()
+        for version in ('2.18.1', 'v2.18.01', '2.18.0-dev', 'unknown'):
+            with self.subTest(version=version), mock.patch.object(self.module, 'command', side_effect=[
+                    'go version go1.27.1 linux/amd64', f'GitVersion:    {version}\n', '{"version":"1.51.1"}']):
+                with self.assertRaises(ValueError):
+                    self.module.verify_tool_versions()
 
     def test_missing_release_tools_fail_before_building(self):
         environment = dict(os.environ, PATH='/usr/bin:/bin')

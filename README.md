@@ -119,8 +119,8 @@ Both architectures receive static/integrity checks; ordinary amd64 CI executes t
 amd64 binary. No native ARM64 execution claim is made by these checks.
 
 For the full local source gate, install golangci-lint 2.13.2, govulncheck 1.7.0,
-Gitleaks 8.30.1, actionlint 1.7.12, and ShellCheck 0.11.0, then run `make all` and
-`make build-contracts`. CI provisions exact versions; missing required validators
+Gitleaks 8.30.1, actionlint 1.7.12, and ShellCheck 0.11.0, then run `make all`,
+`make build-contracts`, and `gitleaks git --redact --no-banner`. CI provisions exact versions; missing required validators
 fail rather than reducing the checks. Cosign 3.0.6 is required for trusted release
 signing and for reviewing new upstream microfat trust data, not for an offline
 build using an already verified cache.

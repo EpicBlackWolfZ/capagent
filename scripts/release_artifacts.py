@@ -92,8 +92,11 @@ def verify_tool_versions():
     go = command('go', 'version')
     goreleaser = command('goreleaser', '--version')
     syft = json.loads(command('syft', 'version', '-o', 'json'))
-    if go.split()[2] != 'go1.27.1' or not re.search(r'GitVersion:\s+v2\.18\.0(?:\s|$)', goreleaser) or syft.get('version') != '1.51.1':
-        raise ValueError('release-check requires Go 1.27.1, GoReleaser 2.18.0, and Syft 1.51.1')
+    match = re.search(r'(?m)^GitVersion:\s+v?([0-9]+\.[0-9]+\.[0-9]+)\s*$', goreleaser)
+    actual = {'go': go.split()[2], 'goreleaser': match.group(1) if match else 'unrecognized',
+              'syft': syft.get('version')}
+    if actual != {'go': 'go1.27.1', 'goreleaser': '2.18.0', 'syft': '1.51.1'}:
+        raise ValueError(f'release-check requires Go 1.27.1, GoReleaser 2.18.0, Syft 1.51.1; found {actual}')
 
 
 def verify_bundles(mode):
