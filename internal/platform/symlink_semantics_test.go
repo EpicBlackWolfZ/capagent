@@ -83,7 +83,7 @@ func TestMemPlatformReader_ForcedErrSymlinkChain(t *testing.T) {
 			m := platform.NewMemPlatformReader()
 			tt.setup(m)
 
-			if _, err := m.ReadFile(tt.path); !errors.Is(err, tt.wantErr) {
+			if _, err := m.ReadFile(t.Context(), tt.path); !errors.Is(err, tt.wantErr) {
 				t.Errorf("ReadFile error = %v, want %v", err, tt.wantErr)
 			}
 			if _, err := m.Stat(tt.path); !errors.Is(err, tt.wantErr) {
@@ -190,7 +190,7 @@ func TestMemPlatformReader_SymlinkVariations(t *testing.T) {
 				t.Errorf("Readlink target = %q, want %q", gotTarget, tt.readlink)
 			}
 
-			data, err := m.ReadFile(tt.path)
+			data, err := m.ReadFile(t.Context(), tt.path)
 			if tt.readFile == "" {
 				// Expecting a resolution failure (ELOOP, ErrNotExist).
 				if err == nil {
@@ -226,7 +226,7 @@ func TestMemPlatformReader_DepthLimit(t *testing.T) {
 	fixtureParents(m, "/chain/r")
 	m.AddFile("/chain/r", []byte("z"), 0o644)
 
-	if _, err := m.ReadFile("/chain/a"); !errors.Is(err, syscall.ELOOP) {
+	if _, err := m.ReadFile(t.Context(), "/chain/a"); !errors.Is(err, syscall.ELOOP) {
 		t.Errorf("ReadFile ELOOP error = %v, want ELOOP", err)
 	}
 	if _, err := m.Stat("/chain/a"); !errors.Is(err, syscall.ELOOP) {

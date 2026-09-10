@@ -15,7 +15,13 @@ func TestCaptureDirectoryFailures(t *testing.T) {
 	for _, failure := range []error{syscall.ENOENT, syscall.EACCES, syscall.EIO, syscall.ENOTDIR} {
 		t.Run(failure.Error(), func(t *testing.T) {
 			t.Parallel()
-			entries, err := captureDirectory([]string{"z", ".", metadataFailureName, "..", "a"}, func(name string) (os.FileInfo, error) {
+			entries, err := captureDirectory(t.Context(), DefaultReadLimits(), func(yield func(string, error) bool) {
+				for _, name := range []string{"z", ".", metadataFailureName, "..", "a"} {
+					if !yield(name, nil) {
+						return
+					}
+				}
+			}, func(name string) (os.FileInfo, error) {
 				if name == "." || name == ".." {
 					t.Fatal("dot entry reached metadata lookup")
 				}

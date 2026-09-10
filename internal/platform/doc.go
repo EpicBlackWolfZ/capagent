@@ -9,7 +9,8 @@
 // The package exposes:
 //
 //   - PlatformReader: a deterministic filesystem abstraction over file reads,
-//     directory enumeration, stat metadata, and symlink targets. Both a real
+//     bounded directory enumeration, immutable ownership metadata, raw file
+//     capability attributes, and symlink targets. Both a real
 //     implementation (OSPlatformReader) and an in-memory test double
 //     (MemPlatformReader) are provided.
 //   - ScopedReader: a root-confined filesystem abstraction that performs each
@@ -19,7 +20,10 @@
 //     reader owns its root FD for its lifetime and releases it via Close().
 //   - ProcfsReader / SysfsReader: thin parsers of Linux pseudo-filesystem
 //     protocols built on top of a ScopedReader, returning pure transport
-//     structs without inferring runtime or container semantics.
+//     structs with bounded completeness diagnostics. Nil error means complete;
+//     partial records carry an error and cannot establish absence.
+//     Context cancellation is cooperative between syscalls; it cannot forcibly
+//     interrupt arbitrary filesystem or device-driver I/O.
 //   - CommandRunner: a bounded subprocess execution abstraction with strict
 //     per-stream output caps, internal timeout handling, cancellation
 //     discrimination, and per-subprocess process-group cleanup. Both a real

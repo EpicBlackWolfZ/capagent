@@ -5,11 +5,13 @@
 package fixtures
 
 import (
+	"context"
+
 	"github.com/EpicBlackWolfZ/capagent/internal/platform"
 )
 
 // readSecretLegitimately routes through the platform abstraction so
 // no host-IO primitive appears in the AST. The denylist permits this.
-func readSecretLegitimately(env platform.Environment) ([]byte, error) {
-	return env.Reader().ReadFile("/etc/passwd")
+func readSecretLegitimately(ctx context.Context, env platform.Environment) ([]byte, error) {
+	return env.Reader().ReadFile(ctx, "/etc/passwd")
 }

@@ -83,7 +83,7 @@ func runFDZeroHelper(t *testing.T) {
 
 	// Every method must work; missing/empty subpaths produce
 	// expected errors that are NOT ErrClosed.
-	if _, err := r.ReadFile("does-not-exist"); err == nil {
+	if _, err := r.ReadFile(t.Context(), "does-not-exist"); err == nil {
 		t.Errorf("ReadFile missing: expected error, got nil")
 	} else if errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadFile missing: ErrClosed returned prematurely (FD 0 handling bug)")
@@ -93,7 +93,7 @@ func runFDZeroHelper(t *testing.T) {
 	} else if errors.Is(err, platform.ErrClosed) {
 		t.Errorf("Stat missing: ErrClosed returned prematurely (FD 0 handling bug)")
 	}
-	if _, err := r.ReadDir("does-not-exist"); err == nil {
+	if _, err := r.ReadDir(t.Context(), "does-not-exist"); err == nil {
 		t.Errorf("ReadDir missing: expected error, got nil")
 	} else if errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadDir missing: ErrClosed returned prematurely (FD 0 handling bug)")
@@ -113,13 +113,13 @@ func runFDZeroHelper(t *testing.T) {
 	if err := r.Close(); err != nil {
 		t.Fatalf("Close: %v", err)
 	}
-	if _, err := r.ReadFile("x"); !errors.Is(err, platform.ErrClosed) {
+	if _, err := r.ReadFile(t.Context(), "x"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadFile after Close error = %v, want ErrClosed", err)
 	}
 	if _, err := r.Stat("x"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("Stat after Close error = %v, want ErrClosed", err)
 	}
-	if _, err := r.ReadDir("x"); !errors.Is(err, platform.ErrClosed) {
+	if _, err := r.ReadDir(t.Context(), "x"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadDir after Close error = %v, want ErrClosed", err)
 	}
 	if _, err := r.Readlink("x"); !errors.Is(err, platform.ErrClosed) {

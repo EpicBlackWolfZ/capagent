@@ -1,8 +1,8 @@
 package platform
 
 import (
+	"context"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,48 +51,41 @@ func (s *SysfsReader) Root() string {
 }
 
 // ReadSysFile reads raw bytes at the supplied sysfs-relative subpath.
-func (s *SysfsReader) ReadSysFile(subpath string) ([]byte, error) {
+func (s *SysfsReader) ReadSysFile(ctx context.Context, subpath string) ([]byte, error) {
 	if err := ValidateSubpath(subpath); err != nil {
 		return nil, err
 	}
-	return s.reader.ReadFile(subpath)
+	return s.reader.ReadFile(ctx, subpath)
 }
 
-// ReadCgroupController reads the cgroup v2 controller file at
-// /sys/fs/cgroup/<controller>.
-//
-// The controller argument must be a single cgroup v2 controller name as
-// documented in cgroup(7): a non-empty, relative path segment composed of
-// lowercase alphanumerics and underscores. Path separators, absolute
-// paths, ".", "..", and any normalization traversal attempt are rejected
-// without touching the underlying PlatformReader.
-func (s *SysfsReader) ReadCgroupController(controller string) ([]byte, error) {
-	if err := validateCgroupController(controller); err != nil {
+// ReadCgroupFile reads a single cgroup v2 filename, such as cpu.max or
+// cgroup.controllers. Grammar is [a-z][a-z0-9_]*(\.[a-z0-9_]+)*; it does
+// not assert that a named controller exists. Subdirectories are not accepted.
+func (s *SysfsReader) ReadCgroupFile(ctx context.Context, filename string) ([]byte, error) {
+	if err := validateCgroupFilename(filename); err != nil {
 		return nil, err
 	}
-	return s.ReadSysFile(cgroupBasePath + "/" + controller)
+	return s.ReadSysFile(ctx, cgroupBasePath+"/"+filename)
 }
 
-// validateCgroupController enforces that controller is a single cgroup v2
-// controller name. The rules mirror the kernel's own controller naming
-// grammar and reject every path-traversal shape that could escape
-// cgroupBasePath.
-//
-// The validation is intentionally stricter than filepath.Clean would
-// produce: callers cannot smuggle separators, leading dots, or relative
-// references past the API boundary.
-func validateCgroupController(controller string) error {
-	if controller == "" {
-		return errors.New("controller name cannot be empty")
-	}
-	if controller == "." || controller == ".." {
-		return errors.New("controller name must not be \".\" or \"..\"")
-	}
-	if strings.ContainsRune(controller, '/') {
-		return errors.New("controller name must not contain a path separator")
-	}
-	if controller[0] == '.' {
-		return errors.New("controller name must not start with \".\"")
+func validateCgroupFilename(filename string) error {
+	first := true
+	for part := range strings.SplitSeq(filename, ".") {
+		if first {
+			if !identifier(part) {
+				return ErrMalformed
+			}
+			first = false
+			continue
+		}
+		if part == "" {
+			return ErrMalformed
+		}
+		for _, ch := range part {
+			if (ch < 'a' || ch > 'z') && (ch < '0' || ch > '9') && ch != '_' {
+				return ErrMalformed
+			}
+		}
 	}
 	return nil
 }
@@ -100,12 +93,9 @@ func validateCgroupController(controller string) error {
 // CgroupControllers parses the cgroup v2 controller list at
 // /sys/fs/cgroup/cgroup.controllers. Controllers are space-delimited; empty
 // strings and surrounding whitespace are stripped.
-func (s *SysfsReader) CgroupControllers() ([]string, error) {
-	data, err := s.ReadSysFile(cgroupControllersPath)
-	if err != nil {
-		return nil, fmt.Errorf("read cgroup.controllers: %w", err)
-	}
-	return splitControllerList(data), nil
+func (s *SysfsReader) CgroupControllers(ctx context.Context) ([]string, error) {
+	data, err := s.ReadSysFile(ctx, cgroupControllersPath)
+	return parseControllers(ctx, data, err)
 }
 
 // SELinuxPresent reports whether /sys/fs/selinux exists in sysfs. Missing
@@ -125,27 +115,33 @@ func (s *SysfsReader) SELinuxPresent() (bool, error) {
 //
 // Per AGENTS.md guidance, "not present" is distinguished from "read failure":
 // if /sys/fs/selinux/enforce is absent, returns ("", nil).
-func (s *SysfsReader) SELinuxMode() (string, error) {
-	data, err := s.ReadSysFile(selinuxEnforcePath)
+func (s *SysfsReader) SELinuxMode(ctx context.Context) (string, error) {
+	data, err := s.ReadSysFile(ctx, selinuxEnforcePath)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return "", nil
 		}
 		return "", err
 	}
-	return strings.TrimSpace(string(data)), nil
+	return parseSELinux(data)
 }
 
 // IsSELinuxEnforcing returns true when SELinux is both present and enforcing.
-// Absence of the subsystem is treated as permissive (false) without error.
-func (s *SysfsReader) IsSELinuxEnforcing() (bool, error) {
+// Absence returns false without error; false alone does not establish permissive mode.
+func (s *SysfsReader) IsSELinuxEnforcing(ctx context.Context) (bool, error) {
+	if err := ctx.Err(); err != nil {
+		return false, err
+	}
 	present, err := s.SELinuxPresent()
 	if err != nil || !present {
 		return false, err
 	}
-	mode, err := s.SELinuxMode()
+	mode, err := s.SELinuxMode(ctx)
 	if err != nil {
 		return false, err
+	}
+	if mode == "" {
+		return false, pathError("read", selinuxEnforcePath, os.ErrNotExist)
 	}
 	return mode == selinuxEnforcing, nil
 }
@@ -161,21 +157,58 @@ func (s *SysfsReader) AppArmorPresent() (bool, error) {
 	return true, nil
 }
 
-// splitControllerList parses a space-delimited cgroup controller list and
-// returns a slice of unique non-empty entries.
-func splitControllerList(data []byte) []string {
-	fields := strings.Fields(string(data))
-	if len(fields) == 0 {
-		return []string{}
+func parseSELinux(data []byte) (string, error) {
+	mode := strings.TrimSpace(string(data))
+	if mode != "0" && mode != "1" {
+		return "", incomplete(ErrMalformed)
 	}
-	seen := make(map[string]struct{}, len(fields))
-	out := make([]string, 0, len(fields))
-	for _, f := range fields {
-		if _, ok := seen[f]; ok {
+	return mode, nil
+}
+
+func parseControllers(ctx context.Context, data []byte, readErr error) ([]string, error) {
+	if len(data) > defaultFileBytes {
+		data = data[:defaultFileBytes]
+		readErr = errors.Join(readErr, &LimitError{Resource: "parser input bytes", Limit: defaultFileBytes})
+	}
+	// Only whitespace-terminated tokens survive incomplete transport.
+	if readErr != nil {
+		end := len(data)
+		for end > 0 && !strings.ContainsRune(" \t\n\r\v\f", rune(data[end-1])) {
+			end--
+		}
+		data = data[:end]
+	}
+	out := make([]string, 0)
+	seen := make(map[string]bool)
+	diagnostics := &ParseError{Source: cgroupControllersPath}
+	token := 0
+	for field := range strings.FieldsSeq(string(data)) {
+		if err := ctx.Err(); err != nil {
+			readErr = errors.Join(readErr, err)
+			break
+		}
+		token++
+		if len(field) > defaultLineBytes {
+			diagnostics.add(token, &LimitError{Resource: "controller bytes", Limit: defaultLineBytes}, defaultDiagnostics)
 			continue
 		}
-		seen[f] = struct{}{}
-		out = append(out, f)
+		if !identifier(field) {
+			diagnostics.add(token, ErrMalformed, defaultDiagnostics)
+			continue
+		}
+		if seen[field] {
+			continue
+		}
+		if len(out) == defaultRecords {
+			diagnostics.add(token, &LimitError{Resource: "records", Limit: defaultRecords}, defaultDiagnostics)
+			break
+		}
+		seen[field] = true
+		out = append(out, field)
 	}
-	return out
+	var parseErr error
+	if len(diagnostics.Diagnostics) > 0 {
+		parseErr = diagnostics
+	}
+	return out, errors.Join(parseErr, incomplete(readErr), incomplete(ctx.Err()))
 }
