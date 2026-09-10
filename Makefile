@@ -48,6 +48,8 @@ help:
 	@echo "  snapshot       Run GoReleaser snapshot build and fat binary packaging"
 	@echo "  release-check  Verify full/minimal binaries, release archives, SBOMs, and provenance"
 	@echo "  build-contracts Run shell/workflow validators and build-security contracts"
+	@echo "  hardening-regressions Run bounded fault/resource regressions and verify their report"
+	@echo "  hardening-stress Run the longer replayable fault/resource profile"
 	@echo "  tidy           Run go mod tidy and go mod verify"
 	@echo "  clean          Remove build artifacts, test outputs, and coverage files"
 
@@ -154,3 +156,11 @@ build-contracts:
 	@shellcheck scripts/*.sh
 	@actionlint
 	@$(GO) test -race ./tests/contract
+
+.PHONY: hardening-regressions hardening-stress
+
+hardening-regressions:
+	@python3 -B scripts/hardening.py run --profile regressions
+
+hardening-stress:
+	@python3 -B scripts/hardening.py run --profile stress

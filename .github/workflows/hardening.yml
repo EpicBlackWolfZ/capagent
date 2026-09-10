@@ -1,0 +1,61 @@
+name: Nightly Hardening
+on:
+  schedule:
+    - cron: '23 2 * * *'
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: Replay seed (unsigned 64-bit integer)
+        type: string
+        default: '1'
+      iterations:
+        description: Seeded cases (1-4096)
+        type: string
+        default: '2048'
+      probes:
+        description: Probes per case (1-4096)
+        type: string
+        default: '256'
+      concurrency:
+        description: Worker budget (1-64)
+        type: string
+        default: '8'
+      duration:
+        description: Campaign watchdog (positive Go duration, at most 20m)
+        type: string
+        default: '15m'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  stress:
+    name: Seeded fault and resource stress
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.27.1'
+      - name: Run bounded stress profile
+        env:
+          CHAOS_SEED: ${{ inputs.seed || github.run_id }}
+          CHAOS_ITERATIONS: ${{ inputs.iterations || '2048' }}
+          CHAOS_PROBES: ${{ inputs.probes || '256' }}
+          CHAOS_CONCURRENCY: ${{ inputs.concurrency || '8' }}
+          CHAOS_DURATION: ${{ inputs.duration || '15m' }}
+        run: make hardening-stress
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: hardening-stress-${{ github.run_attempt }}
+          include-hidden-files: true
+          path: |
+            .work/hardening/stress/events.jsonl
+            .work/hardening/stress/stderr.log
+            .work/hardening/stress/summary.json
+          retention-days: 14
