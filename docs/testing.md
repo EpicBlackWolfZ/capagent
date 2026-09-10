@@ -1,4 +1,4 @@
-# Foundation fault and resource testing
+# Foundation verification and fuzz testing
 
 The M1.1 regression suites cover implemented platform and scheduler contracts.
 They run on the supported Linux 5.6+ baseline with working `openat2`, using Go
@@ -97,5 +97,98 @@ seams; do not introduce production fault switches or weaken the host-I/O boundar
 Register cleanup before starting workers. Add required cases to the inventory in
 `scripts/hardening.py` and retain minimized reproductions as permanent tests.
 
-These suites deliver the fault/resource portion of M1.1. The fuzz facility (#44)
-and final integrated milestone gate (#49) remain separate deliverables.
+## Bounded fuzz facility
+
+```bash
+make fuzz-regressions  # Permanent corpus with race detection
+make fuzz-smoke        # Every target, 5 seconds each
+make fuzz-stress       # Every target, 60 seconds each
+python3 -B scripts/fuzzing.py stress --target FuzzRegistryDAG
+```
+
+There are 13 required targets: mountinfo, cgroups, filesystems, sysfs state,
+cgroup names, subpaths, scoped symlink graphs, command specifications,
+environment policy, bounded buffers, registry DAGs, orchestrator outcomes,
+and report JSON. os-release belongs to its future parser implementation (#15).
+JSON fuzzing tests the shipped DTO/serialization and schema contracts; it does
+not assume the partial DTO validator implements the entire schema (#64).
+
+| Envelope | Limit |
+|---|---|
+| Parser, buffer and JSON input | 64 KiB; JSON nesting at most 64 |
+| Paths, names and symlink graph input | 4 KiB; 12 symlinks plus owned fixture directories/files; symlink targets at most 256 bytes |
+| Command/environment input | 8 KiB; at most 16 arguments and 16 overrides |
+| Registry/scheduler input | 4 KiB; at most 32 nodes, 128 edges and 4 workers |
+| Callback | 32 MiB cumulative Go allocation assertion and 10-second fatal watchdog |
+| Native exploration | One worker; 5 seconds per target in PRs, 60 seconds nightly |
+| Minimization and process | 15-second minimization budget; 180-second process watchdog |
+| Whole invocation | 10 minutes for corpus/smoke; 30 minutes for stress |
+
+Oversized inputs return before fixture construction. Callback allocation
+accounting is serialized within each test process and includes fixture generation
+and replay, but excludes framework cleanup and one-time schema compilation.
+This assertion is not an OS memory limit. The watchdog terminates a stuck worker;
+a goroutine timeout is not presented as cancellation of arbitrary host I/O.
+The supervisor caps stdout at 64 MiB and stderr at 1 MiB per command and reaps its
+owned process group on interruption or failure. All fixture writes use owned,
+fixed paths. Generated executable strings are validated or sent to a fake runner.
+
+`-fuzz-deterministic=true` is the default and required mode. All target decisions
+come from input bytes, including scheduler barriers and cancellation checkpoints.
+Wall time is a watchdog, not a source of outcome randomness. Native Go fuzz
+exploration itself is random; replay uses the saved corpus input, not a promised
+reproduction of the mutator's complete exploration sequence.
+
+Targets require permanent files in package-local `testdata/fuzz/<target>/`.
+The inventory report includes corpus hashes and exact race-enabled replay
+commands. Native Go fuzzing writes minimized failures to that same directory;
+retain the resulting file with its fix. Failure artifacts also copy available
+corpus files. A killed process may not produce a minimized input; retain its
+logs and replay context without claiming that it did. Mutation-cache entries
+are exploration aids, not substitutes for checked-in regressions.
+
+The runner reports corpus membership, limits, execution counts, commands and
+outcomes under `.work/fuzz/`. Missing targets, missing permanent corpora,
+skipped targets, missing exploration evidence and incomplete executions fail.
+Nightly fuzzing is a separate 30-minute job alongside the existing 20-minute
+fault/resource job, with optional exact-target selection for manual replay.
+
+## Complete M1.1 gate
+
+```bash
+make hardening-gate   # Requires the pinned verification/build tools
+make benchmark-smoke # Fixed inventory, one iteration per case
+```
+
+The complete gate uses six shared stages: lint/contracts, tests/coverage/benchmark,
+govulncheck, Gitleaks, build/artifact verification, and bounded fuzz smoke. It runs
+ordinary tests and race tests, Go vet, module checks, full lint, architectural and
+script/workflow contracts, exact coverage checks, and the existing hardening
+report over the same race-test events. Coverage is at least 95% overall and
+strictly greater than 95% separately for model and requirement.
+
+The benchmark inventory has 152 cases across buffer, filesystem, execution-plan
+and concurrency families. Each runs once with allocation reporting. Missing or
+duplicated cases fail; elapsed times are retained as smoke evidence without
+shared-runner performance thresholds. Broad performance qualification stays in #41.
+
+Build verification reuses the full/minimal microfat launcher, static payload,
+archive, SBOM and provenance checks. amd64 smoke runs natively; arm64 verification
+is structural and integrity-based. Govulncheck reports reachable findings
+separately from package-only and module-only advisories. Gitleaks output is
+redacted. A passing scanner is not a security certification; known P1/high/critical
+foundation defects must be resolved before milestone closure.
+
+Each stage writes a versioned report with commit, source-content digest, Go/tool
+versions, workflow run/attempt, command outcomes and detailed evidence. The final
+`M1.1 Hardening Gate` CI check requires every dependency and complete matching
+reports. Missing, skipped, failed, duplicated or stale evidence fails. CI uploads
+available stage reports/logs and the final JSON/Markdown summary for 14 days.
+A local dirty-tree report explicitly identifies development evidence and cannot
+be substituted for clean-commit completion evidence.
+
+The release workflow runs the same stages and final aggregation before handing
+artifacts to the existing isolated tag publisher. Local verification and manual
+release rehearsals do not sign or publish. Milestone closure follows a passing
+merged-commit gate; repository branch-protection settings are a separate
+maintainer policy.

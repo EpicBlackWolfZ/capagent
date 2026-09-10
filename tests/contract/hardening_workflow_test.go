@@ -12,7 +12,7 @@ func TestWorkflow_Hardening(t *testing.T) {
 	testJob := ci["jobs"].(map[string]any)["test"].(map[string]any)
 	steps := fmt.Sprint(testJob["steps"])
 	for _, required := range []string{
-		"--jsonfile", "scripts/hardening.py report", "events.jsonl", "summary.json", "include-hidden-files:true",
+		"scripts/gate.py stage --stage test", ".work/gate/", "include-hidden-files:true",
 	} {
 		if !strings.Contains(steps, required) {
 			t.Errorf("ordinary CI missing %s", required)

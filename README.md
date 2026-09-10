@@ -38,7 +38,7 @@ Explore the comprehensive design specifications:
 - 📖 **[Philosophy & Core Principles](docs/philosophy.md)**: The 20 engineering principles, evidence before inference, unknown is not false, TDD requirements, and Definition of Done.
 - 🏛️ **[Architecture & Contract](docs/architecture.md)**: Conceptual pipeline, package boundaries, 3-valued requirement logic truth tables, execution context, and JSON Schema v1 specification.
 - 🗺️ **[Milestone Roadmap & Catalog](docs/roadmap.md)**: M0 through M21 milestone sequence, detailed issue specifications, exit criteria, and canonical capability catalog.
-- **[Foundation testing](docs/testing.md)**: Run and replay deterministic faults, resource regressions, and nightly stress campaigns.
+- **[Foundation testing](docs/testing.md)**: Run the M1.1 gate, bounded fuzzing, deterministic faults, resource regressions, and nightly campaigns.
 
 ---
 
@@ -67,7 +67,7 @@ Deployment Decision
 
 ## Current Status and Roadmap
 
-The current CLI provides `--help` and `--version`; it does not yet evaluate hosts or accept `--json`. M0 and the initial M1 scaffolding are delivered. M1.1 is the open hardening gate, followed by the M1.2 context/evaluation slice. The full [roadmap](docs/roadmap.md) links each deliverable to its GitHub issues and milestones.
+The current CLI provides `--help` and `--version`; it does not yet evaluate hosts or accept `--json`. M0 and the initial M1 scaffolding are delivered. M1.1 foundation hardening and its permanent verification gate are implemented; milestone closure requires a passing gate on the merged commit. The M1.2 context/evaluation slice follows. The full [roadmap](docs/roadmap.md) links each deliverable to its GitHub issues and milestones.
 
 Execution targets Linux 5.6+ with working `openat2` confinement on amd64/arm64. Historical distribution fixtures do not imply supported execution on older kernels. See the [security and support contract](docs/security.md).
 

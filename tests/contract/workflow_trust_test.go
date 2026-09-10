@@ -126,7 +126,7 @@ func TestWorkflow_ReadOnlyValidationAndRequiredChecks(t *testing.T) {
 		}
 	}
 	build := jobs["build"].(map[string]any)
-	if !strings.Contains(fmt.Sprint(build["steps"]), "make release-check") {
+	if !strings.Contains(fmt.Sprint(build["steps"]), "scripts/gate.py stage --stage build") {
 		t.Fatal("required build job does not run release rehearsal")
 	}
 }
