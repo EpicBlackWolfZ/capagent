@@ -77,6 +77,13 @@ def summarize(events, commit, go_version, test_exit=0):
     begins = [r for r in records if r.get('kind') == 'chaos_begin']
     cases = [r for r in records if r.get('kind') == 'chaos_case']
     config = starts[0].get('config', {}) if len(starts) == 1 else {}
+    if not isinstance(config, dict):
+        config = {}
+    for key, low, high in [('Seed', 0, (1 << 64) - 1), ('Iterations', 1, 4096),
+                           ('Probes', 1, 4096), ('Concurrency', 1, 64)]:
+        value = config.get(key)
+        if type(value) is not int or not low <= value <= high:
+            failures.append(f'invalid or missing replay control: {key}')
     iterations = config.get('Iterations')
     indices = [r.get('iteration') for r in cases]
     if (not isinstance(iterations, int) or isinstance(iterations, bool) or not 1 <= iterations <= 4096
@@ -89,6 +96,8 @@ def summarize(events, commit, go_version, test_exit=0):
     if test_exit:
         failures.append(f'test process exited {test_exit}')
     duration = starts[0].get('duration', '') if starts else ''
+    if not isinstance(duration, str) or not duration:
+        failures.append('missing campaign duration')
     controls = {'CHAOS_SEED': config.get('Seed'), 'CHAOS_ITERATIONS': iterations,
                 'CHAOS_PROBES': config.get('Probes'), 'CHAOS_CONCURRENCY': config.get('Concurrency'),
                 'CHAOS_DURATION': duration}

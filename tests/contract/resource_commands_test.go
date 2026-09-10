@@ -54,7 +54,7 @@ func runCommandPayload(t *testing.T, args []string) {
 		if err := os.WriteFile(filepath.Join(root, "ready"), []byte(strconv.Itoa(os.Getpid())), 0o600); err != nil {
 			t.Fatal(err)
 		}
-		for sent := 0; sent < commandFloodBytes; sent += commandChunk {
+		for sent := commandChunk; sent < commandFloodBytes; sent += commandChunk {
 			writePayload(t, os.Stdout, commandChunk)
 			writePayload(t, os.Stderr, commandChunk)
 			if mode == "slow" {

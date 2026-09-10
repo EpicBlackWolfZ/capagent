@@ -69,6 +69,15 @@ class HardeningReportTests(unittest.TestCase):
         events = [e for e in self.events() if 'resource_case' not in e.get('Output', '')]
         self.assertEqual(self.report(events)['status'], 'fail')
 
+    def test_missing_replay_controls_are_failure(self):
+        events = self.events()
+        for event in events:
+            if 'campaign_start' in event.get('Output', ''):
+                record = json.loads(event['Output'].split('HARDENING ', 1)[1])
+                del record['config']['Probes']
+                event['Output'] = 'HARDENING ' + json.dumps(record)
+        self.assertEqual(self.report(events)['status'], 'fail')
+
     def test_runner_timeout_and_output_overflow_are_bounded(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory)
