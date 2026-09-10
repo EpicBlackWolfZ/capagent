@@ -1,6 +1,7 @@
 package platform_test
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -69,7 +70,7 @@ func TestFilesystemPathConformance(t *testing.T) {
 					if wantErr != nil {
 						want = ""
 					}
-					got, err := r.ReadFile(prefix + tt.path)
+					got, err := r.ReadFile(t.Context(), prefix+tt.path)
 					if !errors.Is(err, wantErr) || string(got) != want {
 						t.Fatalf("ReadFile = %q, %v; want %q, %v", got, err, tt.want, tt.err)
 					}
@@ -95,7 +96,7 @@ func TestDirectorySnapshotConformance(t *testing.T) {
 				r = platform.NewScopedMemReader("/scope", m)
 				dir = "real"
 			}
-			entries, err := r.ReadDir(dir)
+			entries, err := r.ReadDir(t.Context(), dir)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -110,7 +111,7 @@ func TestDirectorySnapshotConformance(t *testing.T) {
 				}
 			}
 			m.AddError("/scope/real/failure", syscall.EIO)
-			got, err := r.ReadDir(dir)
+			got, err := r.ReadDir(t.Context(), dir)
 			if !errors.Is(err, syscall.EIO) || got != nil {
 				t.Fatalf("ReadDir = %v, %v; want nil, EIO", got, err)
 			}
@@ -170,17 +171,17 @@ func TestOSAdapterTargetSelection(t *testing.T) {
 	if p.Root() != root || s.Root() != root {
 		t.Fatal("adapter root differs from reader")
 	}
-	for _, read := range []func(string) ([]byte, error){p.ReadProcFile, s.ReadSysFile} {
-		got, err := read("link/../value")
+	for _, read := range []func(context.Context, string) ([]byte, error){p.ReadProcFile, s.ReadSysFile} {
+		got, err := read(t.Context(), "link/../value")
 		if err != nil || string(got) != resolvedValue {
 			t.Fatalf("read = %q, %v", got, err)
 		}
 	}
-	got, err := p.ReadSelf("../value")
+	got, err := p.ReadSelf(t.Context(), "../value")
 	if !errors.Is(err, platform.ErrSubpathEscape) || got != nil {
 		t.Fatalf("ReadSelf accepted lexical escape: %q, %v", got, err)
 	}
-	got, err = p.ReadSelf("raw/../value")
+	got, err = p.ReadSelf(t.Context(), "raw/../value")
 	if !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("broken intermediate link must remain broken: %q, %v", got, err)
 	}
@@ -207,7 +208,7 @@ func TestAbsoluteTargetPolicies(t *testing.T) {
 		{"OS broken absolute", osReader, "broken", "", os.ErrNotExist},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.reader.ReadFile(tt.path)
+			got, err := tt.reader.ReadFile(t.Context(), tt.path)
 			if string(got) != tt.want || !errors.Is(err, tt.err) {
 				t.Fatalf("got %q, %v; want %q, %v", got, err, tt.want, tt.err)
 			}
@@ -225,7 +226,7 @@ func TestOSRootSlash(t *testing.T) {
 	t.Parallel()
 	root := rawOSFixture(t, pathFixture())
 	r := openConformanceReader(t, "/")
-	got, err := r.ReadFile(strings.TrimPrefix(root, "/") + "/link/../value")
+	got, err := r.ReadFile(t.Context(), strings.TrimPrefix(root, "/")+"/link/../value")
 	if err != nil || string(got) != resolvedValue {
 		t.Fatalf("root / read = %q, %v", got, err)
 	}
@@ -254,12 +255,12 @@ func TestTraversalOperations(t *testing.T) {
 				r = platform.NewOSPlatformReader()
 				prefix = rawOSFixture(t, mem) + "/"
 			}
-			got, err := r.ReadFile(prefix + "complex")
+			got, err := r.ReadFile(t.Context(), prefix+"complex")
 			if err != nil || string(got) != resolvedValue {
 				t.Errorf("complex target = %q, %v", got, err)
 			}
 			for _, path := range []string{"second/./leaf", "link//leaf", `link/a\b`} {
-				if _, err := r.ReadFile(prefix + path); err != nil {
+				if _, err := r.ReadFile(t.Context(), prefix+path); err != nil {
 					t.Errorf("ReadFile(%q): %v", path, err)
 				}
 			}
@@ -268,7 +269,7 @@ func TestTraversalOperations(t *testing.T) {
 				if err != nil || !info.IsDir() {
 					t.Errorf("Stat(%q) = %v, %v", path, info, err)
 				}
-				entries, err := r.ReadDir(prefix + path)
+				entries, err := r.ReadDir(t.Context(), prefix+path)
 				if err != nil || len(entries) == 0 {
 					t.Errorf("ReadDir(%q) = %v, %v", path, entries, err)
 				}
@@ -287,7 +288,7 @@ func TestTraversalOperations(t *testing.T) {
 				if _, err := r.Stat(prefix + path); !errors.Is(err, syscall.ENOTDIR) {
 					t.Errorf("Stat(%q) = %v", path, err)
 				}
-				if _, err := r.ReadDir(prefix + path); !errors.Is(err, syscall.ENOTDIR) {
+				if _, err := r.ReadDir(t.Context(), prefix+path); !errors.Is(err, syscall.ENOTDIR) {
 					t.Errorf("ReadDir(%q) = %v", path, err)
 				}
 				if _, err := r.Readlink(prefix + path); !errors.Is(err, syscall.ENOTDIR) {
@@ -310,7 +311,7 @@ func TestDirectorySnapshotsAfterClose(t *testing.T) {
 				r = openConformanceReader(t, root)
 				path = "real/nested"
 			}
-			entries, err := r.ReadDir(path)
+			entries, err := r.ReadDir(t.Context(), path)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -351,12 +352,12 @@ func TestMemoryRelativeNamespace(t *testing.T) {
 	mem.AddFile("../../value", []byte("parent"), 0o644)
 	mem.AddFile("value", []byte("local"), 0o644)
 	mem.AddSymlink("link", "../../value")
-	got, err := mem.ReadFile("link")
+	got, err := mem.ReadFile(t.Context(), "link")
 	if err != nil || string(got) != "parent" {
 		t.Fatalf("relative target = %q, %v", got, err)
 	}
 	scoped := platform.NewScopedMemReader(".", mem)
-	if _, err := scoped.ReadFile("link"); !errors.Is(err, platform.ErrSubpathEscape) {
+	if _, err := scoped.ReadFile(t.Context(), "link"); !errors.Is(err, platform.ErrSubpathEscape) {
 		t.Fatalf("relative root escaped: %v", err)
 	}
 }
@@ -369,7 +370,7 @@ func TestMemoryScopeBoundaries(t *testing.T) {
 			mem := pathFixture()
 			mem.AddSymlink("/scope/escape", target)
 			r := platform.NewScopedMemReader("/scope", mem)
-			if _, err := r.ReadFile("escape"); !errors.Is(err, platform.ErrSubpathEscape) {
+			if _, err := r.ReadFile(t.Context(), "escape"); !errors.Is(err, platform.ErrSubpathEscape) {
 				t.Fatalf("escape = %v", err)
 			}
 		})
@@ -380,7 +381,7 @@ func TestMemoryScopeBoundaries(t *testing.T) {
 			mem := pathFixture()
 			mem.AddError("/scope/real", failure)
 			r := platform.NewScopedMemReader("/scope", mem)
-			if _, err := r.ReadFile("link/leaf"); !errors.Is(err, failure) {
+			if _, err := r.ReadFile(t.Context(), "link/leaf"); !errors.Is(err, failure) {
 				t.Fatalf("intermediate error = %v", err)
 			}
 		})
@@ -391,7 +392,7 @@ func TestMemoryDirectoryLinkSnapshot(t *testing.T) {
 	t.Parallel()
 	mem := pathFixture()
 	r := platform.NewScopedMemReader("/scope", mem)
-	entries, err := r.ReadDir("real/nested")
+	entries, err := r.ReadDir(t.Context(), "real/nested")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -430,7 +431,7 @@ func TestMemorySymlinkHopBoundary(t *testing.T) {
 					r = platform.NewScopedMemReader("/scope", mem)
 					path = "0"
 				}
-				got, err := r.ReadFile(path)
+				got, err := r.ReadFile(t.Context(), path)
 				if hops > hopLimit {
 					if !errors.Is(err, syscall.ELOOP) {
 						t.Fatalf("error = %v, want ELOOP", err)

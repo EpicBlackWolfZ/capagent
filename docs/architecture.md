@@ -354,8 +354,8 @@ This conservative resource default is overridable with any positive
 
 **`internal/platform` ScopedReader filesystem-security boundary (M1.1).**
 `ScopedReader` is the canonical filesystem abstraction for untrusted
-subpath access. Each of the four file methods (`ReadFile`, `Stat`,
-`ReadDir`, `Readlink`) opens the target via `openat2(2)` with
+subpath access. The file methods (`ReadFile`, `Stat`,
+`ReadDir`, `Readlink`, `FileCapabilities`) opens the target via `openat2(2)` with
 `RESOLVE_IN_ROOT | RESOLVE_NO_MAGICLINKS` against the reader's rootfd,
 then performs fd-relative I/O via direct `unix.*` syscalls
 (`unix.Read(fd, ...)`, `unix.Fstat(fd, ...)`,
@@ -400,9 +400,70 @@ may be skipped. Other metadata failures discard the enumeration and return an
 error preserving the underlying errno through `errors.Is`; successful absence
 must not represent permission denial or I/O failure.
 
+**Metadata and file privileges:** `Stat` and eager `DirEntry.Info()` preserve
+regular/directory/symlink/FIFO/socket/device kinds and setuid/setgid/sticky bits.
+`OwnershipOf(info)` returns a copied UID/GID plus a known flag; an unspecified
+fixture owner is distinct from root. Memory nodes are replaced rather than
+mutated, including ownership and copied capability attributes. `FileCapabilities`
+reads only `security.capability`, retains at most 64 KiB, and distinguishes absent
+attributes from unsupported xattrs, permission failures, and I/O errors. Raw
+attribute bytes are not an assertion of valid encoding or effective privileges.
+Inspection requires a readable regular file; metadata-only stat does not.
+
+**Bounded reads and context:** `ReadFile(ctx, path)` and `ReadDir(ctx, path)`
+propagate the supplied context through procfs/sysfs and the read-only environment
+views. Constructors copy validated `ReadLimits`: defaults are 8 MiB retained file
+bytes, 8,192 encountered directory names, and 1 MiB aggregate directory-name
+bytes. Explicit overrides must be positive and below half MaxInt; zero is not
+unlimited. File reads inspect one extra byte to distinguish exact-limit EOF from
+actual overflow. Directory enumeration uses fixed-size getdents chunks and eager
+fd-relative metadata; disappearing entries still consume the encounter budget.
+Limits and cancellation return sorted partial directory results with an error.
+Subset membership and selection order on incomplete enumeration are unspecified.
+The memory reader scans its existing flat map with context checks and bounded
+retention; directory latency can scale with the entire fixture map size.
+
+Data opens first use `O_PATH` to reject observed non-regular files, then a second
+confined `O_RDONLY|O_NONBLOCK|O_NOCTTY` open checks type and inode identity before
+reading. Both descriptor scopes have one owner and use `O_CLOEXEC`. Replacement
+returns `ErrFileChanged` or a file-type/path error without reading replacement
+data. This is not atomic regular-file-only opening: a malicious replacement
+device can still enter its open handler. The supported contract assumes responsive
+host filesystems and procfs/sysfs metadata sources; it does not cover hostile
+device drivers or forced cancellation of a stuck syscall. No magic-link reopening
+or background goroutine timeout substitutes for the containment boundary.
+
+Scoped operations check closed state, original path validity, then context before
+I/O. Context is checked between read/enumeration calls and finite EINTR retries.
+Metadata calls remain synchronous. Owners close readers only after workers join.
+These are retention and cooperative-work bounds, not a hard time or process RSS
+limit: scratch buffers, allocation growth, parsed values, and concurrent calls
+consume additional memory.
+
+**Parser completeness:** procfs parsers cap input at 8 MiB, accepted records at
+8,192, and retained diagnostics at 32 by default. Line limits are 64 KiB for
+filesystems/cgroup and 1 MiB for mountinfo. `NewProcfsReaderWithLimits` accepts
+explicit validated `ParserLimits`. Oversized complete lines can be skipped while
+valid later records are retained; the result still has an error. A final
+unterminated record is accepted only at clean EOF. On incomplete reads, only
+complete preceding records are parsed. Diagnostics contain record locations and
+categories, not raw input contents; excess diagnostics are counted.
+
+`MountEntry.Root`, `MountPoint`, and `MountSource` remain raw escaped mountinfo
+fields. No decoding or path-authority grant is implicit. `ReadCgroupFile` accepts
+a single conservative filename (`cpu.max`, `memory.current`, `cgroup.controllers`),
+not a controller-presence claim. Controller-list tokens are validated separately.
+Invalid SELinux text returns an error; false from `IsSELinuxEnforcing` alone does
+not distinguish an absent subsystem from permissive mode. A present subsystem
+whose enforce file disappears returns a missing-file error.
+
 **Error mapping:** magic-link rejection via `RESOLVE_NO_MAGICLINKS`
-is surfaced as `syscall.ELOOP` (not `ErrSubpathEscape`), per the
-corrected semantics. Pre-5.6 kernels return `ErrSymlinkUnsupported`
+retains `syscall.ELOOP` (not `ErrSubpathEscape`). Native errno identities are
+preserved through contextual wrappers, alongside familiar `os.Err*` matches.
+`LimitError` matches `ErrLimitExceeded` and `ErrIncomplete`; `ParseError` retains
+bounded diagnostics and matching causes. Partial records plus an error are not
+successful absence. Callers may inspect context causes before transport/parse
+causes when both are present. Pre-5.6 kernels return `ErrSymlinkUnsupported`
 from `NewScopedOSReader`; capagent targets Linux 5.6+ as the
 documented minimum. Both memory readers traverse pathname components in order,
 including intermediate links and trailing-slash directory requirements. Parent

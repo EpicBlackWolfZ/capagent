@@ -1,6 +1,7 @@
 package platform
 
 import (
+	"context"
 	"errors"
 	"io/fs"
 	"os"
@@ -46,11 +47,12 @@ var ErrClosed = errors.New("platform: ScopedReader is closed")
 const sentinelClosedRootFD = int64(-1)
 
 // ScopedReader is the filesystem abstraction that operates under a declared
-// root. All four file methods accept subpaths relative to the root; the
+// root. All file methods accept subpaths relative to the root; the
 // reader validates its own subpath arguments via ValidateSubpath before
 // acquiring any file descriptor. ReadDir returns sorted eager metadata; only
 // disappearing children (ENOENT) may be skipped. Other metadata failures
-// return no entries and a wrapped error.
+// return no entries and a wrapped error. Limits and cooperative cancellation may
+// return partial bytes/entries with an error; non-nil contexts are required for reads.
 //
 // Implementations:
 //
@@ -63,18 +65,19 @@ const sentinelClosedRootFD = int64(-1)
 //
 // Concurrency contract:
 //
-//   - ReadFile, Stat, ReadDir, Readlink may run concurrently with each
+//   - ReadFile, Stat, ReadDir, Readlink, FileCapabilities may run concurrently with each
 //     other and with operations on other ScopedReader instances.
 //   - Close must NOT be called concurrently with any other method on the
 //     same reader.
-//   - After Close returns, all four file methods return ErrClosed.
+//   - After Close returns, all file methods return ErrClosed.
 //   - Root() remains valid after Close.
 //   - Close is idempotent: subsequent calls return nil.
 type ScopedReader interface {
-	ReadFile(subpath string) ([]byte, error)
+	ReadFile(ctx context.Context, subpath string) ([]byte, error)
 	Stat(subpath string) (os.FileInfo, error)
-	ReadDir(subpath string) ([]os.DirEntry, error)
+	ReadDir(ctx context.Context, subpath string) ([]os.DirEntry, error)
 	Readlink(subpath string) (string, error)
+	FileCapabilities(context.Context, string) (CapabilityAttribute, error)
 	Root() string
 	Close() error
 }
@@ -89,11 +92,12 @@ var (
 // ScopedReader.ReadDir. Once constructed, no host I/O is required to
 // satisfy the FileInfo methods; this keeps DirEntry.Info() host-I/O free.
 type scopedFileInfo struct {
-	name    string
-	size    int64
-	mode    os.FileMode
-	modTime time.Time
-	isDir   bool
+	name     string
+	size     int64
+	mode     os.FileMode
+	modTime  time.Time
+	isDir    bool
+	metadata fileMetadata
 }
 
 func (fi *scopedFileInfo) Name() string       { return fi.name }
@@ -101,21 +105,7 @@ func (fi *scopedFileInfo) Size() int64        { return fi.size }
 func (fi *scopedFileInfo) Mode() os.FileMode  { return fi.mode }
 func (fi *scopedFileInfo) ModTime() time.Time { return fi.modTime }
 func (fi *scopedFileInfo) IsDir() bool        { return fi.isDir }
-func (fi *scopedFileInfo) Sys() any           { return nil }
-
-// scopedStatMode converts a unix.Stat_t mode field to an os.FileMode with
-// POSIX type bits preserved. Permissions are limited to the low 9 bits
-// (rwx for owner/group/other); the file type bits come from the high bits.
-func scopedStatMode(mode uint32) os.FileMode {
-	out := os.FileMode(mode & permMask)
-	switch mode & unix.S_IFMT {
-	case unix.S_IFDIR:
-		out |= os.ModeDir
-	case unix.S_IFLNK:
-		out |= os.ModeSymlink
-	}
-	return out
-}
+func (fi *scopedFileInfo) Sys() any           { return fi.metadata }
 
 // -----------------------------------------------------------------------------
 // Linux implementation: ScopedOSReader
@@ -142,8 +132,9 @@ func scopedStatMode(mode uint32) os.FileMode {
 // Exactly one close path per FD is therefore mechanically guaranteed;
 // double-close is impossible by construction.
 type ScopedOSReader struct {
-	fd   atomic.Int64
-	root string
+	fd     atomic.Int64
+	root   string
+	limits ReadLimits
 }
 
 // NewScopedOSReader opens root once via openat2(AT_FDCWD, root, O_PATH|O_DIRECTORY|O_CLOEXEC,
@@ -153,6 +144,14 @@ type ScopedOSReader struct {
 // On pre-5.6 kernels or where openat2(2) is unavailable, NewScopedOSReader
 // returns ErrSymlinkUnsupported so the caller can fail fast.
 func NewScopedOSReader(root string) (ScopedReader, error) {
+	return NewScopedOSReaderWithLimits(root, DefaultReadLimits())
+}
+
+// NewScopedOSReaderWithLimits validates limits before opening the root.
+func NewScopedOSReaderWithLimits(root string, limits ReadLimits) (ScopedReader, error) {
+	if err := limits.validate(); err != nil {
+		return nil, err
+	}
 	if root == "" {
 		return nil, errors.New("platform: root path cannot be empty")
 	}
@@ -163,7 +162,7 @@ func NewScopedOSReader(root string) (ScopedReader, error) {
 	if err != nil {
 		return nil, mapOpenError(err, root)
 	}
-	r := &ScopedOSReader{root: root}
+	r := &ScopedOSReader{root: root, limits: limits}
 	// Store the kernel-returned FD verbatim. FD 0 is valid; the
 	// sentinel -1 is reserved for the closed state.
 	r.fd.Store(int64(fd))
@@ -193,7 +192,7 @@ func (r *ScopedOSReader) checkOpen() error {
 }
 
 // Close releases the root FD. Idempotent: subsequent calls return nil.
-// After Close, all four file methods return ErrClosed; Root() remains valid.
+// After Close, all file methods return ErrClosed; Root() remains valid.
 //
 // The CAS loop ensures exactly one Close wins the FD-release race; the
 // losing concurrent Close observes the sentinel and returns nil without
@@ -244,46 +243,30 @@ func (r *ScopedOSReader) readSubpath(subpath string, flags uint64, fn func(fd in
 	return fn(fd)
 }
 
-// ReadFile opens subpath with O_RDONLY and reads all bytes via unix.Read.
+// ReadFile checks the target type before data-open and retains a bounded prefix.
 // Per-operation FD is owned and closed by readSubpath; the callback
 // performs fd-relative reads and returns the assembled buffer.
-func (r *ScopedOSReader) ReadFile(subpath string) ([]byte, error) {
-	var data []byte
-	err := r.readSubpath(subpath, unix.O_RDONLY, func(fd int) error {
-		d, ferr := readAllFD(fd)
-		if ferr != nil {
-			return ferr
-		}
-		data = d
-		return nil
-	})
-	if err != nil {
+func (r *ScopedOSReader) ReadFile(ctx context.Context, subpath string) ([]byte, error) {
+	if err := r.validateRead(ctx, subpath); err != nil {
 		return nil, err
 	}
-	return data, nil
+	var data []byte
+	err := checkedRegular(ctx, func(flags uint64, fn func(int) error) error { return r.readSubpath(subpath, flags, fn) }, func(fd int) error {
+		var err error
+		data, err = readAllFD(ctx, fd, r.limits.FileBytes)
+		return err
+	})
+	return data, pathError("read", subpath, err)
 }
 
-// readAllFD drains fd via repeated unix.Read until EOF. The caller owns
-// fd and is responsible for closing it.
-//
-// ScopedReader never opens FDs in non-blocking mode, so unix.Read
-// cannot return EAGAIN for these descriptors; the loop terminates
-// only on EOF (n == 0) or on a hard error.
-func readAllFD(fd int) ([]byte, error) {
-	var buf []byte
-	tmp := make([]byte, ioChunkBytes)
-	for {
-		n, err := unix.Read(fd, tmp)
-		if n > 0 {
-			buf = append(buf, tmp[:n]...)
-		}
-		if err != nil {
-			return buf, err
-		}
-		if n == 0 {
-			return buf, nil
-		}
+func (r *ScopedOSReader) validateRead(ctx context.Context, path string) error {
+	if err := r.checkOpen(); err != nil {
+		return err
 	}
+	if err := ValidateSubpath(path); err != nil {
+		return err
+	}
+	return ctx.Err()
 }
 
 // Stat opens subpath with O_PATH and returns FileInfo built from fstat(2).
@@ -294,13 +277,7 @@ func (r *ScopedOSReader) Stat(subpath string) (os.FileInfo, error) {
 		if lerr := unix.Fstat(fd, &st); lerr != nil {
 			return lerr
 		}
-		info = &scopedFileInfo{
-			name:    filepath.Base(subpath),
-			size:    st.Size,
-			mode:    scopedStatMode(st.Mode),
-			modTime: time.Unix(st.Mtim.Sec, st.Mtim.Nsec),
-			isDir:   st.Mode&unix.S_IFMT == unix.S_IFDIR,
-		}
+		info = statInfo(filepath.Base(subpath), &st)
 		return nil
 	})
 	if err != nil {
@@ -316,51 +293,17 @@ func (r *ScopedOSReader) Stat(subpath string) (os.FileInfo, error) {
 // Per-operation FD is owned and closed by readSubpath; the callback
 // performs fd-relative enumeration via direct syscalls. No *os.File is
 // constructed.
-func (r *ScopedOSReader) ReadDir(subpath string) ([]os.DirEntry, error) {
-	var entries []os.DirEntry
-	err := r.readSubpath(subpath, unix.O_RDONLY|unix.O_DIRECTORY, func(fd int) error {
-		names, gerr := readDirNames(fd)
-		if gerr != nil {
-			return gerr
-		}
-		var captureErr error
-		entries, captureErr = captureDirectory(names, func(name string) (os.FileInfo, error) {
-			var st unix.Stat_t
-			if err := unix.Fstatat(fd, name, &st, unix.AT_SYMLINK_NOFOLLOW); err != nil {
-				return nil, err
-			}
-			return &scopedFileInfo{
-				name: name, size: st.Size, mode: scopedStatMode(st.Mode),
-				modTime: time.Unix(st.Mtim.Sec, st.Mtim.Nsec), isDir: st.Mode&unix.S_IFMT == unix.S_IFDIR,
-			}, nil
-		})
-		return captureErr
-	})
-	if err != nil {
+func (r *ScopedOSReader) ReadDir(ctx context.Context, subpath string) ([]os.DirEntry, error) {
+	if err := r.validateRead(ctx, subpath); err != nil {
 		return nil, err
 	}
-	return entries, nil
-}
-
-// readDirNames enumerates the directory entries reachable via fd.
-// The caller owns fd and is responsible for closing it.
-//
-// ScopedReader never opens FDs in non-blocking mode, so unix.Getdents
-// cannot return EAGAIN for these descriptors.
-func readDirNames(fd int) ([]string, error) {
-	var names []string
-	tmp := make([]byte, ioChunkBytes)
-	for {
-		n, err := unix.Getdents(fd, tmp)
-		if err != nil {
-			return nil, err
-		}
-		if n == 0 {
-			return names, nil
-		}
-		_, _, parsed := unix.ParseDirent(tmp[:n], -1, names)
-		names = parsed
-	}
+	var entries []os.DirEntry
+	err := r.readSubpath(subpath, unix.O_RDONLY|unix.O_DIRECTORY, func(fd int) error {
+		var err error
+		entries, err = readDirectoryFD(ctx, fd, r.limits)
+		return err
+	})
+	return entries, pathError("readdir", subpath, err)
 }
 
 // Readlink opens subpath with O_PATH|O_NOFOLLOW (which yields an FD
@@ -405,32 +348,11 @@ func mapOpenError(err error, subpath string) error {
 	if err == nil {
 		return nil
 	}
-	if errors.Is(err, unix.ENOENT) {
-		return &os.PathError{Op: "openat2", Path: subpath, Err: os.ErrNotExist}
-	}
-	if errors.Is(err, unix.EACCES) {
-		return &os.PathError{Op: "openat2", Path: subpath, Err: os.ErrPermission}
-	}
-	if errors.Is(err, unix.EEXIST) {
-		return &os.PathError{Op: "openat2", Path: subpath, Err: os.ErrExist}
-	}
 	if errors.Is(err, unix.EXDEV) {
-		return ErrSubpathEscape
-	}
-	if errors.Is(err, unix.ELOOP) {
-		return syscall.ELOOP
+		err = errors.Join(ErrSubpathEscape, err)
 	}
 	if errors.Is(err, unix.ENOSYS) {
-		return ErrSymlinkUnsupported
-	}
-	if errors.Is(err, unix.ENOTDIR) {
-		return syscall.ENOTDIR
-	}
-	if errors.Is(err, unix.EISDIR) {
-		return syscall.EISDIR
-	}
-	if errors.Is(err, unix.EINVAL) {
-		return syscall.EINVAL
+		err = errors.Join(ErrSymlinkUnsupported, err)
 	}
 	return &os.PathError{Op: "openat2", Path: subpath, Err: err}
 }
@@ -456,8 +378,9 @@ func mapOpenError(err error, subpath string) error {
 // The memory reader does NOT model Linux magic links; /proc/self is just a
 // regular symlink with a stored target string.
 type ScopedMemReader struct {
-	root string
-	mem  *MemPlatformReader
+	root   string
+	mem    *MemPlatformReader
+	limits ReadLimits
 	// closed is set to 1 by Close; reads are non-atomic on zero-value
 	// struct initialization so a closed flag protects accidental misuse.
 	closed atomic.Bool
@@ -469,7 +392,7 @@ func NewScopedMemReader(root string, mem *MemPlatformReader) ScopedReader {
 	if mem == nil {
 		mem = NewMemPlatformReader()
 	}
-	return &ScopedMemReader{root: filepath.Clean(root), mem: mem}
+	return &ScopedMemReader{root: filepath.Clean(root), mem: mem, limits: mem.limits}
 }
 
 // Root returns the configured root path string.
@@ -491,21 +414,35 @@ func (r *ScopedMemReader) Close() error {
 }
 
 // ReadFile returns the content of the file at subpath.
-func (r *ScopedMemReader) ReadFile(subpath string) ([]byte, error) {
+func (r *ScopedMemReader) ReadFile(ctx context.Context, subpath string) ([]byte, error) {
+	if err := r.validateRead(ctx, subpath); err != nil {
+		return nil, err
+	}
+	entry, _, err := r.mem.resolvePath(subpath, r.root, true, maxSymlinkDepthMemory)
+	if err != nil {
+		return nil, err
+	}
+	return readVirtual(ctx, entry, r.limits.FileBytes)
+}
+
+func (r *ScopedMemReader) validateRead(ctx context.Context, path string) error {
 	if err := r.checkOpen(); err != nil {
+		return err
+	}
+	if err := ValidateSubpath(path); err != nil {
+		return err
+	}
+	return ctx.Err()
+}
+
+// NewScopedMemReaderWithLimits overrides the backing reader's copied limits.
+func NewScopedMemReaderWithLimits(root string, mem *MemPlatformReader, limits ReadLimits) (ScopedReader, error) {
+	if err := limits.validate(); err != nil {
 		return nil, err
 	}
-	if err := ValidateSubpath(subpath); err != nil {
-		return nil, err
-	}
-	entry, _, rerr := r.mem.resolvePath(subpath, r.root, true, maxSymlinkDepthMemory)
-	if rerr != nil {
-		return nil, rerr
-	}
-	if entry.Kind == FileKindDirectory {
-		return nil, syscall.EISDIR
-	}
-	return append([]byte(nil), entry.Content...), nil
+	r := NewScopedMemReader(root, mem).(*ScopedMemReader)
+	r.limits = limits
+	return r, nil
 }
 
 // Stat returns the FileInfo of the file at subpath.
@@ -520,24 +457,16 @@ func (r *ScopedMemReader) Stat(subpath string) (os.FileInfo, error) {
 	if rerr != nil {
 		return nil, rerr
 	}
-	return &scopedFileInfo{
-		name:    filepath.Base(subpath),
-		size:    entry.size(),
-		mode:    entry.Mode,
-		modTime: time.Time{},
-		isDir:   entry.Kind == FileKindDirectory,
-	}, nil
+	return virtualInfo(filepath.Base(subpath), entry), nil
 }
 
 // ReadDir enumerates the directory at subpath, eagerly capturing each
 // child's metadata.
-func (r *ScopedMemReader) ReadDir(subpath string) ([]os.DirEntry, error) {
-	if err := r.checkOpen(); err != nil {
+func (r *ScopedMemReader) ReadDir(ctx context.Context, subpath string) ([]os.DirEntry, error) {
+	if err := r.validateRead(ctx, subpath); err != nil {
 		return nil, err
 	}
-	if err := ValidateSubpath(subpath); err != nil {
-		return nil, err
-	}
+
 	entry, resolved, rerr := r.mem.resolvePath(subpath, r.root, true, maxSymlinkDepthMemory)
 	if rerr != nil {
 		return nil, rerr
@@ -546,7 +475,7 @@ func (r *ScopedMemReader) ReadDir(subpath string) ([]os.DirEntry, error) {
 		return nil, syscall.ENOTDIR
 	}
 
-	return r.mem.captureChildren(resolved)
+	return r.mem.captureChildren(ctx, resolved, r.limits)
 }
 
 // Readlink returns the raw symlink target stored at subpath.

@@ -1,5 +1,7 @@
 package platform
 
+import "context"
+
 // Environment is an owner-constructed, read-only view of shared probe services.
 // Copies share the services, which must support concurrent operations. Owners
 // must not replace or reconfigure services during Run and must close resources
@@ -17,22 +19,22 @@ type Environment struct {
 // ProcfsView exposes measurements without access to the shared wrapper itself.
 type ProcfsView interface {
 	Root() string
-	ReadProcFile(string) ([]byte, error)
-	ReadSelf(string) ([]byte, error)
-	Mounts() ([]MountEntry, error)
-	Filesystems() ([]FilesystemEntry, error)
-	Cgroups() ([]CgroupEntry, error)
+	ReadProcFile(context.Context, string) ([]byte, error)
+	ReadSelf(context.Context, string) ([]byte, error)
+	Mounts(context.Context) ([]MountEntry, error)
+	Filesystems(context.Context) ([]FilesystemEntry, error)
+	Cgroups(context.Context) ([]CgroupEntry, error)
 }
 
 // SysfsView exposes measurements without setup or resource ownership.
 type SysfsView interface {
 	Root() string
-	ReadSysFile(string) ([]byte, error)
-	ReadCgroupController(string) ([]byte, error)
-	CgroupControllers() ([]string, error)
+	ReadSysFile(context.Context, string) ([]byte, error)
+	ReadCgroupFile(context.Context, string) ([]byte, error)
+	CgroupControllers(context.Context) ([]string, error)
 	SELinuxPresent() (bool, error)
-	SELinuxMode() (string, error)
-	IsSELinuxEnforcing() (bool, error)
+	SELinuxMode(context.Context) (string, error)
+	IsSELinuxEnforcing(context.Context) (bool, error)
 	AppArmorPresent() (bool, error)
 }
 

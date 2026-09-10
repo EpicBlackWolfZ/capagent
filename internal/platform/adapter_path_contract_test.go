@@ -1,6 +1,7 @@
 package platform_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -12,7 +13,7 @@ type adapterPathRecorder struct {
 	paths []string
 }
 
-func (r *adapterPathRecorder) ReadFile(path string) ([]byte, error) {
+func (r *adapterPathRecorder) ReadFile(ctx context.Context, path string) ([]byte, error) {
 	r.paths = append(r.paths, path)
 	return nil, nil
 }
@@ -46,7 +47,7 @@ func TestAdapterPathContract(t *testing.T) {
 						read = p.ReadSelf
 						prefix = "self/"
 					}
-					_, err := read(tt.path)
+					_, err := read(t.Context(), tt.path)
 					if !errors.Is(err, tt.want) {
 						t.Fatalf("error = %v, want %v", err, tt.want)
 					}

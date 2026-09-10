@@ -135,7 +135,7 @@ func runConcurrentLifecycleContract(t *testing.T, build func(*probe.Registry) (c
 			if gotCtx != ctx {
 				t.Error("context replaced")
 			}
-			data, err := gotEnv.Reader().ReadFile("/shared")
+			data, err := gotEnv.Reader().ReadFile(gotCtx, "/shared")
 			if err != nil {
 				return model.Observation{}, err
 			}

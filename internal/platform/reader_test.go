@@ -27,7 +27,7 @@ func TestOSPlatformReader_DelegatesToOS(t *testing.T) {
 		t.Fatalf("failed to seed fixture: %v", err)
 	}
 
-	data, err := r.ReadFile(target)
+	data, err := r.ReadFile(t.Context(), target)
 	if err != nil {
 		t.Fatalf("ReadFile: %v", err)
 	}
@@ -46,7 +46,7 @@ func TestOSPlatformReader_DelegatesToOS(t *testing.T) {
 		t.Errorf("Stat size = %d, want %d", info.Size(), len("hello"))
 	}
 
-	entries, err := r.ReadDir(dir)
+	entries, err := r.ReadDir(t.Context(), dir)
 	if err != nil {
 		t.Fatalf("ReadDir: %v", err)
 	}
@@ -188,7 +188,7 @@ func TestMemPlatformReader_ReadFile(t *testing.T) {
 			m := platform.NewMemPlatformReader()
 			tt.setup(m)
 
-			got, err := m.ReadFile(tt.path)
+			got, err := m.ReadFile(t.Context(), tt.path)
 			if tt.wantErr != nil {
 				if !errors.Is(err, tt.wantErr) && err.Error() != tt.wantErr.Error() {
 					t.Fatalf("ReadFile error = %v, want %v", err, tt.wantErr)
@@ -391,7 +391,7 @@ func TestMemPlatformReader_ReadDir(t *testing.T) {
 			m := platform.NewMemPlatformReader()
 			tt.setup(m)
 
-			entries, err := m.ReadDir(tt.path)
+			entries, err := m.ReadDir(t.Context(), tt.path)
 			if tt.wantErr != nil {
 				if !errors.Is(err, tt.wantErr) {
 					t.Fatalf("ReadDir error = %v, want %v", err, tt.wantErr)
@@ -499,7 +499,7 @@ func TestMemPlatformReader_ConcurrentSafe(t *testing.T) {
 		go func() {
 			defer func() { done <- struct{}{} }()
 			for j := 0; j < 100; j++ {
-				if _, err := m.ReadFile("/x"); err != nil {
+				if _, err := m.ReadFile(t.Context(), "/x"); err != nil {
 					t.Errorf("ReadFile error: %v", err)
 					return
 				}

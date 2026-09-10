@@ -101,7 +101,7 @@ func TestScopedOSReader_ReadFile(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
-		got, err := r.ReadFile("f")
+		got, err := r.ReadFile(t.Context(), "f")
 		if err != nil {
 			t.Fatalf("ReadFile: %v", err)
 		}
@@ -112,21 +112,21 @@ func TestScopedOSReader_ReadFile(t *testing.T) {
 
 	t.Run("missing returns ErrNotExist", func(t *testing.T) {
 		t.Parallel()
-		if _, err := r.ReadFile("does-not-exist"); !errors.Is(err, os.ErrNotExist) {
+		if _, err := r.ReadFile(t.Context(), "does-not-exist"); !errors.Is(err, os.ErrNotExist) {
 			t.Errorf("ReadFile missing = %v, want ErrNotExist", err)
 		}
 	})
 
 	t.Run("empty rejected", func(t *testing.T) {
 		t.Parallel()
-		if _, err := r.ReadFile(""); !errors.Is(err, platform.ErrEmptySubpath) {
+		if _, err := r.ReadFile(t.Context(), ""); !errors.Is(err, platform.ErrEmptySubpath) {
 			t.Errorf("ReadFile empty = %v, want ErrEmptySubpath", err)
 		}
 	})
 
 	t.Run("absolute rejected", func(t *testing.T) {
 		t.Parallel()
-		if _, err := r.ReadFile("/etc/passwd"); !errors.Is(err, platform.ErrAbsoluteSubpath) {
+		if _, err := r.ReadFile(t.Context(), "/etc/passwd"); !errors.Is(err, platform.ErrAbsoluteSubpath) {
 			t.Errorf("ReadFile absolute = %v, want ErrAbsoluteSubpath", err)
 		}
 	})
@@ -210,7 +210,7 @@ func TestScopedOSReader_ReadDir(t *testing.T) {
 
 	t.Run("directory", func(t *testing.T) {
 		t.Parallel()
-		entries, err := r.ReadDir("d")
+		entries, err := r.ReadDir(t.Context(), "d")
 		if err != nil {
 			t.Fatalf("ReadDir: %v", err)
 		}
@@ -231,7 +231,7 @@ func TestScopedOSReader_ReadDir(t *testing.T) {
 
 	t.Run("missing", func(t *testing.T) {
 		t.Parallel()
-		if _, err := r.ReadDir("does-not-exist"); !errors.Is(err, os.ErrNotExist) {
+		if _, err := r.ReadDir(t.Context(), "does-not-exist"); !errors.Is(err, os.ErrNotExist) {
 			t.Errorf("ReadDir missing = %v, want ErrNotExist", err)
 		}
 	})
@@ -301,13 +301,13 @@ func TestScopedOSReader_Close(t *testing.T) {
 		t.Errorf("Root() after Close = %q, want %q", got, dir)
 	}
 
-	if _, err := r.ReadFile("x"); !errors.Is(err, platform.ErrClosed) {
+	if _, err := r.ReadFile(t.Context(), "x"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadFile after Close = %v, want ErrClosed", err)
 	}
 	if _, err := r.Stat("x"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("Stat after Close = %v, want ErrClosed", err)
 	}
-	if _, err := r.ReadDir("x"); !errors.Is(err, platform.ErrClosed) {
+	if _, err := r.ReadDir(t.Context(), "x"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadDir after Close = %v, want ErrClosed", err)
 	}
 	if _, err := r.Readlink("x"); !errors.Is(err, platform.ErrClosed) {
@@ -383,7 +383,7 @@ func TestScopedDirEntry_AllAccessors(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "d", "f"), []byte("x"), 0o644); err != nil {
 		t.Fatalf("seed file: %v", err)
 	}
-	entries, err := r.ReadDir("d")
+	entries, err := r.ReadDir(t.Context(), "d")
 	if err != nil {
 		t.Fatalf("ReadDir: %v", err)
 	}
@@ -457,7 +457,7 @@ func TestScopedOSReader_MapError_ReachableBranches(t *testing.T) {
 	if err := os.Mkdir(filepath.Join(dir, "d"), 0o755); err != nil {
 		t.Fatalf("seed dir: %v", err)
 	}
-	if _, err := r.ReadFile("d"); !errors.Is(err, syscall.EISDIR) {
+	if _, err := r.ReadFile(t.Context(), "d"); !errors.Is(err, syscall.EISDIR) {
 		t.Errorf("ReadFile dir = %v, want EISDIR", err)
 	}
 
@@ -465,7 +465,7 @@ func TestScopedOSReader_MapError_ReachableBranches(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "f"), []byte("x"), 0o644); err != nil {
 		t.Fatalf("seed file: %v", err)
 	}
-	if _, err := r.ReadDir("f"); !errors.Is(err, syscall.ENOTDIR) {
+	if _, err := r.ReadDir(t.Context(), "f"); !errors.Is(err, syscall.ENOTDIR) {
 		t.Errorf("ReadDir file = %v, want ENOTDIR", err)
 	}
 }
@@ -491,7 +491,7 @@ func TestScopedOSReader_StatMode_SymlinkLink(t *testing.T) {
 	}
 	// ReadDir's per-entry fstatat with AT_SYMLINK_NOFOLLOW hits
 	// the S_IFLNK branch of scopedStatMode.
-	entries, err := r.ReadDir(".")
+	entries, err := r.ReadDir(t.Context(), ".")
 	if err != nil {
 		t.Fatalf("ReadDir: %v", err)
 	}
@@ -568,14 +568,14 @@ func TestScopedMemReader_ReadDir_MissingAndNonDirectory(t *testing.T) {
 
 	t.Run("missing returns ErrNotExist", func(t *testing.T) {
 		t.Parallel()
-		if _, err := r.ReadDir("missing"); !errors.Is(err, os.ErrNotExist) {
+		if _, err := r.ReadDir(t.Context(), "missing"); !errors.Is(err, os.ErrNotExist) {
 			t.Errorf("ReadDir missing = %v, want ErrNotExist", err)
 		}
 	})
 
 	t.Run("non-directory returns ENOTDIR", func(t *testing.T) {
 		t.Parallel()
-		if _, err := r.ReadDir("f"); !errors.Is(err, syscall.ENOTDIR) {
+		if _, err := r.ReadDir(t.Context(), "f"); !errors.Is(err, syscall.ENOTDIR) {
 			t.Errorf("ReadDir on file = %v, want ENOTDIR", err)
 		}
 	})
@@ -593,7 +593,7 @@ func TestScopedMemReader_ReadFile_MissingAndRelativeRoot(t *testing.T) {
 
 	t.Run("missing returns ErrNotExist", func(t *testing.T) {
 		t.Parallel()
-		if _, err := r.ReadFile("missing"); !errors.Is(err, os.ErrNotExist) {
+		if _, err := r.ReadFile(t.Context(), "missing"); !errors.Is(err, os.ErrNotExist) {
 			t.Errorf("ReadFile missing = %v, want ErrNotExist", err)
 		}
 	})
@@ -602,7 +602,7 @@ func TestScopedMemReader_ReadFile_MissingAndRelativeRoot(t *testing.T) {
 		t.Parallel()
 		// Add a root entry (a file) so "." resolves to a stored node.
 		mem.AddFile("/proc", []byte("root-content"), 0o644)
-		data, err := r.ReadFile(".")
+		data, err := r.ReadFile(t.Context(), ".")
 		if err != nil {
 			t.Fatalf("ReadFile .: %v", err)
 		}
@@ -627,7 +627,7 @@ func TestScopedOSReader_StatErrors(t *testing.T) {
 		t.Fatalf("seed: %v", err)
 	}
 	// ReadDir on a regular file returns ENOTDIR.
-	if _, err := r.ReadDir("f"); !errors.Is(err, syscall.ENOTDIR) {
+	if _, err := r.ReadDir(t.Context(), "f"); !errors.Is(err, syscall.ENOTDIR) {
 		t.Errorf("ReadDir on file = %v, want ENOTDIR", err)
 	}
 }
@@ -660,7 +660,7 @@ func TestScopedMemReader_ResolveMemoryCycle(t *testing.T) {
 	r := platform.NewScopedMemReader("/proc", mem)
 	t.Cleanup(func() { _ = r.Close() })
 
-	if _, err := r.ReadFile("a"); !errors.Is(err, syscall.ELOOP) {
+	if _, err := r.ReadFile(t.Context(), "a"); !errors.Is(err, syscall.ELOOP) {
 		t.Errorf("ReadFile cycle = %v, want ELOOP", err)
 	}
 }
@@ -677,7 +677,7 @@ func TestScopedMemReader_ResolveMemoryAbsoluteTargetInRoot(t *testing.T) {
 	r := platform.NewScopedMemReader("/proc", mem)
 	t.Cleanup(func() { _ = r.Close() })
 
-	data, err := r.ReadFile("link")
+	data, err := r.ReadFile(t.Context(), "link")
 	if err != nil {
 		t.Fatalf("ReadFile: %v", err)
 	}
@@ -701,7 +701,7 @@ func TestScopedOSReader_ReadDir_Empty(t *testing.T) {
 	if err := os.Mkdir(filepath.Join(dir, "empty"), 0o755); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	entries, err := r.ReadDir("empty")
+	entries, err := r.ReadDir(t.Context(), "empty")
 	if err != nil {
 		t.Fatalf("ReadDir empty: %v", err)
 	}
@@ -725,7 +725,7 @@ func TestScopedOSReader_Stat_EISDIRError(t *testing.T) {
 	if err := os.Mkdir(filepath.Join(dir, "d"), 0o755); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	if _, err := r.ReadFile("d"); !errors.Is(err, syscall.EISDIR) {
+	if _, err := r.ReadFile(t.Context(), "d"); !errors.Is(err, syscall.EISDIR) {
 		t.Errorf("ReadFile dir = %v, want EISDIR", err)
 	}
 }
@@ -758,7 +758,7 @@ func TestScopedOSReader_SymlinkOutsideRoot(t *testing.T) {
 	if err := os.Symlink(filepath.Join(outsideDir, "secret"), filepath.Join(dir, "escape")); err != nil {
 		t.Skipf("symlink unsupported: %v", err)
 	}
-	_, err = r.ReadFile("escape")
+	_, err = r.ReadFile(t.Context(), "escape")
 	if err == nil {
 		t.Fatalf("ReadFile escape returned nil error")
 	}
@@ -788,7 +788,7 @@ func TestScopedOSReader_PermissionDenied(t *testing.T) {
 	if err := os.WriteFile(path, []byte("secret"), 0o000); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	if _, err := r.ReadFile("locked"); !errors.Is(err, os.ErrPermission) {
+	if _, err := r.ReadFile(t.Context(), "locked"); !errors.Is(err, os.ErrPermission) {
 		t.Errorf("ReadFile locked = %v, want ErrPermission", err)
 	}
 }
@@ -830,10 +830,10 @@ func TestScopedOSReader_ReadDir_NonDirectory(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "f"), []byte("x"), 0o644); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	if _, err := r.ReadDir("f"); !errors.Is(err, syscall.ENOTDIR) {
+	if _, err := r.ReadDir(t.Context(), "f"); !errors.Is(err, syscall.ENOTDIR) {
 		t.Errorf("ReadDir file = %v, want ENOTDIR", err)
 	}
-	if _, err := r.ReadDir("/etc"); !errors.Is(err, platform.ErrAbsoluteSubpath) {
+	if _, err := r.ReadDir(t.Context(), "/etc"); !errors.Is(err, platform.ErrAbsoluteSubpath) {
 		t.Errorf("ReadDir absolute = %v, want ErrAbsoluteSubpath", err)
 	}
 }
@@ -851,14 +851,14 @@ func TestScopedOSReader_ReadFile_ValidationErrors(t *testing.T) {
 		t.Fatalf("NewScopedOSReader: %v", err)
 	}
 	// ReadFile on a non-existent regular file: ENOENT.
-	if _, err := r.ReadFile("does-not-exist"); !errors.Is(err, os.ErrNotExist) {
+	if _, err := r.ReadFile(t.Context(), "does-not-exist"); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("ReadFile missing = %v, want ErrNotExist", err)
 	}
 	// ReadFile on a directory: EISDIR.
 	if err := os.Mkdir(filepath.Join(dir, "d"), 0o755); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
-	if _, err := r.ReadFile("d"); !errors.Is(err, syscall.EISDIR) {
+	if _, err := r.ReadFile(t.Context(), "d"); !errors.Is(err, syscall.EISDIR) {
 		t.Errorf("ReadFile dir = %v, want EISDIR", err)
 	}
 }
@@ -875,10 +875,10 @@ func TestScopedOSReader_ReadDir_ValidationErrors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewScopedOSReader: %v", err)
 	}
-	if _, err := r.ReadDir(""); !errors.Is(err, platform.ErrEmptySubpath) {
+	if _, err := r.ReadDir(t.Context(), ""); !errors.Is(err, platform.ErrEmptySubpath) {
 		t.Errorf("ReadDir empty = %v, want ErrEmptySubpath", err)
 	}
-	if _, err := r.ReadDir("/etc"); !errors.Is(err, platform.ErrAbsoluteSubpath) {
+	if _, err := r.ReadDir(t.Context(), "/etc"); !errors.Is(err, platform.ErrAbsoluteSubpath) {
 		t.Errorf("ReadDir absolute = %v, want ErrAbsoluteSubpath", err)
 	}
 }
@@ -933,7 +933,7 @@ func TestScopedOSReader_RelativeSymlinkEscape(t *testing.T) {
 		t.Skipf("openat2 unavailable: %v", err)
 	}
 
-	_, err = r.ReadFile("escape")
+	_, err = r.ReadFile(t.Context(), "escape")
 	if !errors.Is(err, platform.ErrSubpathEscape) && !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("ReadFile escape = %v, want ErrSubpathEscape or ErrNotExist", err)
 	}
@@ -955,7 +955,7 @@ func TestScopedOSReader_SelfReferentialSymlink(t *testing.T) {
 	if err := os.Symlink("self", filepath.Join(dir, "self")); err != nil {
 		t.Skipf("symlink unsupported: %v", err)
 	}
-	_, err = r.ReadFile("self")
+	_, err = r.ReadFile(t.Context(), "self")
 	if err == nil {
 		t.Fatalf("ReadFile self-loop returned nil error")
 	}
@@ -981,7 +981,7 @@ func TestScopedOSReader_RootFDAfterClose(t *testing.T) {
 	}
 	// All file methods on a closed reader must return ErrClosed.
 	// The checkOpen gate covers this; rootFD is the inner helper.
-	if _, err := r.ReadFile("x"); !errors.Is(err, platform.ErrClosed) {
+	if _, err := r.ReadFile(t.Context(), "x"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadFile after Close = %v, want ErrClosed", err)
 	}
 }
@@ -1039,7 +1039,7 @@ func TestScopedMemReader_ReadDir_Exhaustive(t *testing.T) {
 	r := platform.NewScopedMemReader("/proc", mem)
 	t.Cleanup(func() { _ = r.Close() })
 
-	entries, err := r.ReadDir("d")
+	entries, err := r.ReadDir(t.Context(), "d")
 	if err != nil {
 		t.Fatalf("ReadDir: %v", err)
 	}
@@ -1094,13 +1094,13 @@ func TestScopedMemReader_AllMethods_AfterClose(t *testing.T) {
 		t.Fatalf("Close: %v", err)
 	}
 
-	if _, err := r.ReadFile("f"); !errors.Is(err, platform.ErrClosed) {
+	if _, err := r.ReadFile(t.Context(), "f"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadFile after Close = %v, want ErrClosed", err)
 	}
 	if _, err := r.Stat("f"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("Stat after Close = %v, want ErrClosed", err)
 	}
-	if _, err := r.ReadDir("."); !errors.Is(err, platform.ErrClosed) {
+	if _, err := r.ReadDir(t.Context(), "."); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadDir after Close = %v, want ErrClosed", err)
 	}
 	if _, err := r.Readlink("l"); !errors.Is(err, platform.ErrClosed) {
@@ -1131,7 +1131,7 @@ func TestScopedMemReader_ReadFile_EISDIR(t *testing.T) {
 	r := platform.NewScopedMemReader("/proc", mem)
 	t.Cleanup(func() { _ = r.Close() })
 
-	if _, err := r.ReadFile("d"); !errors.Is(err, syscall.EISDIR) {
+	if _, err := r.ReadFile(t.Context(), "d"); !errors.Is(err, syscall.EISDIR) {
 		t.Errorf("ReadFile on directory = %v, want EISDIR", err)
 	}
 }
@@ -1144,7 +1144,7 @@ func TestScopedMemReader_ReadDir_FNF(t *testing.T) {
 	r := platform.NewScopedMemReader("/proc", mem)
 	t.Cleanup(func() { _ = r.Close() })
 
-	if _, err := r.ReadDir("nonexistent"); !errors.Is(err, os.ErrNotExist) {
+	if _, err := r.ReadDir(t.Context(), "nonexistent"); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("ReadDir missing = %v, want ErrNotExist", err)
 	}
 }
@@ -1159,7 +1159,7 @@ func TestScopedMemReader_ReadDir_NonDirectory(t *testing.T) {
 	r := platform.NewScopedMemReader("/proc", mem)
 	t.Cleanup(func() { _ = r.Close() })
 
-	if _, err := r.ReadDir("regular"); !errors.Is(err, syscall.ENOTDIR) {
+	if _, err := r.ReadDir(t.Context(), "regular"); !errors.Is(err, syscall.ENOTDIR) {
 		t.Errorf("ReadDir on regular = %v, want ENOTDIR", err)
 	}
 }
@@ -1236,7 +1236,7 @@ func TestScopedMemReader_ReadFile(t *testing.T) {
 
 	t.Run("regular file", func(t *testing.T) {
 		t.Parallel()
-		data, err := r.ReadFile("f")
+		data, err := r.ReadFile(t.Context(), "f")
 		if err != nil {
 			t.Fatalf("ReadFile: %v", err)
 		}
@@ -1247,7 +1247,7 @@ func TestScopedMemReader_ReadFile(t *testing.T) {
 
 	t.Run("directory returns EISDIR", func(t *testing.T) {
 		t.Parallel()
-		_, err := r.ReadFile("d")
+		_, err := r.ReadFile(t.Context(), "d")
 		if !errors.Is(err, syscall.EISDIR) {
 			t.Errorf("ReadFile on directory = %v, want EISDIR", err)
 		}
@@ -1255,7 +1255,7 @@ func TestScopedMemReader_ReadFile(t *testing.T) {
 
 	t.Run("missing returns ErrNotExist", func(t *testing.T) {
 		t.Parallel()
-		if _, err := r.ReadFile("missing"); !errors.Is(err, os.ErrNotExist) {
+		if _, err := r.ReadFile(t.Context(), "missing"); !errors.Is(err, os.ErrNotExist) {
 			t.Errorf("ReadFile missing = %v, want ErrNotExist", err)
 		}
 	})
@@ -1312,7 +1312,7 @@ func TestScopedMemReader_ReadDir(t *testing.T) {
 
 	t.Run("directory", func(t *testing.T) {
 		t.Parallel()
-		entries, err := r.ReadDir("d")
+		entries, err := r.ReadDir(t.Context(), "d")
 		if err != nil {
 			t.Fatalf("ReadDir: %v", err)
 		}
@@ -1329,7 +1329,7 @@ func TestScopedMemReader_ReadDir(t *testing.T) {
 
 	t.Run("non-directory returns ENOTDIR", func(t *testing.T) {
 		t.Parallel()
-		_, err := r.ReadDir("f-or-missing")
+		_, err := r.ReadDir(t.Context(), "f-or-missing")
 		if err == nil {
 			t.Fatalf("ReadDir on non-directory returned nil error")
 		}
@@ -1367,7 +1367,7 @@ func TestScopedMemReader_Close(t *testing.T) {
 	if err := r.Close(); err != nil {
 		t.Errorf("second Close: %v (idempotent contract violated)", err)
 	}
-	if _, err := r.ReadFile("f"); !errors.Is(err, platform.ErrClosed) {
+	if _, err := r.ReadFile(t.Context(), "f"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadFile after Close = %v, want ErrClosed", err)
 	}
 }
@@ -1384,7 +1384,7 @@ func TestScopedMemReader_Containment(t *testing.T) {
 	r := platform.NewScopedMemReader("/proc", mem)
 	t.Cleanup(func() { _ = r.Close() })
 
-	if _, err := r.ReadFile("escape"); !errors.Is(err, platform.ErrSubpathEscape) {
+	if _, err := r.ReadFile(t.Context(), "escape"); !errors.Is(err, platform.ErrSubpathEscape) {
 		t.Errorf("ReadFile escape = %v, want ErrSubpathEscape", err)
 	}
 }
@@ -1403,7 +1403,7 @@ func TestScopedMemReader_SymlinkChain(t *testing.T) {
 	r := platform.NewScopedMemReader("/proc", mem)
 	t.Cleanup(func() { _ = r.Close() })
 
-	data, err := r.ReadFile("a")
+	data, err := r.ReadFile(t.Context(), "a")
 	if err != nil {
 		t.Fatalf("ReadFile a: %v", err)
 	}
@@ -1449,7 +1449,7 @@ func TestScopedMemReader_Validation(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			_, err := r.ReadFile(tc.subpath)
+			_, err := r.ReadFile(t.Context(), tc.subpath)
 			if !errors.Is(err, tc.want) {
 				t.Errorf("ReadFile(%q) = %v, want %v", tc.subpath, err, tc.want)
 			}

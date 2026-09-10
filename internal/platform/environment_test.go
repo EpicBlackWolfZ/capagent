@@ -69,7 +69,7 @@ func TestNewTestEnvironment_WithMemReader(t *testing.T) {
 	}
 
 	// Verify the readers can read the seeded fixtures via the Env.
-	data, err := env.Procfs().ReadProcFile("version")
+	data, err := env.Procfs().ReadProcFile(t.Context(), "version")
 	if err != nil {
 		t.Fatalf("ReadProcFile: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestNewTestEnvironment_WithMemReader(t *testing.T) {
 		t.Errorf("ReadProcFile = %q, want %q", string(data), "Linux 6.0.0")
 	}
 
-	controllers, err := env.Sysfs().CgroupControllers()
+	controllers, err := env.Sysfs().CgroupControllers(t.Context())
 	if err != nil {
 		t.Fatalf("CgroupControllers: %v", err)
 	}
@@ -113,7 +113,7 @@ func TestNewTestEnvironment_NilReaderCreatesFresh(t *testing.T) {
 	}
 
 	// The fresh reader should be empty and report missing files.
-	if _, err := env.Procfs().ReadProcFile("version"); err == nil {
+	if _, err := env.Procfs().ReadProcFile(t.Context(), "version"); err == nil {
 		t.Error("expected error on empty reader")
 	}
 }
@@ -144,8 +144,8 @@ func TestMemFileInfo_Methods(t *testing.T) {
 	if info.IsDir() {
 		t.Error("IsDir = true, want false")
 	}
-	if info.Sys() != nil {
-		t.Error("Sys returned non-nil")
+	if _, known := platform.OwnershipOf(info); known {
+		t.Error("unspecified fixture ownership must remain unknown")
 	}
 	if info.ModTime().IsZero() == false {
 		// ModTime returns time.Time{} (zero), which IsZero() should report as true.
@@ -178,7 +178,7 @@ func TestMemDirEntry_Accessors(t *testing.T) {
 	fixtureParents(mem, "/d/link")
 	mem.AddSymlink("/d/link", "file")
 
-	entries, err := mem.ReadDir("/d")
+	entries, err := mem.ReadDir(t.Context(), "/d")
 	if err != nil {
 		t.Fatalf("ReadDir: %v", err)
 	}
@@ -223,13 +223,13 @@ func TestMemPlatformReader_NormalizeEmptyPath(t *testing.T) {
 	mem.AddSymlink("", "target")
 	mem.AddError("", nil)
 
-	if _, err := mem.ReadFile(""); err == nil {
+	if _, err := mem.ReadFile(t.Context(), ""); err == nil {
 		t.Error("ReadFile on empty path returned nil error")
 	}
 	if _, err := mem.Stat(""); err == nil {
 		t.Error("Stat on empty path returned nil error")
 	}
-	if _, err := mem.ReadDir(""); err == nil {
+	if _, err := mem.ReadDir(t.Context(), ""); err == nil {
 		t.Error("ReadDir on empty path returned nil error")
 	}
 	if _, err := mem.Readlink(""); err == nil {
@@ -256,7 +256,7 @@ func TestOSPlatformReader_SymlinkReadFollowsTarget(t *testing.T) {
 
 	r := platform.NewOSPlatformReader()
 
-	data, err := r.ReadFile(link)
+	data, err := r.ReadFile(t.Context(), link)
 	if err != nil {
 		t.Fatalf("ReadFile via symlink: %v", err)
 	}
@@ -299,7 +299,7 @@ func TestMemPlatformReader_ReadDirEmptyDirectory(t *testing.T) {
 	mem := platform.NewMemPlatformReader()
 	mem.AddDir("/empty", 0o755)
 
-	got, err := mem.ReadDir("/empty")
+	got, err := mem.ReadDir(t.Context(), "/empty")
 	if err != nil {
 		t.Fatalf("ReadDir: %v", err)
 	}

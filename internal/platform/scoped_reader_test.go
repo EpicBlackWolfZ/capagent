@@ -16,18 +16,19 @@ import (
 	"time"
 
 	"github.com/EpicBlackWolfZ/capagent/internal/platform"
+	"golang.org/x/sys/unix"
 )
 
 // Reused literal names hoisted to constants for the goconst linter.
 const (
-	scopedReaderProcRoot      = "/proc"
-	scopedReaderMissingSub    = "missing"
-	scopedReaderNonExist      = "nope"
-	scopedReaderSymlinkName   = "l"
-	scopedReaderOSRootSample  = "/tmp/scoped-test"
-	memReaderKind             = "memory"
-	osReaderKind              = "os"
-	linuxGOOS                 = "linux"
+	scopedReaderProcRoot     = "/proc"
+	scopedReaderMissingSub   = "missing"
+	scopedReaderNonExist     = "nope"
+	scopedReaderSymlinkName  = "l"
+	scopedReaderOSRootSample = "/tmp/scoped-test"
+	memReaderKind            = "memory"
+	osReaderKind             = "os"
+	linuxGOOS                = "linux"
 )
 
 // scopedMemFactory wraps a MemPlatformReader; the setup closure runs
@@ -177,26 +178,60 @@ func isVirtualRootPath(virtualPath, virtualRoot string) bool {
 // target translated to the corresponding OS path.
 func materializeTreeEntry(t *testing.T, path string, vf *platform.VirtualFile, virtualRoot, osRoot string) {
 	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	switch vf.Kind {
 	case platform.FileKindDirectory:
 		if err := os.MkdirAll(path, 0o755); err != nil {
-			t.Fatalf("materialize dir %q: %v", path, err)
+			t.Fatal(err)
 		}
 	case platform.FileKindSymlink:
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			t.Fatalf("materialize dir for symlink %q: %v", path, err)
-		}
 		target := translateSymlinkTarget(vf.Target, path, virtualRoot, osRoot)
 		if err := os.Symlink(target, path); err != nil {
-			t.Skipf("symlink unsupported on this host: %v", err)
+			t.Fatal(err)
+		}
+	case platform.FileKindRegular:
+		if err := os.WriteFile(path, vf.Content, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	case platform.FileKindSpecial:
+		materializeSpecial(t, path, vf.Mode)
+	default:
+		t.Fatalf("unknown fixture kind %v", vf.Kind)
+	}
+	if vf.OwnershipKnown {
+		if err := os.Lchown(path, int(vf.Ownership.UID), int(vf.Ownership.GID)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// chown may clear special bits; apply requested permissions last.
+	if vf.Kind != platform.FileKindSymlink {
+		if err := os.Chmod(path, vf.Mode); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func materializeSpecial(t *testing.T, path string, mode os.FileMode) {
+	t.Helper()
+	switch mode.Type() {
+	case os.ModeNamedPipe:
+		if err := unix.Mkfifo(path, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	case os.ModeSocket:
+		fd, err := unix.Socket(unix.AF_UNIX, unix.SOCK_DGRAM|unix.SOCK_CLOEXEC, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = unix.Bind(fd, &unix.SockaddrUnix{Name: path})
+		closeErr := unix.Close(fd)
+		if err != nil || closeErr != nil {
+			t.Fatalf("socket fixture: %v %v", err, closeErr)
 		}
 	default:
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			t.Fatalf("materialize dir for file %q: %v", path, err)
-		}
-		if err := os.WriteFile(path, vf.Content, 0o644); err != nil {
-			t.Fatalf("materialize file %q: %v", path, err)
-		}
+		t.Fatalf("special fixture requires a dedicated privileged harness: %v", mode)
 	}
 }
 
@@ -280,14 +315,13 @@ func withParity(
 // error that still satisfies the containment invariant.
 func TestScopedReader_ReadFile(t *testing.T) {
 
-
 	tests := []struct {
 		name           string
 		setup          func(m *platform.MemPlatformReader)
 		subpath        string
 		want           string
-		wantErr        error   // strict expected error
-		wantErrMemOnly error   // additional error only the memory reader surfaces
+		wantErr        error // strict expected error
+		wantErrMemOnly error // additional error only the memory reader surfaces
 	}{
 		{
 			name: "plain file",
@@ -371,7 +405,7 @@ func TestScopedReader_ReadFile(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		withParity(t, tt.name, tt.setup, func(t *testing.T, r platform.ScopedReader, kind string) {
-			data, err := r.ReadFile(tt.subpath)
+			data, err := r.ReadFile(t.Context(), tt.subpath)
 			if tt.wantErr != nil {
 				if !errors.Is(err, tt.wantErr) {
 					t.Fatalf("ReadFile(%q) [%s] error = %v, want %v", tt.subpath, kind, err, tt.wantErr)
@@ -417,49 +451,48 @@ func TestScopedReader_ReadFile(t *testing.T) {
 // enforces the lexical containment rules.
 func TestScopedReader_Stat(t *testing.T) {
 
-
 	tests := []struct {
-		name        string
-		setup       func(m *platform.MemPlatformReader)
-		subpath     string
-		wantExist   bool
-		wantIsDir   bool
-		wantIsLink  bool
-		wantErr     error
+		name       string
+		setup      func(m *platform.MemPlatformReader)
+		subpath    string
+		wantExist  bool
+		wantIsDir  bool
+		wantIsLink bool
+		wantErr    error
 	}{
 		{
 			name: "regular file",
 			setup: func(m *platform.MemPlatformReader) {
 				m.AddFile("/proc/x", []byte("data"), 0o600)
 			},
-			subpath:    "x",
-			wantExist:  true,
-			wantIsDir:  false,
+			subpath:   "x",
+			wantExist: true,
+			wantIsDir: false,
 		},
 		{
 			name: "directory",
 			setup: func(m *platform.MemPlatformReader) {
 				m.AddDir("/proc/d", 0o755)
 			},
-			subpath:    "d",
-			wantExist:  true,
-			wantIsDir:  true,
+			subpath:   "d",
+			wantExist: true,
+			wantIsDir: true,
 		},
 		{
-			name: "missing returns ErrNotExist",
-			setup: func(m *platform.MemPlatformReader) {},
-			subpath:    scopedReaderMissingSub,
-			wantErr:    os.ErrNotExist,
+			name:    "missing returns ErrNotExist",
+			setup:   func(m *platform.MemPlatformReader) {},
+			subpath: scopedReaderMissingSub,
+			wantErr: os.ErrNotExist,
 		},
 		{
-			name: "absolute rejected",
-			setup: func(m *platform.MemPlatformReader) {},
+			name:    "absolute rejected",
+			setup:   func(m *platform.MemPlatformReader) {},
 			subpath: "/x",
 			wantErr: platform.ErrAbsoluteSubpath,
 		},
 		{
-			name: "lexical escape rejected",
-			setup: func(m *platform.MemPlatformReader) {},
+			name:    "lexical escape rejected",
+			setup:   func(m *platform.MemPlatformReader) {},
 			subpath: "../escape",
 			wantErr: platform.ErrSubpathEscape,
 		},
@@ -469,8 +502,8 @@ func TestScopedReader_Stat(t *testing.T) {
 				m.AddFile("/proc/target", []byte(testPayload), 0o644)
 				m.AddSymlink("/proc/link", "target")
 			},
-			subpath:    "link",
-			wantExist:  true,
+			subpath:   "link",
+			wantExist: true,
 		},
 	}
 
@@ -499,7 +532,6 @@ func TestScopedReader_Stat(t *testing.T) {
 // inputs.
 func TestScopedReader_ReadDir(t *testing.T) {
 
-
 	tests := []struct {
 		name      string
 		setup     func(m *platform.MemPlatformReader)
@@ -519,8 +551,8 @@ func TestScopedReader_ReadDir(t *testing.T) {
 			wantNames: []string{"a", "b", "c"},
 		},
 		{
-			name: "missing returns ErrNotExist",
-			setup: func(m *platform.MemPlatformReader) {},
+			name:    "missing returns ErrNotExist",
+			setup:   func(m *platform.MemPlatformReader) {},
 			subpath: scopedReaderMissingSub,
 			wantErr: os.ErrNotExist,
 		},
@@ -533,14 +565,14 @@ func TestScopedReader_ReadDir(t *testing.T) {
 			wantErr: syscall.ENOTDIR,
 		},
 		{
-			name: "empty rejected",
-			setup: func(m *platform.MemPlatformReader) {},
+			name:    "empty rejected",
+			setup:   func(m *platform.MemPlatformReader) {},
 			subpath: "",
 			wantErr: platform.ErrEmptySubpath,
 		},
 		{
-			name: "absolute rejected",
-			setup: func(m *platform.MemPlatformReader) {},
+			name:    "absolute rejected",
+			setup:   func(m *platform.MemPlatformReader) {},
 			subpath: "/d",
 			wantErr: platform.ErrAbsoluteSubpath,
 		},
@@ -549,7 +581,7 @@ func TestScopedReader_ReadDir(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		withParity(t, tt.name, tt.setup, func(t *testing.T, r platform.ScopedReader, kind string) {
-			entries, err := r.ReadDir(tt.subpath)
+			entries, err := r.ReadDir(t.Context(), tt.subpath)
 			if tt.wantErr != nil {
 				if !errors.Is(err, tt.wantErr) {
 					t.Fatalf("ReadDir(%q) [%s] error = %v, want %v", tt.subpath, kind, err, tt.wantErr)
@@ -580,7 +612,6 @@ func TestScopedReader_ReadDir(t *testing.T) {
 // readlinkat is called on a non-symlink FD; the test accepts both as
 // long as containment holds.
 func TestScopedReader_Readlink(t *testing.T) {
-
 
 	tests := []struct {
 		name           string
@@ -706,7 +737,6 @@ func TestScopedReader_Readlink(t *testing.T) {
 // symlinks — the AT_SYMLINK_NOFOLLOW guarantee).
 func TestScopedReader_ReadDir_ChildMetadata(t *testing.T) {
 
-
 	setup := func(m *platform.MemPlatformReader) {
 		m.AddDir("/proc/d", 0o755)
 		m.AddFile("/proc/d/regular", []byte("data-this-is-content-with-known-size"), 0o644)
@@ -717,7 +747,7 @@ func TestScopedReader_ReadDir_ChildMetadata(t *testing.T) {
 	}
 
 	withParity(t, "ChildMetadata", setup, func(t *testing.T, r platform.ScopedReader, kind string) {
-		entries, err := r.ReadDir("d")
+		entries, err := r.ReadDir(t.Context(), "d")
 		if err != nil {
 			t.Fatalf("ReadDir: %v", err)
 		}
@@ -820,7 +850,6 @@ func TestScopedReader_ReadDir_ChildMetadata(t *testing.T) {
 // the reader afterwards must not invalidate the returned entries.
 func TestScopedReader_ReadDir_NoDeferredLookup(t *testing.T) {
 
-
 	setup := func(m *platform.MemPlatformReader) {
 		m.AddDir("/proc/d", 0o755)
 		m.AddFile("/proc/d/regular", []byte("A"), 0o644)
@@ -832,7 +861,7 @@ func TestScopedReader_ReadDir_NoDeferredLookup(t *testing.T) {
 	}
 
 	withParity(t, "NoDeferredLookup", setup, func(t *testing.T, r platform.ScopedReader, kind string) {
-		entries, err := r.ReadDir("d")
+		entries, err := r.ReadDir(t.Context(), "d")
 		if err != nil {
 			t.Fatalf("ReadDir: %v", err)
 		}
@@ -862,14 +891,13 @@ func TestScopedReader_ReadDir_NoDeferredLookup(t *testing.T) {
 // never returned. Both readers must apply the same filter.
 func TestScopedReader_ReadDir_FiltersDotAndDotDot(t *testing.T) {
 
-
 	setup := func(m *platform.MemPlatformReader) {
 		m.AddDir("/proc/d", 0o755)
 		m.AddFile("/proc/d/a", []byte("a"), 0o644)
 	}
 
 	withParity(t, "FiltersDotAndDotDot", setup, func(t *testing.T, r platform.ScopedReader, kind string) {
-		entries, err := r.ReadDir("d")
+		entries, err := r.ReadDir(t.Context(), "d")
 		if err != nil {
 			t.Fatalf("ReadDir: %v", err)
 		}
@@ -926,7 +954,6 @@ func TestScopedReader_SymlinkRace_AbortPath(t *testing.T) {
 // after Close(), while Root() remains valid and Close() is idempotent.
 func TestScopedReader_UseAfterClose(t *testing.T) {
 
-
 	mem := platform.NewMemPlatformReader()
 	mem.AddFile("/proc/x", []byte(testPayload), 0o644)
 	r := platform.NewScopedMemReader(scopedReaderProcRoot, mem)
@@ -941,13 +968,13 @@ func TestScopedReader_UseAfterClose(t *testing.T) {
 		t.Errorf("Root() after Close = %q, want %q", got, scopedReaderProcRoot)
 	}
 
-	if _, err := r.ReadFile("x"); !errors.Is(err, platform.ErrClosed) {
+	if _, err := r.ReadFile(t.Context(), "x"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadFile after Close error = %v, want ErrClosed", err)
 	}
 	if _, err := r.Stat("x"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("Stat after Close error = %v, want ErrClosed", err)
 	}
-	if _, err := r.ReadDir("d"); !errors.Is(err, platform.ErrClosed) {
+	if _, err := r.ReadDir(t.Context(), "d"); !errors.Is(err, platform.ErrClosed) {
 		t.Errorf("ReadDir after Close error = %v, want ErrClosed", err)
 	}
 	if _, err := r.Readlink("x"); !errors.Is(err, platform.ErrClosed) {
@@ -959,7 +986,6 @@ func TestScopedReader_UseAfterClose(t *testing.T) {
 // contract: many goroutines may simultaneously call file methods on the
 // same reader without triggering a data race.
 func TestScopedReader_Race_LegalConcurrentUse(t *testing.T) {
-
 
 	mem := platform.NewMemPlatformReader()
 	mem.AddFile("/proc/x", []byte(testPayload), 0o644)
@@ -979,7 +1005,7 @@ func TestScopedReader_Race_LegalConcurrentUse(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < iterations; j++ {
-				if _, err := r.ReadFile("x"); err != nil {
+				if _, err := r.ReadFile(t.Context(), "x"); err != nil {
 					t.Errorf("ReadFile: %v", err)
 					return
 				}
@@ -987,7 +1013,7 @@ func TestScopedReader_Race_LegalConcurrentUse(t *testing.T) {
 					t.Errorf("Stat: %v", err)
 					return
 				}
-				if _, err := r.ReadDir("d"); err != nil {
+				if _, err := r.ReadDir(t.Context(), "d"); err != nil {
 					t.Errorf("ReadDir: %v", err)
 					return
 				}
@@ -995,9 +1021,9 @@ func TestScopedReader_Race_LegalConcurrentUse(t *testing.T) {
 					t.Errorf("Readlink: %v", err)
 					return
 				}
-if got := r.Root(); got != scopedReaderProcRoot {
-				t.Errorf("Root = %q, want %q", got, scopedReaderProcRoot)
-			}
+				if got := r.Root(); got != scopedReaderProcRoot {
+					t.Errorf("Root = %q, want %q", got, scopedReaderProcRoot)
+				}
 			}
 		}()
 	}
@@ -1202,10 +1228,10 @@ func TestTranslateSymlinkTarget_Unit(t *testing.T) {
 	const osRoot = "/tmp/scoped-test"
 
 	tests := []struct {
-		name              string
-		virtualTarget     string
-		symlinkOSPath     string
-		wantTranslated    string
+		name           string
+		virtualTarget  string
+		symlinkOSPath  string
+		wantTranslated string
 	}{
 		{
 			name:           "relative target stays relative",
@@ -1290,7 +1316,6 @@ const symlinkRaceInside = "INSIDE-BYTES-OWNED-BY-ROOT"
 // unblocks immediately rather than hanging on a rendezvous that
 // will never complete.
 func TestScopedReader_SymlinkRace(t *testing.T) {
-
 
 	if runtime.GOOS != linuxGOOS {
 		t.Skipf("symlink race regression test requires Linux openat2 path")
@@ -1390,7 +1415,7 @@ func TestScopedReader_SymlinkRace(t *testing.T) {
 			case <-ctx.Done():
 				return
 			}
-			data, err := r.ReadFile("target")
+			data, err := r.ReadFile(t.Context(), "target")
 			select {
 			case syncCh <- struct{}{}:
 			case <-ctx.Done():
@@ -1416,7 +1441,7 @@ func TestScopedReader_SymlinkRace(t *testing.T) {
 			case <-ctx.Done():
 				return
 			}
-			data, err = r.ReadFile("target")
+			data, err = r.ReadFile(t.Context(), "target")
 			select {
 			case syncCh <- struct{}{}:
 			case <-ctx.Done():
@@ -1450,7 +1475,6 @@ func TestScopedReader_SymlinkRace(t *testing.T) {
 // guarantee under the kernel-confined design.
 func TestScopedReader_ReadDir_NoSymlinkFollow(t *testing.T) {
 
-
 	if runtime.GOOS != linuxGOOS {
 		t.Skipf("OS-reader parity requires Linux")
 	}
@@ -1474,7 +1498,7 @@ func TestScopedReader_ReadDir_NoSymlinkFollow(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = sr.Close() })
 
-	entries, err := sr.ReadDir("d")
+	entries, err := sr.ReadDir(t.Context(), "d")
 	if err != nil {
 		t.Fatalf("ReadDir: %v", err)
 	}
@@ -1530,8 +1554,8 @@ func TestScopedReader_FileInfo_AllAccessors(t *testing.T) {
 	if info.Mode()&0o644 == 0 {
 		t.Errorf("Mode = %v, want 0o644 bits set", info.Mode())
 	}
-	if info.Sys() != nil {
-		t.Errorf("Sys = %v, want nil", info.Sys())
+	if _, known := platform.OwnershipOf(info); known {
+		t.Error("unspecified fixture owner must be unknown")
 	}
 
 	// directory
@@ -1616,13 +1640,13 @@ func TestScopedReader_LifecycleInternalHelpers(t *testing.T) {
 			t.Fatalf("close: %v", err)
 		}
 		// After close, all file methods must return ErrClosed.
-		if _, err := osr.ReadFile("x"); !errors.Is(err, platform.ErrClosed) {
+		if _, err := osr.ReadFile(t.Context(), "x"); !errors.Is(err, platform.ErrClosed) {
 			t.Errorf("ReadFile after close error = %v, want ErrClosed", err)
 		}
 		if _, err := osr.Stat("x"); !errors.Is(err, platform.ErrClosed) {
 			t.Errorf("Stat after close error = %v, want ErrClosed", err)
 		}
-		if _, err := osr.ReadDir("x"); !errors.Is(err, platform.ErrClosed) {
+		if _, err := osr.ReadDir(t.Context(), "x"); !errors.Is(err, platform.ErrClosed) {
 			t.Errorf("ReadDir after close error = %v, want ErrClosed", err)
 		}
 		if _, err := osr.Readlink("x"); !errors.Is(err, platform.ErrClosed) {
@@ -1663,7 +1687,7 @@ func TestScopedReader_NewScopedMemReaderNilMem(t *testing.T) {
 	if _, err := r.Stat("nonexistent"); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("Stat missing: error = %v, want ErrNotExist", err)
 	}
-	if _, err := r.ReadDir("nonexistent"); !errors.Is(err, os.ErrNotExist) {
+	if _, err := r.ReadDir(t.Context(), "nonexistent"); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("ReadDir missing: error = %v, want ErrNotExist", err)
 	}
 	if _, err := r.Readlink("nonexistent"); !errors.Is(err, os.ErrNotExist) {

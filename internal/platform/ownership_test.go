@@ -15,7 +15,7 @@ func TestFakeEvidenceOwnership(t *testing.T) {
 		input := []byte("original")
 		mem.AddFile("/file", input, 0o600)
 		input[0] = 'X'
-		first, err := mem.ReadFile("/file")
+		first, err := mem.ReadFile(t.Context(), "/file")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -23,7 +23,7 @@ func TestFakeEvidenceOwnership(t *testing.T) {
 			t.Errorf("input alias: %q", first)
 		}
 		first[0] = 'Y'
-		second, err := mem.ReadFile("/file")
+		second, err := mem.ReadFile(t.Context(), "/file")
 		if err != nil {
 			t.Fatal(err)
 		}

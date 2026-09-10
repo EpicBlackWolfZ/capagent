@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"reflect"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -76,7 +77,7 @@ func TestProcfsReader_Filesystems(t *testing.T) {
 			mem.AddFile("/proc/filesystems", []byte(tt.input), 0o644)
 
 			r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem))
-			got, err := r.Filesystems()
+			got, err := r.Filesystems(t.Context())
 			if err != nil {
 				t.Fatalf("Filesystems: %v", err)
 			}
@@ -136,9 +137,13 @@ func TestProcfsReader_Cgroups(t *testing.T) {
 			mem.AddFile("/proc/self/cgroup", []byte(tt.input), 0o644)
 
 			r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem))
-			got, err := r.Cgroups()
-			if err != nil {
-				t.Fatalf("Cgroups: %v", err)
+			got, err := r.Cgroups(t.Context())
+			if strings.Contains(tt.name, "malformed") {
+				if !errors.Is(err, platform.ErrMalformed) {
+					t.Fatalf("expected malformed diagnostic: %v", err)
+				}
+			} else if err != nil {
+				t.Fatal(err)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Cgroups = %+v, want %+v", got, tt.want)
@@ -296,9 +301,13 @@ func TestProcfsReader_Mounts(t *testing.T) {
 			mem.AddFile("/proc/self/mountinfo", []byte(tt.input), 0o644)
 
 			r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem))
-			got, err := r.Mounts()
-			if err != nil {
-				t.Fatalf("Mounts: %v", err)
+			got, err := r.Mounts(t.Context())
+			if strings.Contains(tt.name, "malformed") {
+				if !errors.Is(err, platform.ErrMalformed) {
+					t.Fatalf("expected malformed diagnostic: %v", err)
+				}
+			} else if err != nil {
+				t.Fatal(err)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Mounts mismatch:\ngot  %+v\nwant %+v", got, tt.want)
@@ -318,7 +327,7 @@ func TestProcfsReader_ReadProcFileAndReadSelf(t *testing.T) {
 
 	r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem))
 
-	v, err := r.ReadProcFile("version")
+	v, err := r.ReadProcFile(t.Context(), "version")
 	if err != nil {
 		t.Fatalf("ReadProcFile: %v", err)
 	}
@@ -326,7 +335,7 @@ func TestProcfsReader_ReadProcFileAndReadSelf(t *testing.T) {
 		t.Errorf("ReadProcFile content = %q, want %q", string(v), "Linux 6.0.0")
 	}
 
-	s, err := r.ReadSelf("status")
+	s, err := r.ReadSelf(t.Context(), "status")
 	if err != nil {
 		t.Fatalf("ReadSelf: %v", err)
 	}
@@ -343,7 +352,7 @@ func TestProcfsReader_CustomRoot(t *testing.T) {
 	mem.AddFile("/testdata/proc/filesystems", []byte("nodev\ttmpfs\n"), 0o644)
 
 	r := platform.NewProcfsReader(platform.NewScopedMemReader("/testdata/proc", mem))
-	got, err := r.Filesystems()
+	got, err := r.Filesystems(t.Context())
 	if err != nil {
 		t.Fatalf("Filesystems: %v", err)
 	}
@@ -382,13 +391,13 @@ func TestProcfsReader_MissingFilePropagates(t *testing.T) {
 	mem := platform.NewMemPlatformReader()
 	r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem))
 
-	if _, err := r.Filesystems(); !errors.Is(err, os.ErrNotExist) {
+	if _, err := r.Filesystems(t.Context()); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("Filesystems missing-file error = %v, want ErrNotExist", err)
 	}
-	if _, err := r.Cgroups(); !errors.Is(err, os.ErrNotExist) {
+	if _, err := r.Cgroups(t.Context()); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("Cgroups missing-file error = %v, want ErrNotExist", err)
 	}
-	if _, err := r.Mounts(); !errors.Is(err, os.ErrNotExist) {
+	if _, err := r.Mounts(t.Context()); !errors.Is(err, os.ErrNotExist) {
 		t.Errorf("Mounts missing-file error = %v, want ErrNotExist", err)
 	}
 }
@@ -404,10 +413,10 @@ func TestProcfsReader_PermissionErrorPropagates(t *testing.T) {
 
 	r := platform.NewProcfsReader(platform.NewScopedMemReader("/proc", mem))
 
-	if _, err := r.Filesystems(); err != nil {
+	if _, err := r.Filesystems(t.Context()); err != nil {
 		t.Errorf("Filesystems error = %v, want nil", err)
 	}
-	if _, err := r.Cgroups(); !errors.Is(err, syscall.EACCES) {
+	if _, err := r.Cgroups(t.Context()); !errors.Is(err, syscall.EACCES) {
 		t.Errorf("Cgroups error = %v, want EACCES", err)
 	}
 }
@@ -420,7 +429,7 @@ func TestProcfsReader_RealProcfs(t *testing.T) {
 	}
 
 	r := mustOSProcfsReader(t, "/proc")
-	entries, err := r.Filesystems()
+	entries, err := r.Filesystems(t.Context())
 	if err != nil {
 		t.Fatalf("real Filesystems: %v", err)
 	}
