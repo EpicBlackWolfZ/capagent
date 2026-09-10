@@ -36,3 +36,6 @@ go.work.sum
 
 # Local audit evidence, planning notes, and working documents
 /.work/
+
+# Python build-helper bytecode
+__pycache__/

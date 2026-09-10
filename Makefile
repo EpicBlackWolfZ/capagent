@@ -30,22 +30,24 @@ GORELEASER := $(shell command -v goreleaser 2> /dev/null)
 
 .PHONY: all help build test coverage lint vuln vuln-optional deps-microfat snapshot tidy clean
 
-all: tidy lint vuln test coverage build ## Run complete verification pipeline (tidy, lint, vuln, test, coverage gate, build)
+all: check-mod lint vuln coverage build ## Run strict verification pipeline (module check, lint, vuln, race coverage, build)
 
 ## help: Display available targets
 help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all            Run tidy, lint, vuln, test, coverage, and build"
+	@echo "  all            Run module verification, strict lint/vuln, race coverage, and build"
 	@echo "  build          Compile universal fat binary for host arch via GoReleaser snapshot"
 	@echo "  test           Run unit tests with race detection"
 	@echo "  coverage       Run unit tests with race detection and verify coverage (>= 95.0%)"
-	@echo "  lint           Run golangci-lint (with warning fallback to go vet)"
+	@echo "  lint           Run required golangci-lint (fails if missing)"
 	@echo "  vuln           Run govulncheck vulnerability scanner (strict; fails if missing)"
 	@echo "  vuln-optional  Run govulncheck vulnerability scanner (warning fallback if missing)"
 	@echo "  deps-microfat  Ensure microfat CLI and architecture stubs are present"
 	@echo "  snapshot       Run GoReleaser snapshot build and fat binary packaging"
+	@echo "  release-check  Verify full/minimal binaries, release archives, SBOMs, and provenance"
+	@echo "  build-contracts Run shell/workflow validators and build-security contracts"
 	@echo "  tidy           Run go mod tidy and go mod verify"
 	@echo "  clean          Remove build artifacts, test outputs, and coverage files"
 
@@ -63,7 +65,7 @@ ifdef GORELEASER
 	@echo "==> Assembling universal fat binaries..."
 	@./scripts/bundle-fat.sh full
 	@mkdir -p $(BIN_DIR)
-	@cp $(DIST_DIR)/fat/$(HOST_ARCH)/capagent $(BIN_DIR)/capagent
+	@cp $(DIST_DIR)/fat/full/$(HOST_ARCH)/capagent $(BIN_DIR)/capagent
 	@echo "✔ Successfully built capagent [$(VERSION)] (microfat universal binary) -> $(BIN_DIR)/capagent"
 else
 	@echo "❌ Error: 'goreleaser' is required for building capagent."
@@ -90,9 +92,7 @@ else
 endif
 	@echo "==> Coverage summary:"
 	@$(GO) tool cover -func=$(COVERAGE_FILE)
-	@echo "==> Verifying total repository coverage threshold (>= $(COVERAGE_THRESHOLD)%)..."
-	@TOTAL_COVERAGE=$$($(GO) tool cover -func=$(COVERAGE_FILE) | grep "total:" | awk '{print substr($$3, 1, length($$3)-1)}'); \
-	echo "$${TOTAL_COVERAGE} $(COVERAGE_THRESHOLD)" | awk '{if ($$1 < $$2) { printf "❌ Total coverage %s%% is below target $(COVERAGE_THRESHOLD)%%\n", $$1; exit 1 } else { printf "✅ Total coverage %s%% satisfies target >= $(COVERAGE_THRESHOLD)%%\n", $$1 }}'
+	@python3 -B scripts/check-coverage.py $(COVERAGE_FILE) $(COVERAGE_THRESHOLD)
 
 ## lint: Run strict golangci-lint check
 lint:
@@ -100,10 +100,8 @@ lint:
 ifdef GOLANGCI_LINT
 	@golangci-lint run ./...
 else
-	@echo "⚠️  WARNING: golangci-lint not found in PATH."
-	@echo "⚠️  Falling back to 'go vet' (REDUCED VALIDATION: staticcheck, errcheck, mnd, lll not checked)."
-	@echo "⚠️  Install golangci-lint to enforce the full repository quality baseline."
-	@$(GO) vet ./...
+	@echo "Error: golangci-lint is required; install the pinned version from CI."
+	@exit 1
 endif
 
 ## vuln: Run govulncheck vulnerability scanner (fails if tool missing)
@@ -138,3 +136,21 @@ snapshot: build
 clean:
 	@echo "==> Cleaning artifacts..."
 	@rm -rf $(BIN_DIR) $(DIST_DIR) $(COVERAGE_FILE)
+
+.PHONY: check-mod release-check build-contracts
+
+## check-mod: Verify dependency integrity without silently changing tracked files
+check-mod:
+	@$(GO) mod tidy -diff
+	@$(GO) mod verify
+
+## release-check: Build and validate full/minimal artifacts without signing or publishing
+release-check:
+	@./scripts/release-check.sh
+
+## build-contracts: Validate shell/workflow semantics and build security regressions
+build-contracts:
+	@for script in scripts/*.sh; do bash -n "$$script"; done
+	@shellcheck scripts/*.sh
+	@actionlint
+	@$(GO) test -race ./tests/contract

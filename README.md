@@ -100,6 +100,37 @@ Execution targets Linux 5.6+ with working `openat2` confinement on amd64/arm64. 
 
 ---
 
+## Building and checking release artifacts
+
+Build on Linux with Go 1.27.1, Bash, Python 3 (standard library), curl, and
+GoReleaser 2.18.0. The build downloads only repository-pinned microfat inputs and
+verifies cached inputs on every use. See the [build trust contract](docs/security.md#build-and-artifact-trust)
+and [tooling update procedure](scripts/trust/README.md).
+
+```bash
+make build          # Full development launcher -> bin/capagent
+make release-check  # Also package and verify minimal release launchers; never publishes
+```
+
+The release rehearsal additionally requires Syft 1.51.1. Its output includes both
+architecture archives, SPDX/CycloneDX SBOMs, checksums, and `release-inputs.json` in
+`dist/release/`; `dist/release-inputs.tar.gz` is the verified publisher handoff.
+Both architectures receive static/integrity checks; ordinary amd64 CI executes the
+amd64 binary. No native ARM64 execution claim is made by these checks.
+
+For the full local source gate, install golangci-lint 2.13.2, govulncheck 1.7.0,
+Gitleaks 8.30.1, actionlint 1.7.12, and ShellCheck 0.11.0, then run `make all` and
+`make build-contracts`. CI provisions exact versions; missing required validators
+fail rather than reducing the checks. Cosign 3.0.6 is required for trusted release
+signing and for reviewing new upstream microfat trust data, not for an offline
+build using an already verified cache.
+
+PR CI and manual CI/Release dispatch run non-publishing verification. A release-tag
+push runs the full gate before a separate publisher signs and uploads its verified
+artifacts. Existing published releases are never silently replaced.
+
+---
+
 ## Design Principles
 
 1. **Passive by Default**: Never creates containers, modifies networks, or alters system files unless `--active` is explicitly passed.

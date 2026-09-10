@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "version": "v0.2.2",
+  "assets": [
+    {
+      "role": "cli",
+      "arch": "amd64",
+      "archive": "microfat_linux_amd64_fat.tar.gz",
+      "archive_sha256": "03bb47989772affb5901e9ba2c2ff0011e56365fc487373d88601ec0abf0a5b8",
+      "archive_size": 10587121,
+      "member": "microfat",
+      "sha256": "55049f9786a0602c1fda8ddb52a89e7ebce53c2b4d6970b21f007fae4e0f504a",
+      "size": 12693159
+    },
+    {
+      "role": "full",
+      "arch": "amd64",
+      "archive": "microfat-stub_0.2.2_linux_amd64_v1.tar.gz",
+      "archive_sha256": "4e5bfb314dd6b3b13945097f7a8400ee34d8724942321b964b29a00193de4e78",
+      "archive_size": 1649774,
+      "member": "microfat-stub",
+      "sha256": "c5183399c5840489a65d04dfcbf4bf93d80a717ff97010078220b169518f50fe",
+      "size": 3731616
+    },
+    {
+      "role": "minimal",
+      "arch": "amd64",
+      "archive": "microfat-stub-minimal_0.2.2_linux_amd64_v1.tar.gz",
+      "archive_sha256": "608c57315189bfa68ecaeb99ea96ee0d7803ccda7c57773e9e7677b37aaa7166",
+      "archive_size": 1255782,
+      "member": "microfat-stub-minimal",
+      "sha256": "66ab65de207f672701524082686967f851fd85383b237a5e2f36970bde55e484",
+      "size": 2773152
+    },
+    {
+      "role": "cli",
+      "arch": "arm64",
+      "archive": "microfat_linux_arm64_fat.tar.gz",
+      "archive_sha256": "4379b9ab438152956e73bab99a5358e3b6789b9aa721a8b63c0a3b0a8061839d",
+      "archive_size": 7391637,
+      "member": "microfat",
+      "sha256": "a7c6e22cda3a408f6550048382c12242ef1f7bc717bf2b09a2d8d109864aa53b",
+      "size": 9435549
+    },
+    {
+      "role": "full",
+      "arch": "arm64",
+      "archive": "microfat-stub_0.2.2_linux_arm64_v8.0.tar.gz",
+      "archive_sha256": "77ab8b284d9841366370b043e5af7fee6d1f93de9909841732b8d91b18a1af27",
+      "archive_size": 1470471,
+      "member": "microfat-stub",
+      "sha256": "068be325dedcaa797f3e624f9d52aec3b22927afd66f3ec6ad0187b18609eb83",
+      "size": 3473568
+    },
+    {
+      "role": "minimal",
+      "arch": "arm64",
+      "archive": "microfat-stub-minimal_0.2.2_linux_arm64_v8.0.tar.gz",
+      "archive_sha256": "3b50412b2a4f937ca761a169367a479a7893a04a36344e618da054dc01fd575d",
+      "archive_size": 1111988,
+      "member": "microfat-stub-minimal",
+      "sha256": "53b03d64e60d4dc068baf30ba3fe928ca00b783118e8a84c79d0ff9c3c0ab962",
+      "size": 2621600
+    }
+  ]
+}
