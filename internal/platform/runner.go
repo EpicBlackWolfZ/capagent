@@ -3,9 +3,9 @@ package platform
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -53,13 +53,13 @@ type ExecResult struct {
 // cancellation from internal timeout, bound pipe draining, and reap their
 // direct child. Process-group cleanup cannot terminate escaped descendants.
 type CommandRunner interface {
-	Run(ctx context.Context, name string, args ...string) (ExecResult, error)
+	Run(ctx context.Context, spec CommandSpec) (ExecResult, error)
 }
 
 // OSCommandRunner is the production CommandRunner that delegates to os/exec.
 type OSCommandRunner struct {
-	// defaultTimeout is applied when no caller-provided context deadline is
-	// earlier. Zero or negative means use defaultRunnerTimeout.
+	// defaultTimeout is used when CommandSpec.Timeout is zero. A caller deadline
+	// can end execution earlier. Non-positive means use defaultRunnerTimeout.
 	defaultTimeout time.Duration
 }
 
@@ -127,7 +127,7 @@ func (b *boundedBuffer) Truncated() bool {
 	return b.truncated
 }
 
-// Run executes the named binary with a caller context and internal timeout.
+// Run executes an absolute binary with explicit environment, directory and timeout.
 // An observable caller cancellation returns ctx.Err() with TimedOut false;
 // otherwise an internal timeout returns DeadlineExceeded with TimedOut true.
 //
@@ -146,12 +146,23 @@ func (b *boundedBuffer) Truncated() bool {
 // Pipe draining ends within runnerWaitDelay of cancellation or observed child
 // exit, subject to kernel/scheduling delays. A successful exit with expired
 // drain returns exec.ErrWaitDelay; a nonzero exit retains its ExitError.
-func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) (ExecResult, error) {
+func (r *OSCommandRunner) Run(ctx context.Context, spec CommandSpec) (ExecResult, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 
-	timeout := r.defaultTimeout
+	if err := ctx.Err(); err != nil {
+		return ExecResult{}, err
+	}
+	prepared, err := spec.normalized()
+	if err != nil {
+		return ExecResult{}, err
+	}
+	spec = prepared
+	timeout := spec.Timeout
+	if timeout == 0 {
+		timeout = r.defaultTimeout
+	}
 	if timeout <= 0 {
 		timeout = defaultRunnerTimeout
 	}
@@ -186,7 +197,9 @@ func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) 
 		internalCancel()
 	})
 
-	cmd := exec.CommandContext(internalCtx, name, args...) //nolint:gosec // G204: CommandRunner is a subprocess abstraction layer.
+	cmd := exec.CommandContext(internalCtx, spec.Path, spec.Args...) //nolint:gosec // G204: CommandRunner is a subprocess abstraction layer.
+	cmd.Env = spec.Env.Variables()
+	cmd.Dir = spec.Dir
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.WaitDelay = runnerWaitDelay
 	// Override the default Cancel to terminate the entire process group
@@ -248,11 +261,11 @@ func (r *OSCommandRunner) Run(ctx context.Context, name string, args ...string) 
 		result.TimedOut = true
 		return result, context.DeadlineExceeded
 	}
-	return result, runErr
+	return result, safeCommandError(runErr)
 }
 
 // FakeCommandRunner is an in-memory CommandRunner used as a deterministic
-// test double. Each registered (name, args...) tuple returns the
+// test double. Each registered command specification returns the
 // preconfigured ExecResult with caller-owned copies of output bytes.
 //
 // FakeCommandRunner is safe for concurrent use.
@@ -263,50 +276,58 @@ type FakeCommandRunner struct {
 	calls   []FakeCall
 }
 
-// fakeSeparator is the NUL byte used to delimit command name and arguments
-// when building FakeCommandRunner lookup keys. It cannot occur in shell
-// arguments, ensuring unambiguous matching.
-const fakeSeparator = "\x00"
-
-// FakeCall records a single Run invocation for inspection in tests.
-type FakeCall struct {
-	Name string
-	Args []string
-}
+// FakeCall records a validated invocation. Specification contents are sensitive;
+// ordinary formatting uses CommandSpec's redacted representation.
+type FakeCall struct{ Spec CommandSpec }
 
 // NewFakeCommandRunner constructs an empty FakeCommandRunner.
 func NewFakeCommandRunner() *FakeCommandRunner {
-	return &FakeCommandRunner{
-		results: make(map[string]ExecResult),
-		errors:  make(map[string]error),
+	return &FakeCommandRunner{results: make(map[string]ExecResult), errors: make(map[string]error)}
+}
+
+// fakeKey uses length-prefixed fields, including counts for variable-length
+// lists. This distinguishes empty arguments and field/list boundaries exactly.
+// Timeout zero remains a declaration of the runner default, not an explicit 30s.
+func fakeKey(spec CommandSpec) string {
+	var key strings.Builder
+	field := func(s string) { key.WriteString(strconv.Itoa(len(s))); key.WriteByte(':'); key.WriteString(s) }
+	field(spec.Path)
+	field(spec.Dir)
+	field(strconv.FormatInt(int64(spec.Timeout), 10))
+	field(strconv.Itoa(len(spec.Args)))
+	for _, arg := range spec.Args {
+		field(arg)
 	}
+	env := spec.Env.Variables()
+	field(strconv.Itoa(len(env)))
+	for _, variable := range env {
+		field(variable)
+	}
+	return key.String()
 }
 
-// fakeKey computes the lookup key for a (name, args...) tuple.
-func fakeKey(name string, args []string) string {
-	parts := make([]string, 0, len(args)+1)
-	parts = append(parts, name)
-	parts = append(parts, args...)
-	return strings.Join(parts, fakeSeparator)
+// Register validates the full specification and copies the configured result.
+func (f *FakeCommandRunner) Register(spec CommandSpec, result ExecResult) error {
+	return f.RegisterWithError(spec, result, nil)
 }
 
-// Register associates an ExecResult with the (name, args...) tuple, copying output bytes.
-func (f *FakeCommandRunner) Register(name string, args []string, result ExecResult) {
-	f.RegisterWithError(name, args, result, nil)
-}
-
-// RegisterWithError associates both an ExecResult and an error with the
-// (name, args...) tuple. When err is non-nil, Run returns it verbatim.
-func (f *FakeCommandRunner) RegisterWithError(name string, args []string, result ExecResult, err error) {
+// RegisterWithError stores a result and error for the full specification.
+// The injected error is retained as a cause behind redacted diagnostic formatting.
+func (f *FakeCommandRunner) RegisterWithError(spec CommandSpec, result ExecResult, err error) error {
+	prepared, validationErr := spec.normalized()
+	if validationErr != nil {
+		return validationErr
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	key := fakeKey(name, args)
+	key := fakeKey(prepared)
 	f.results[key] = cloneExecResult(result)
 	f.errors[key] = err
+	return nil
 }
 
 // errUnmockedCommand is returned by FakeCommandRunner.Run when no result
-// has been registered for the requested (name, args...) tuple.
+// has been registered for the complete requested specification.
 var errUnmockedCommand = errors.New("fake command runner: no result registered for command")
 
 // ErrUnmockedCommand exposes errUnmockedCommand for tests that need to
@@ -315,32 +336,38 @@ func ErrUnmockedCommand() error {
 	return errUnmockedCommand
 }
 
-// Run returns a copy of the registered result for (name, args...) and records the
-// invocation for later inspection. Unmocked calls return ErrUnmockedCommand.
-func (f *FakeCommandRunner) Run(ctx context.Context, name string, args ...string) (ExecResult, error) {
-	f.mu.Lock()
-	key := fakeKey(name, args)
-	result, hasResult := f.results[key]
-	err := f.errors[key]
-	f.calls = append(f.calls, FakeCall{Name: name, Args: append([]string(nil), args...)})
-	f.mu.Unlock()
-
-	if !hasResult {
-		return ExecResult{}, fmt.Errorf("%w: %s %v", errUnmockedCommand, name, args)
+// Run validates and records the full specification without reading host state.
+// Invalid or already-cancelled calls are rejected before recording an invocation.
+func (f *FakeCommandRunner) Run(ctx context.Context, spec CommandSpec) (ExecResult, error) {
+	if ctx != nil {
+		if err := ctx.Err(); err != nil {
+			return ExecResult{}, err
+		}
 	}
-	return cloneExecResult(result), err
+	prepared, err := spec.normalized()
+	if err != nil {
+		return ExecResult{}, err
+	}
+	f.mu.Lock()
+	key := fakeKey(prepared)
+	result, hasResult := f.results[key]
+	runErr := f.errors[key]
+	f.calls = append(f.calls, FakeCall{Spec: prepared})
+	f.mu.Unlock()
+	if !hasResult {
+		return ExecResult{}, errUnmockedCommand
+	}
+	return cloneExecResult(result), safeCommandError(runErr)
 }
 
-// Calls returns a copy of the invocation log recorded so far.
+// Calls returns a deep copy of the invocation log; raw fields are for trusted
+// test assertions only, not diagnostics or fixture export without sanitization.
 func (f *FakeCommandRunner) Calls() []FakeCall {
 	f.mu.RLock()
 	defer f.mu.RUnlock()
 	out := make([]FakeCall, len(f.calls))
 	for i, c := range f.calls {
-		out[i] = FakeCall{
-			Name: c.Name,
-			Args: append([]string(nil), c.Args...),
-		}
+		out[i] = FakeCall{Spec: cloneCommandSpec(c.Spec)}
 	}
 	return out
 }

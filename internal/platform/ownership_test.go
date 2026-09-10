@@ -35,10 +35,14 @@ func TestFakeEvidenceOwnership(t *testing.T) {
 		t.Parallel()
 		runner := platform.NewFakeCommandRunner()
 		out, errs := []byte("output"), []byte("errors")
-		runner.Register("command", nil, platform.ExecResult{Stdout: out, Stderr: errs})
+		if err :=
+			runner.Register(platform.CommandSpec{Path: "/fixtures/command", Args: nil},
+				platform.ExecResult{Stdout: out, Stderr: errs}); err != nil {
+			t.Fatal(err)
+		}
 		out[0] = 'X'
 		errs[0] = 'X'
-		first, err := runner.Run(context.Background(), "command")
+		first, err := runner.Run(context.Background(), platform.CommandSpec{Path: "/fixtures/command"})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -47,7 +51,7 @@ func TestFakeEvidenceOwnership(t *testing.T) {
 		}
 		first.Stdout[0] = 'Y'
 		first.Stderr[0] = 'Y'
-		second, err := runner.Run(context.Background(), "command")
+		second, err := runner.Run(context.Background(), platform.CommandSpec{Path: "/fixtures/command"})
 		if err != nil {
 			t.Fatal(err)
 		}

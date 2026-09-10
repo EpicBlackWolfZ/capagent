@@ -324,6 +324,37 @@ state, such as fake command call recording, may change during a run.
 and returned stdout/stderr. Test owners retain their concrete handles to seed
 fixtures, while probes receive only the measurement interfaces.
 
+**Command specifications and environment ownership.**
+`CommandRunner.Run(ctx, CommandSpec)` accepts `Path`, `Args`, `Env`, `Dir`, and
+`Timeout`. The path must be absolute; arguments are literal and NUL-free. Empty
+`Dir` means `/`, and other directory values must be absolute and NUL-free.
+There is no executable lookup or global `chdir`. A zero timeout selects the
+configured runner default, a positive timeout overrides it, and negative values
+are rejected. An already-cancelled context is rejected before specification
+validation or process setup. Nil contexts retain the background-context behavior.
+
+The zero `EnvPolicy` contains only `LC_ALL=C` and `PATH=/usr/bin:/bin`.
+`NewEnvPolicy(inherit []string, overrides map[string]string)` captures named
+inherited variables and applies explicit overrides after the defaults. The
+result is an immutable sorted snapshot; execution never rereads ambient state.
+`Variables()` returns a defensive copy for explicit, sensitive inspection.
+Callers must not mutate input collections during construction or execution.
+
+Fake registration accepts the same specification and returns validation errors.
+Matching includes the absolute path, ordered arguments, effective directory,
+environment snapshot and declared timeout. Zero timeout stays distinct from an
+explicit 30 seconds because it requests the configured default. Empty and `/`
+directories match, as do equivalent environment snapshots. Registrations retain
+no mutable argument/output aliases, and call records expose copied specifications.
+Injected fake results do not simulate elapsed time or host execution; fixtures
+explicitly provide outcomes. Pre-cancelled/invalid calls are not recorded.
+
+Specifications, policies and runner-owned errors have redacted formatting.
+Underlying errors remain available through `errors.Is`/`errors.As`; raw output,
+explicit environment inspection and unwrapped errors require consumer sanitization.
+See the [execution security contract](security.md#executables-environment-and-target-identity)
+for current-identity, endpoint and passive-command limitations.
+
 **`internal/platform` CommandRunner process-group lifecycle.**
 `OSCommandRunner` creates each subprocess in its own process group via
 `Setpgid`. Timeout or caller cancellation signals the owned group; `Run`
@@ -336,7 +367,7 @@ budget for lingering pipes after cancellation or observed direct-child exit,
 whichever occurs first. Pipe closure bounds drain even when a descendant
 changes session, subject to kernel/scheduling delays; it does not promise
 termination of escaped descendants. A successful exit with expired drain
-returns `exec.ErrWaitDelay`; nonzero exit preserves `*exec.ExitError`.
+wraps `exec.ErrWaitDelay`; nonzero exit preserves `*exec.ExitError` through wrapping.
 Retained prefixes remain available on errors. Caller cancellation observable
 at classification wins over internal timeout, followed by execution errors.
 `TimedOut` is true only when the internal timeout is selected. ExitCode zero
@@ -480,16 +511,35 @@ magic links. The unscoped memory reader uses physical absolute target semantics;
 both OS readers delegate pathname resolution to the kernel. These distinctions
 are explicit regression cases rather than claims of complete emulation.
 
-**Architecture enforcement.** The AST-based host-IO denylist test
-(`TestArchitecture_ForbidHostIOPrimitivesOutsidePlatform`) detects configured
-direct file-I/O, command-execution and ambient-environment patterns
-outside `internal/platform/`, with an exemption for the
-`tests/contract/` harness. The `cmd/` CLI prefix is NOT in
-the denylist allowlist; CLI binaries that need `os.Args`,
-`os.Stdout`, `os.Stderr`, or `os.Exit` use those primitives
-directly because they are not in any denylist. Test files may use
-`os.Getenv`, `os.LookupEnv`, and `os.Environ` (ambient environment
-exemption) but NOT file-I/O or `os/exec`.
+**Architecture enforcement.** The repository and fixture tests use the same
+per-file AST scanner. It recognizes configured filesystem, descriptor, process,
+identity, network, raw syscall, environment and filesystem-touching path-helper
+selectors outside `internal/platform/`, with an exemption for the contract harness.
+The scanner handles import aliases and direct function-value references, rejects
+dot imports of monitored packages, and distinguishes locally shadowed identifiers.
+Errno/constants, metadata types and pure path operations remain permitted. The
+host-access rule does not independently authorize a package dependency.
+
+Production platform dependencies use an exact third-party allowlist containing
+only `golang.org/x/sys/unix`; arbitrary external packages and sibling/subpackages
+are rejected. Additional syscall adapters require the separately approved #65
+boundary. Model and requirement import restrictions and JSON-v2 enforcement remain
+in force. Fixture paths are supplied as logical source locations, so the contract
+harness exemption cannot accidentally exempt the negative examples.
+
+CLI code may import only `internal/app` and `internal/version` within the module.
+The reserved `internal/app` boundary allows composition of lower layers, forbids
+dependencies on `cmd`, and cannot be imported by lower layers. Its implementation
+remains #61 work. Neither the CLI nor the application owner has a host-I/O exemption.
+Ordinary `os.Args`, `os.Stdout`, `os.Stderr` and `os.Exit` use remains permitted.
+Test files may inspect ambient environment through `os` or `syscall`, but may not
+perform direct host-I/O, subprocess execution or process-global environment mutation
+outside the permitted harnesses.
+
+These are syntactic guards, not full effect analysis or a sandbox. Indirect method
+calls, reflection, dynamic execution and unlisted/new primitive APIs need review;
+new wrappers must extend the catalog and regression fixtures. Vendored, hidden,
+testdata and designated generated files are excluded from the host-access walk.
 
 ---
 

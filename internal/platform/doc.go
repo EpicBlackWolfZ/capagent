@@ -24,6 +24,9 @@
 //     partial records carry an error and cannot establish absence.
 //     Context cancellation is cooperative between syscalls; it cannot forcibly
 //     interrupt arbitrary filesystem or device-driver I/O.
+//   - CommandSpec / EnvPolicy: absolute executables, literal arguments, explicit
+//     working directories/timeouts and immutable allowlisted environment snapshots.
+//     Credentials and namespaces remain inherited; these APIs are not a sandbox.
 //   - CommandRunner: a bounded subprocess execution abstraction with strict
 //     per-stream output caps, internal timeout handling, cancellation
 //     discrimination, and per-subprocess process-group cleanup. Both a real
@@ -35,6 +38,6 @@
 // OSCommandRunner creates each subprocess in its own process group via
 // Setpgid. When timeout or caller cancellation interrupts execution, the
 // runner's CommandContext cancellation hook terminates the entire process
-// group and waits for it to be reaped. Normally completing commands are
+// group and reaps its direct child. Escaped descendants may survive. Completing commands are
 // not signalled after completion.
 package platform
