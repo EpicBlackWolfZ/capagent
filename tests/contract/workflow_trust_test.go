@@ -161,3 +161,38 @@ func TestWorkflow_PublishingIsAnIsolatedTagOnlyHandoff(t *testing.T) {
 		}
 	}
 }
+
+func TestWorkflow_ValidationHasNoCredentialEscalation(t *testing.T) {
+	t.Parallel()
+	for _, path := range []string{".github/workflows/ci.yml", ".github/workflows/release.yml"} {
+		document := readWorkflow(t, path)
+		triggers := document["on"].(map[string]any)
+		for _, trigger := range []string{"pull_request_target", "workflow_run"} {
+			if _, exists := triggers[trigger]; exists {
+				t.Errorf("%s: unexpected privileged trigger %s", path, trigger)
+			}
+		}
+		for id, raw := range document["jobs"].(map[string]any) {
+			job := raw.(map[string]any)
+			if id == "publish" && strings.HasSuffix(path, "release.yml") {
+				continue
+			}
+			if permissions, ok := job["permissions"].(map[string]any); ok {
+				for permission, level := range permissions {
+					if level == "write" {
+						t.Errorf("%s/%s: validation grants %s write", path, id, permission)
+					}
+				}
+			}
+			for _, rawStep := range job["steps"].([]any) {
+				step := rawStep.(map[string]any)
+				if strings.HasPrefix(fmt.Sprint(step["uses"]), "actions/checkout@") {
+					inputs, ok := step["with"].(map[string]any)
+					if !ok || inputs["persist-credentials"] != false {
+						t.Errorf("%s/%s: checkout retains credentials", path, id)
+					}
+				}
+			}
+		}
+	}
+}
