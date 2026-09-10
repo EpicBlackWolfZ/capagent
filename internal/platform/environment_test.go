@@ -84,10 +84,13 @@ func TestNewTestEnvironment_WithMemReader(t *testing.T) {
 	if len(controllers) != 2 {
 		t.Errorf("CgroupControllers = %v, want 2 entries", controllers)
 	}
+	if err :=
 
-	// Setup remains with the owner; probes receive only execution authority.
-	runner.Register("/bin/true", nil, platform.ExecResult{Stdout: []byte("ok"), ExitCode: 0})
-	result, err := env.Runner().Run(context.Background(), "/bin/true")
+		// Setup remains with the owner; probes receive only execution authority.
+		runner.Register(platform.CommandSpec{Path: trueCommand, Args: nil}, platform.ExecResult{Stdout: []byte("ok"), ExitCode: 0}); err != nil {
+		t.Fatal(err)
+	}
+	result, err := env.Runner().Run(context.Background(), platform.CommandSpec{Path: trueCommand})
 	if err != nil {
 		t.Errorf("Runner.Run unmocked: %v", err)
 	}

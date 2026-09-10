@@ -53,13 +53,52 @@ filesystem/device behavior must not be advertised as safe passive observation.
 
 Runtime discovery and execution must identify the executable, arguments, allowed environment, working directory, target credentials, endpoint and namespace. Setting a child's environment alone does not control executable lookup in the parent. Ambient `PATH`, proxy/config variables and remote endpoint settings must not silently redirect a supposedly local evaluation.
 
-The current runner passes an argument vector to `os/exec`; it does not implicitly parse a shell command. It still inherits process context and lacks the explicit execution policy planned in [#36](https://github.com/EpicBlackWolfZ/capagent/issues/36). That policy does not itself implement target-user credential switching. Target identities and supplementary groups are handled through the context work, without changing global credentials inside concurrent probes.
+`CommandRunner.Run` accepts a `CommandSpec` with an absolute executable path and
+literal arguments. Bare/relative executable names and embedded NUL are rejected
+before starting a child; the runner never performs ambient `PATH` lookup or shell
+interpretation. Executable discovery is a separate future adapter responsibility.
+An empty working directory means `/`; a supplied directory must be absolute.
+The parent working directory is never changed. An absolute path does not pin an
+executable inode or prevent its owner from replacing it; the caller must trust
+the executable and its filesystem location.
+
+The zero `EnvPolicy` supplies only `PATH=/usr/bin:/bin` and `LC_ALL=C`.
+`NewEnvPolicy(inherit, overrides)` captures only named inherited variables, then
+applies explicit overrides. Missing inherited values are omitted and explicit
+empty values are retained. Variable names use ASCII letters, digits and `_`,
+with no leading digit; values cannot contain NUL. The snapshot is immutable and
+sorted by key. Repeated runs do not reread ambient variables. Explicit overrides
+may change defaults, including the child's `PATH`, but cannot steer the runner's
+absolute executable selection. No `HOME`, `PWD`, proxy, loader or runtime endpoint
+variable is inherited implicitly.
+
+Bounded `systemctl --version` interrogation is eligible read-only host metadata.
+This does not authorize general production shell/utility probes. The runner
+provides no shell-command-string API, but it is not an executable allowlist or
+sandbox: adapters must select reviewed commands and literal arguments whose
+passive behavior is established. Inspection that initializes storage or mutates
+runtime state must not be classified as passive. No live probe is added by these
+execution primitives.
+
+Credentials, supplementary groups, namespaces, umask and other process attributes
+still come from the executing process. Target-user switching belongs to the
+context/identity work, without changing global credentials inside concurrent
+probes. Explicit endpoint/config/proxy settings require an adapter policy and
+matching evaluation scope; selecting a remote endpoint must never label its
+observations as local. Typed scope and target switching remain separate work.
+
+Ordinary formatting of specifications, policies and runner-owned errors omits
+command/configuration values. `errors.Is` and `errors.As` preserve underlying
+startup/exit/drain error identity. Raw stdout/stderr, `EnvPolicy.Variables()`,
+fake-call fields and explicitly unwrapped OS errors remain sensitive; consumers
+must sanitize them before diagnostics or fixture capture. This is not automatic
+redaction of arbitrary runtime output.
 
 Root being able to read a user file or connect to a socket does not establish the target user's access. Evidence for different users, namespaces or runtime endpoints must stay separate. Runtime/configuration output and diagnostics may contain sensitive information; redaction and fixture sanitization are prerequisites for adapter delivery.
 
 ## Resource ownership and cancellation
 
-The runner caps retained stdout and stderr at 1 MiB each and applies a default 30-second execution timer. Each buffer starts with 4 KiB capacity and grows within its cap. Temporary growth allocations and returned output copies are additional memory; these limits are not a total process-memory budget. Probe concurrency defaults to `min(runtime.NumCPU(), 8)`, with a minimum of one. Explicit positive `WithMaxConcurrency` values can exceed that default; zero and negative overrides are rejected.
+The runner caps retained stdout and stderr at 1 MiB each and applies a default 30-second execution timer. A zero specification timeout uses the runner default; a positive value overrides it and a negative value is rejected. Already-cancelled contexts and invalid specifications start no child. Each buffer starts with 4 KiB capacity and grows within its cap. Temporary growth allocations and returned output copies are additional memory; these limits are not a total process-memory budget. Probe concurrency defaults to `min(runtime.NumCPU(), 8)`, with a minimum of one. Explicit positive `WithMaxConcurrency` values can exceed that default; zero and negative overrides are rejected.
 
 The runner signals its separate process group on cancellation and reaps its direct child. A 250 ms pipe-drain budget starts on cancellation or observed direct-child exit, whichever occurs first. Expiry closes lingering runner pipes, including those held by descendants that escape into another session. This budget is subject to kernel and scheduling delays, rather than a hard real-time guarantee. Closing pipes does not prove escaped descendants have terminated; successful completion does not trigger an extra group signal.
 

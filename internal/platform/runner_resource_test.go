@@ -188,7 +188,13 @@ func runResourceSupervisor(t *testing.T, scenario, root string) {
 	done := make(chan outcome, 1)
 	start := time.Now()
 	go func() {
-		result, err := NewOSCommandRunner(timeout).Run(ctx, os.Args[0], resourceArgs("parent", scenario, root)...)
+		policy, err := NewEnvPolicy(nil, map[string]string{"GORACE": "atexit_sleep_ms=0"})
+		if err != nil {
+			done <- outcome{err: err}
+			return
+		}
+		spec := CommandSpec{Path: os.Args[0], Args: resourceArgs("parent", scenario, root), Env: policy}
+		result, err := NewOSCommandRunner(timeout).Run(ctx, spec)
 		done <- outcome{result, err}
 	}()
 	// Cleanup first cancels and joins Run, then kills/reaps the adopted holder.

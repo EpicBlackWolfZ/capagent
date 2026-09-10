@@ -142,7 +142,7 @@ func TestScopedDescriptorsCloseOnExec(t *testing.T) {
 		}
 		ctx, cancel := context.WithTimeout(t.Context(), descriptorHelperTimeout)
 		defer cancel()
-		result, err := NewOSCommandRunner(descriptorHelperTimeout).Run(ctx, os.Args[0], args...)
+		result, err := NewOSCommandRunner(descriptorHelperTimeout).Run(ctx, CommandSpec{Path: os.Args[0], Args: args})
 		if err != nil {
 			t.Errorf("exec isolation: %v\n%s%s", err, result.Stdout, result.Stderr)
 		}

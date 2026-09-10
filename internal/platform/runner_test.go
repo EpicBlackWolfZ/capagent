@@ -21,6 +21,12 @@ import (
 
 // sleepCommand is used to build deterministic time-based tests. "/bin/sleep"
 // is part of POSIX coreutils and is virtually guaranteed on Linux CI.
+const (
+	shellCommand    = "/bin/sh"
+	trueCommand     = "/bin/true"
+	fakeEchoCommand = "/fixtures/echo"
+)
+
 const sleepCommand = "/bin/sleep"
 
 // echoCommand is used to verify normal completion of a trivial subprocess.
@@ -33,7 +39,7 @@ func TestOSCommandRunner_EchoSuccess(t *testing.T) {
 	t.Parallel()
 
 	r := platform.NewOSCommandRunner(5 * time.Second)
-	result, err := r.Run(context.Background(), echoCommand, "hello world")
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: echoCommand, Args: []string{"hello world"}})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -55,7 +61,7 @@ func TestOSCommandRunner_NonZeroExitCaptured(t *testing.T) {
 	t.Parallel()
 
 	r := platform.NewOSCommandRunner(5 * time.Second)
-	result, err := r.Run(context.Background(), falseCommand)
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: falseCommand})
 	if err == nil {
 		t.Fatal("expected error from /bin/false")
 	}
@@ -72,7 +78,7 @@ func TestOSCommandRunner_InternalTimeoutTriggered(t *testing.T) {
 	t.Parallel()
 
 	r := platform.NewOSCommandRunner(50 * time.Millisecond)
-	result, err := r.Run(context.Background(), sleepCommand, "5")
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: sleepCommand, Args: []string{"5"}})
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("error = %v, want context.DeadlineExceeded", err)
 	}
@@ -93,7 +99,7 @@ func TestOSCommandRunner_DefaultTimeoutWhenZero(t *testing.T) {
 	}
 	// Sanity: zero/negative config must not panic and must produce a normal
 	// exit for fast commands.
-	result, err := r.Run(context.Background(), echoCommand, "ok")
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: echoCommand, Args: []string{"ok"}})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -113,7 +119,7 @@ func TestOSCommandRunner_CallerContextCancellation(t *testing.T) {
 		cancel()
 	}()
 
-	result, err := r.Run(ctx, sleepCommand, "5")
+	result, err := r.Run(ctx, platform.CommandSpec{Path: sleepCommand, Args: []string{"5"}})
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("error = %v, want context.Canceled", err)
 	}
@@ -129,7 +135,7 @@ func TestOSCommandRunner_AlreadyCancelledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	result, err := r.Run(ctx, sleepCommand, "1")
+	result, err := r.Run(ctx, platform.CommandSpec{Path: sleepCommand, Args: []string{"1"}})
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("error = %v, want context.Canceled", err)
 	}
@@ -175,7 +181,7 @@ func TestOSCommandRunner_RaceTimeoutVsCancellation(t *testing.T) {
 			cancel()
 		}()
 
-		result, err := r.Run(ctx, sleepCommand, "5")
+		result, err := r.Run(ctx, platform.CommandSpec{Path: sleepCommand, Args: []string{"5"}})
 
 		switch {
 		case ctx.Err() != nil:
@@ -205,8 +211,8 @@ func TestOSCommandRunner_TruncatesLongStdout(t *testing.T) {
 	// generate exactly 2 MiB of output, which exceeds the 1 MiB cap.
 	const totalBytes = 2 * 1024 * 1024
 	r := platform.NewOSCommandRunner(10 * time.Second)
-	result, err := r.Run(context.Background(), "/bin/sh", "-c",
-		"head -c "+strconv.Itoa(totalBytes)+" /dev/zero")
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: shellCommand, Args: []string{"-c",
+		"head -c " + strconv.Itoa(totalBytes) + " /dev/zero"}})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -229,8 +235,8 @@ func TestOSCommandRunner_TruncatesLongStderr(t *testing.T) {
 
 	const totalBytes = 2 * 1024 * 1024
 	r := platform.NewOSCommandRunner(10 * time.Second)
-	result, err := r.Run(context.Background(), "/bin/sh", "-c",
-		"head -c "+strconv.Itoa(totalBytes)+" /dev/zero >&2")
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: shellCommand, Args: []string{"-c",
+		"head -c " + strconv.Itoa(totalBytes) + " /dev/zero >&2"}})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -264,7 +270,7 @@ func TestOSCommandRunner_TruncatesBothStreamsSimultaneously(t *testing.T) {
 		strconv.Itoa(totalBytes) + " /dev/zero >&2 & wait"
 
 	r := platform.NewOSCommandRunner(10 * time.Second)
-	result, err := r.Run(context.Background(), "/bin/sh", "-c", script)
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: shellCommand, Args: []string{"-c", script}})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -293,7 +299,7 @@ func TestOSCommandRunner_BinaryNotFound(t *testing.T) {
 	t.Parallel()
 
 	r := platform.NewOSCommandRunner(5 * time.Second)
-	_, err := r.Run(context.Background(), "/no/such/binary/surely")
+	_, err := r.Run(context.Background(), platform.CommandSpec{Path: "/no/such/binary/surely"})
 	if err == nil {
 		t.Fatal("expected error for missing binary")
 	}
@@ -310,7 +316,7 @@ func TestOSCommandRunner_NilContextTreatedAsBackground(t *testing.T) {
 	r := platform.NewOSCommandRunner(5 * time.Second)
 	// Pass a typed nil context to exercise the nil-guard branch in Run.
 	var nilCtx context.Context //nolint:staticcheck // SA1012: intentional nil-ctx test.
-	result, err := r.Run(nilCtx, echoCommand, "ok")
+	result, err := r.Run(nilCtx, platform.CommandSpec{Path: echoCommand, Args: []string{"ok"}})
 	if err != nil {
 		t.Fatalf("Run(nil, ...): %v", err)
 	}
@@ -325,7 +331,7 @@ func TestOSCommandRunner_InternalTimeoutTrumpsNoExternalCancel(t *testing.T) {
 	// Long-running sleep, short internal timeout. Verify TimedOut flag
 	// even when ctx.Err() is nil.
 	r := platform.NewOSCommandRunner(75 * time.Millisecond)
-	result, err := r.Run(context.Background(), sleepCommand, "10")
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: sleepCommand, Args: []string{"10"}})
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("error = %v, want context.DeadlineExceeded", err)
 	}
@@ -342,9 +348,11 @@ func TestFakeCommandRunner_RegisterAndMatch(t *testing.T) {
 		Stdout:   []byte("mock stdout"),
 		ExitCode: 0,
 	}
-	f.Register("mytool", []string{"--version"}, want)
+	if err := f.Register(platform.CommandSpec{Path: "/fixtures/mytool", Args: []string{"--version"}}, want); err != nil {
+		t.Fatal(err)
+	}
 
-	got, err := f.Run(context.Background(), "mytool", "--version")
+	got, err := f.Run(context.Background(), platform.CommandSpec{Path: "/fixtures/mytool", Args: []string{"--version"}})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -356,7 +364,7 @@ func TestFakeCommandRunner_RegisterAndMatch(t *testing.T) {
 	if len(calls) != 1 {
 		t.Fatalf("Calls len = %d, want 1", len(calls))
 	}
-	if calls[0].Name != "mytool" || len(calls[0].Args) != 1 || calls[0].Args[0] != "--version" {
+	if calls[0].Spec.Path != "/fixtures/mytool" || len(calls[0].Spec.Args) != 1 || calls[0].Spec.Args[0] != "--version" {
 		t.Errorf("Calls[0] = %+v, want {mytool, [--version]}", calls[0])
 	}
 }
@@ -365,10 +373,18 @@ func TestFakeCommandRunner_ArgsDisambiguateSameName(t *testing.T) {
 	t.Parallel()
 
 	f := platform.NewFakeCommandRunner()
-	f.Register("tool", []string{"info"}, platform.ExecResult{Stdout: []byte("info")})
-	f.Register("tool", []string{"version"}, platform.ExecResult{Stdout: []byte("v1")})
+	if err :=
+		f.Register(platform.CommandSpec{Path: "/fixtures/tool", Args: []string{"info"}},
+			platform.ExecResult{Stdout: []byte("info")}); err != nil {
+		t.Fatal(err)
+	}
+	if err :=
+		f.Register(platform.CommandSpec{Path: "/fixtures/tool", Args: []string{"version"}},
+			platform.ExecResult{Stdout: []byte("v1")}); err != nil {
+		t.Fatal(err)
+	}
 
-	info, err := f.Run(context.Background(), "tool", "info")
+	info, err := f.Run(context.Background(), platform.CommandSpec{Path: "/fixtures/tool", Args: []string{"info"}})
 	if err != nil {
 		t.Fatalf("Run info: %v", err)
 	}
@@ -376,7 +392,7 @@ func TestFakeCommandRunner_ArgsDisambiguateSameName(t *testing.T) {
 		t.Errorf("info stdout = %q", string(info.Stdout))
 	}
 
-	ver, err := f.Run(context.Background(), "tool", "version")
+	ver, err := f.Run(context.Background(), platform.CommandSpec{Path: "/fixtures/tool", Args: []string{"version"}})
 	if err != nil {
 		t.Fatalf("Run version: %v", err)
 	}
@@ -389,7 +405,7 @@ func TestFakeCommandRunner_UnmockedReturnsError(t *testing.T) {
 	t.Parallel()
 
 	f := platform.NewFakeCommandRunner()
-	_, err := f.Run(context.Background(), "missing", "args")
+	_, err := f.Run(context.Background(), platform.CommandSpec{Path: "/fixtures/missing", Args: []string{"args"}})
 	if !errors.Is(err, platform.ErrUnmockedCommand()) {
 		t.Errorf("error = %v, want ErrUnmockedCommand", err)
 	}
@@ -400,9 +416,13 @@ func TestFakeCommandRunner_RegisterWithError(t *testing.T) {
 
 	f := platform.NewFakeCommandRunner()
 	wantErr := errors.New("boom")
-	f.RegisterWithError("fail", []string{"x"}, platform.ExecResult{ExitCode: 99}, wantErr)
+	if err :=
+		f.RegisterWithError(platform.CommandSpec{Path: "/fixtures/fail", Args: []string{"x"}},
+			platform.ExecResult{ExitCode: 99}, wantErr); err != nil {
+		t.Fatal(err)
+	}
 
-	result, err := f.Run(context.Background(), "fail", "x")
+	result, err := f.Run(context.Background(), platform.CommandSpec{Path: "/fixtures/fail", Args: []string{"x"}})
 	if !errors.Is(err, wantErr) {
 		t.Errorf("error = %v, want %v", err, wantErr)
 	}
@@ -411,17 +431,23 @@ func TestFakeCommandRunner_RegisterWithError(t *testing.T) {
 	}
 }
 
-func TestFakeCommandRunner_ArgsWithNULDisambiguated(t *testing.T) {
+func TestFakeCommandRunner_ArgumentBoundariesDisambiguated(t *testing.T) {
 	t.Parallel()
 
-	// Verify the NUL-separator key disambiguates pathological inputs that
-	// might otherwise collide. ("foo", "bar") vs ("fo", "obar") must NOT
-	// collide under NUL joining.
+	// Different path/argument boundaries must not collide in fixture keys.
 	f := platform.NewFakeCommandRunner()
-	f.Register("foo", []string{"bar"}, platform.ExecResult{Stdout: []byte("hit-foo-bar")})
-	f.Register("fo", []string{"obar"}, platform.ExecResult{Stdout: []byte("hit-fo-obar")})
+	if err :=
+		f.Register(platform.CommandSpec{Path: "/fixtures/foo", Args: []string{"bar"}},
+			platform.ExecResult{Stdout: []byte("hit-foo-bar")}); err != nil {
+		t.Fatal(err)
+	}
+	if err :=
+		f.Register(platform.CommandSpec{Path: "/fixtures/fo", Args: []string{"obar"}},
+			platform.ExecResult{Stdout: []byte("hit-fo-obar")}); err != nil {
+		t.Fatal(err)
+	}
 
-	got1, err := f.Run(context.Background(), "foo", "bar")
+	got1, err := f.Run(context.Background(), platform.CommandSpec{Path: "/fixtures/foo", Args: []string{"bar"}})
 	if err != nil {
 		t.Fatalf("Run foo bar: %v", err)
 	}
@@ -429,7 +455,7 @@ func TestFakeCommandRunner_ArgsWithNULDisambiguated(t *testing.T) {
 		t.Errorf("foo bar = %q", string(got1.Stdout))
 	}
 
-	got2, err := f.Run(context.Background(), "fo", "obar")
+	got2, err := f.Run(context.Background(), platform.CommandSpec{Path: "/fixtures/fo", Args: []string{"obar"}})
 	if err != nil {
 		t.Fatalf("Run fo obar: %v", err)
 	}
@@ -442,7 +468,9 @@ func TestFakeCommandRunner_Concurrent(t *testing.T) {
 	t.Parallel()
 
 	f := platform.NewFakeCommandRunner()
-	f.Register("noop", nil, platform.ExecResult{Stdout: []byte("ok")})
+	if err := f.Register(platform.CommandSpec{Path: "/fixtures/noop", Args: nil}, platform.ExecResult{Stdout: []byte("ok")}); err != nil {
+		t.Fatal(err)
+	}
 
 	const goroutines = 16
 	const iterations = 50
@@ -455,7 +483,7 @@ func TestFakeCommandRunner_Concurrent(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < iterations; j++ {
-				result, err := f.Run(context.Background(), "noop")
+				result, err := f.Run(context.Background(), platform.CommandSpec{Path: "/fixtures/noop"})
 				if err != nil {
 					t.Errorf("concurrent Run: %v", err)
 					return
@@ -484,23 +512,31 @@ func TestFakeCommandRunner_CallsIsolated(t *testing.T) {
 	t.Parallel()
 
 	f := platform.NewFakeCommandRunner()
-	f.Register("echo", []string{"a"}, platform.ExecResult{Stdout: []byte("a")})
-	f.Register("echo", []string{"b"}, platform.ExecResult{Stdout: []byte("b")})
+	if err :=
+		f.Register(platform.CommandSpec{Path: fakeEchoCommand, Args: []string{"a"}},
+			platform.ExecResult{Stdout: []byte("a")}); err != nil {
+		t.Fatal(err)
+	}
+	if err :=
+		f.Register(platform.CommandSpec{Path: fakeEchoCommand, Args: []string{"b"}},
+			platform.ExecResult{Stdout: []byte("b")}); err != nil {
+		t.Fatal(err)
+	}
 
-	_, _ = f.Run(context.Background(), "echo", "a")
-	_, _ = f.Run(context.Background(), "echo", "b")
-	_, _ = f.Run(context.Background(), "echo", "a")
+	_, _ = f.Run(context.Background(), platform.CommandSpec{Path: fakeEchoCommand, Args: []string{"a"}})
+	_, _ = f.Run(context.Background(), platform.CommandSpec{Path: fakeEchoCommand, Args: []string{"b"}})
+	_, _ = f.Run(context.Background(), platform.CommandSpec{Path: fakeEchoCommand, Args: []string{"a"}})
 
 	calls := f.Calls()
 	if len(calls) != 3 {
 		t.Fatalf("Calls = %d, want 3", len(calls))
 	}
-	if calls[0].Args[0] != "a" || calls[1].Args[0] != "b" || calls[2].Args[0] != "a" {
+	if calls[0].Spec.Args[0] != "a" || calls[1].Spec.Args[0] != "b" || calls[2].Spec.Args[0] != "a" {
 		t.Errorf("Calls = %+v", calls)
 	}
 	// Mutating the returned Args slice must not affect internal state.
-	calls[0].Args[0] = "tampered"
-	again, _ := f.Run(context.Background(), "echo", "a")
+	calls[0].Spec.Args[0] = "tampered"
+	again, _ := f.Run(context.Background(), platform.CommandSpec{Path: fakeEchoCommand, Args: []string{"a"}})
 	if !strings.Contains(string(again.Stdout), "a") {
 		t.Errorf("post-tamper result corrupted: %q", string(again.Stdout))
 	}
@@ -509,14 +545,14 @@ func TestFakeCommandRunner_CallsIsolated(t *testing.T) {
 func TestOSCommandRunner_KillsProcessGroupOnTimeout(t *testing.T) {
 	t.Parallel()
 
-	if _, err := exec.LookPath("/bin/sh"); err != nil {
+	if _, err := exec.LookPath(shellCommand); err != nil {
 		t.Skipf("/bin/sh not available: %v", err)
 	}
 
 	// Spawn a shell that execs a sleeping child. The internal timeout
 	// must kill the entire process group, not just the shell wrapper.
 	r := platform.NewOSCommandRunner(80 * time.Millisecond)
-	result, err := r.Run(context.Background(), "/bin/sh", "-c", "exec /bin/sleep 30")
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: shellCommand, Args: []string{"-c", "exec /bin/sleep 30"}})
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("error = %v, want DeadlineExceeded", err)
 	}
@@ -534,7 +570,7 @@ func TestOSCommandRunner_ExitCodeOnKilled(t *testing.T) {
 	// Verify that a process killed by the internal timeout records a
 	// non-zero ExitCode (kernel-reported signal status).
 	r := platform.NewOSCommandRunner(80 * time.Millisecond)
-	result, err := r.Run(context.Background(), sleepCommand, "30")
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: sleepCommand, Args: []string{"30"}})
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("error = %v, want DeadlineExceeded", err)
 	}
@@ -555,7 +591,7 @@ func TestOSCommandRunner_ExitCodeOnKilled(t *testing.T) {
 func TestOSCommandRunner_NormalCompletionDoesNotSignalChildren(t *testing.T) {
 	t.Parallel()
 
-	if _, err := exec.LookPath("/bin/sh"); err != nil {
+	if _, err := exec.LookPath(shellCommand); err != nil {
 		t.Skipf("/bin/sh not available: %v", err)
 	}
 
@@ -568,7 +604,7 @@ func TestOSCommandRunner_NormalCompletionDoesNotSignalChildren(t *testing.T) {
 	// before writing the file.
 	script := fmt.Sprintf(`(sleep 0.05; echo alive > %s) & wait`, sentinel)
 	r := platform.NewOSCommandRunner(5 * time.Second)
-	result, err := r.Run(context.Background(), "/bin/sh", "-c", script)
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: shellCommand, Args: []string{"-c", script}})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -591,7 +627,7 @@ func TestOSCommandRunner_NormalCompletionDoesNotSignalChildren(t *testing.T) {
 func TestOSCommandRunner_KillsDescendantsOnTimeout(t *testing.T) {
 	t.Parallel()
 
-	if _, err := exec.LookPath("/bin/sh"); err != nil {
+	if _, err := exec.LookPath(shellCommand); err != nil {
 		t.Skipf("/bin/sh not available: %v", err)
 	}
 
@@ -608,7 +644,7 @@ func TestOSCommandRunner_KillsDescendantsOnTimeout(t *testing.T) {
 		pidFile, filepath.Join(dir, "ready"),
 	)
 	r := platform.NewOSCommandRunner(200 * time.Millisecond)
-	result, err := r.Run(context.Background(), "/bin/sh", "-c", script)
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: shellCommand, Args: []string{"-c", script}})
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("error = %v, want DeadlineExceeded", err)
 	}
@@ -642,7 +678,7 @@ func TestOSCommandRunner_KillsDescendantsOnTimeout(t *testing.T) {
 func TestOSCommandRunner_KillsDescendantsOnCallerCancellation(t *testing.T) {
 	t.Parallel()
 
-	if _, err := exec.LookPath("/bin/sh"); err != nil {
+	if _, err := exec.LookPath(shellCommand); err != nil {
 		t.Skipf("/bin/sh not available: %v", err)
 	}
 
@@ -661,7 +697,7 @@ func TestOSCommandRunner_KillsDescendantsOnCallerCancellation(t *testing.T) {
 		cancel()
 	}()
 
-	result, err := r.Run(ctx, "/bin/sh", "-c", script)
+	result, err := r.Run(ctx, platform.CommandSpec{Path: shellCommand, Args: []string{"-c", script}})
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("error = %v, want context.Canceled", err)
 	}
@@ -695,7 +731,7 @@ func TestOSCommandRunner_ReapsKilledProcess(t *testing.T) {
 	t.Parallel()
 
 	r := platform.NewOSCommandRunner(60 * time.Millisecond)
-	result, err := r.Run(context.Background(), sleepCommand, "10")
+	result, err := r.Run(context.Background(), platform.CommandSpec{Path: sleepCommand, Args: []string{"10"}})
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("error = %v, want DeadlineExceeded", err)
 	}
@@ -707,7 +743,7 @@ func TestOSCommandRunner_ReapsKilledProcess(t *testing.T) {
 	// Use a separate runner with a generous timeout so CI does not flake
 	// on process-startup latency.
 	r2 := platform.NewOSCommandRunner(5 * time.Second)
-	result2, err := r2.Run(context.Background(), echoCommand, "reaped")
+	result2, err := r2.Run(context.Background(), platform.CommandSpec{Path: echoCommand, Args: []string{"reaped"}})
 	if err != nil {
 		t.Fatalf("second Run: %v", err)
 	}
@@ -730,7 +766,7 @@ func TestOSCommandRunner_ReapsKilledProcessOnCallerCancellation(t *testing.T) {
 		cancel()
 	}()
 
-	result, err := r.Run(ctx, sleepCommand, "10")
+	result, err := r.Run(ctx, platform.CommandSpec{Path: sleepCommand, Args: []string{"10"}})
 	if !errors.Is(err, context.Canceled) {
 		t.Fatalf("error = %v, want context.Canceled", err)
 	}
@@ -739,7 +775,7 @@ func TestOSCommandRunner_ReapsKilledProcessOnCallerCancellation(t *testing.T) {
 	}
 
 	// Subsequent Run must work without blocking on a zombie.
-	result2, err := r.Run(context.Background(), echoCommand, "ok")
+	result2, err := r.Run(context.Background(), platform.CommandSpec{Path: echoCommand, Args: []string{"ok"}})
 	if err != nil {
 		t.Fatalf("second Run after cancel: %v", err)
 	}
