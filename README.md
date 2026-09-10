@@ -38,6 +38,7 @@ Explore the comprehensive design specifications:
 - 📖 **[Philosophy & Core Principles](docs/philosophy.md)**: The 20 engineering principles, evidence before inference, unknown is not false, TDD requirements, and Definition of Done.
 - 🏛️ **[Architecture & Contract](docs/architecture.md)**: Conceptual pipeline, package boundaries, 3-valued requirement logic truth tables, execution context, and JSON Schema v1 specification.
 - 🗺️ **[Milestone Roadmap & Catalog](docs/roadmap.md)**: M0 through M21 milestone sequence, detailed issue specifications, exit criteria, and canonical capability catalog.
+- **[Foundation testing](docs/testing.md)**: Run and replay deterministic faults, resource regressions, and nightly stress campaigns.
 
 ---
 

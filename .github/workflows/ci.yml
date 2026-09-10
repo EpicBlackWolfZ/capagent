@@ -62,18 +62,28 @@ jobs:
           go-version: '1.27.1'
       - run: go install gotest.tools/gotestsum@v1.13.0
       - name: Race tests and exact coverage gates
+        id: unit-tests
         run: |
-          gotestsum --junitfile junit.xml --format pkgname -- -race -coverprofile=coverage.out -covermode=atomic ./...
+          mkdir -p .work/hardening/ci
+          gotestsum --junitfile junit.xml --jsonfile .work/hardening/ci/events.jsonl --format pkgname -- -race -count=1 -coverprofile=coverage.out -covermode=atomic ./...
           python3 -B scripts/check-coverage.py coverage.out 95.0 | tee coverage-summary.txt
           cat coverage-summary.txt >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify hardening evidence from the same test run
+        if: always()
+        env:
+          TEST_EXIT: ${{ steps.unit-tests.outcome == 'success' && '0' || '1' }}
+        run: python3 -B scripts/hardening.py report --events .work/hardening/ci/events.jsonl --output .work/hardening/ci --test-exit "$TEST_EXIT"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: test-results-${{ github.run_attempt }}
+          include-hidden-files: true
           path: |
             junit.xml
             coverage.out
             coverage-summary.txt
+            .work/hardening/ci/events.jsonl
+            .work/hardening/ci/summary.json
           retention-days: 14
   vulncheck:
     name: Vulnerability Scan (govulncheck)
