@@ -130,7 +130,8 @@ and replay, but excludes framework cleanup and one-time schema compilation.
 This assertion is not an OS memory limit. The watchdog terminates a stuck worker;
 a goroutine timeout is not presented as cancellation of arbitrary host I/O.
 The supervisor caps stdout at 64 MiB and stderr at 1 MiB per command and reaps its
-owned process group on interruption or failure. All fixture writes use owned,
+owned process group on interruption or failure. It also owns and removes the
+worker/compiler temporary tree, including after worker crashes. All fixture writes use owned,
 fixed paths. Generated executable strings are validated or sent to a fake runner.
 
 `-fuzz-deterministic=true` is the default and required mode. All target decisions

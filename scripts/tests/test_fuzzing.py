@@ -71,3 +71,22 @@ class CorpusFailureTests(unittest.TestCase):
             result = fuzzing.execute([sys.executable, '-c', 'print("x"*100)'], Path(directory), timeout=2)
             self.assertEqual(result['status'], 'fail')
             self.assertEqual(Path(result['stdout']).stat().st_size, 8)
+
+class FuzzTemporaryOwnershipTests(unittest.TestCase):
+    def test_worker_failure_does_not_leave_temporary_fixture_tree(self):
+        from unittest.mock import patch
+        root = SCRIPTS.parent
+        observed = []
+        def failed_worker(_command, output, timeout, env):
+            self.assertGreater(timeout, 0)
+            temporary = Path(env['TMPDIR'])
+            self.assertEqual(env['GOTMPDIR'], str(temporary))
+            self.assertTrue(temporary.is_relative_to(output.parent.resolve()))
+            (temporary/'orphaned-worker-fixture').write_text('synthetic')
+            observed.append(temporary)
+            return dict(status='fail', exit_code=2, error='synthetic worker crash')
+        with tempfile.TemporaryDirectory() as directory, patch.object(fuzzing, 'execute', failed_worker):
+            report = fuzzing.run('smoke', Path(directory)/'fuzz', 'FuzzMountinfo')
+            self.assertEqual(report['status'], 'fail')
+            self.assertTrue(observed)
+            self.assertFalse(any(path.exists() for path in observed))

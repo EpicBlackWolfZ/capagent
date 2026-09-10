@@ -9,6 +9,7 @@ import re
 import shutil
 import sys
 import time
+import tempfile
 
 import hardening
 from verification import execute, identity, write_report, install_signals
@@ -73,12 +74,15 @@ def run(profile, output, target=None):
     output = Path(output)
     report = dict(schema_version=1, kind='fuzz', status='fail', identity=identity(), profile=profile,
                   inventory=[], commands=[], failures=[], seconds_per_target=0 if profile == 'corpus' else 5 if profile == 'smoke' else 60)
+    scratch = None
     try:
+        output.mkdir(parents=True, exist_ok=True)
+        scratch = tempfile.TemporaryDirectory(prefix='scratch-', dir=output.resolve())
         report['inventory'] = inventory(Path.cwd())
         targets = [target] if target else list(TARGETS)
         if target and target not in TARGETS:
             raise ValueError('unknown fuzz target')
-        env = dict(os.environ, CAPAGENT_FUZZ_FIXED='synthetic', GOMAXPROCS='2')
+        env = dict(os.environ, CAPAGENT_FUZZ_FIXED='synthetic', GOMAXPROCS='2', TMPDIR=scratch.name, GOTMPDIR=scratch.name)
         if profile == 'corpus':
             packages = sorted({TARGETS[name][0] for name in targets})
             commands = [('corpus', targets, ['go', 'test', '-race', '-count=1', '-json', '-timeout=2m',
@@ -105,10 +109,18 @@ def run(profile, output, target=None):
                 if not counts or int(counts[-1]) <= 0 or 'fuzzing with 1 workers' not in output_text:
                     raise ValueError('missing native fuzz exploration evidence: '+name)
                 result['executions'] = int(counts[-1])
+        if identity() != report['identity']:
+            raise ValueError('source changed during fuzz verification')
         report['status'] = 'pass'
     except (OSError, ValueError, TypeError) as exc:
         report['failures'].append(str(exc))
     finally:
+        if scratch is not None:
+            try:
+                scratch.cleanup()
+            except OSError as exc:
+                report['status'] = 'fail'
+                report['failures'].append('temporary fixture cleanup: '+str(exc))
         for package in {row[0] for row in TARGETS.values()}:
             source = Path(package)/'testdata/fuzz'
             if source.exists():
