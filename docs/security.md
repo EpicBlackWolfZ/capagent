@@ -154,7 +154,80 @@ Live evidence outranks runtime reports, configuration, historical knowledge and 
 
 Go payloads are built with `CGO_ENABLED=0` and checked for dynamic linker dependencies. The packaged executable also includes a microfat launcher, so payload checks alone do not verify the complete release artifact.
 
-Release inputs need independently pinned digest/signature trust, verified versioned caches and launcher provenance. Workflow actions and tool versions need controlled updates, minimal job permissions and isolated publishing credentials. These controls are being completed in [#31](https://github.com/EpicBlackWolfZ/capagent/issues/31) and [#38](https://github.com/EpicBlackWolfZ/capagent/issues/38). Current tooling does not yet establish all these guarantees.
+### Download and cache authority
+
+The build uses microfat v0.2.2 with repository-pinned SHA-256 digests for both host
+CLI archives and all four full/minimal launcher archives. The initial trust data
+was derived from the upstream checksum file after verification of its Cosign
+signature against the exact release workflow/tag identity and GitHub OIDC issuer.
+The [trust manifest and update procedure](../scripts/trust/README.md) are reviewed
+source inputs. Downloaded checksum files and cached binaries cannot replace them.
+
+Archive verification precedes extraction. Extraction accepts the expected regular
+executable exactly once, validates its size and digest, and rejects unsafe member
+paths, links, excessive expansion and incomplete downloads. A complete set is
+installed atomically under a version/host-architecture/manifest-digest cache key.
+Installers use a bounded lock wait. Every cache use verifies ownership, file type,
+permissions, size and digest; execution uses a freshly verified private snapshot.
+Repository scripts never fall back to an ambient `microfat` executable.
+
+A valid cache works offline. Corruption fails closed with the affected path; remove
+that specific cache generation and retry to download it again. Loose historical
+`bin/microfat*` files are ignored. `MICROFAT_VERSION` can select only versions with
+complete committed trust manifests. There is no arbitrary mirror or trust override.
+
+These are build-time controls implemented using Bash and Python's standard
+library, with HTTPS downloads through curl. They trust the reviewed checkout,
+system toolchain and current process owner. They do not isolate a hostile process
+with the same user authority. Catchable termination cleans staging; forced process
+or machine termination can leave an unused staging directory but cannot publish a
+partial generation. These helpers add no dependency to the shipped capagent binary.
+
+### Exact artifact verification and provenance
+
+`make build` uses full development launchers. `make release-check` additionally
+builds minimal launchers, verifies both bundled architectures, and packages the
+exact verified bytes without signing or publishing. Compilation and packaging use
+separate GoReleaser configurations and output directories: packaging cannot erase
+or rebuild the verified payloads.
+
+All seven payload variants and both selected launchers receive ELF architecture
+and static-linking checks. Embedded launcher bytes must match the pinned stub;
+embedded variant hashes must match the compiled payloads. Microfat verifies all
+payload integrity checks, and archive verification checks the final executable
+bytes again. Native amd64 `--help`/`--version` smoke is required in CI. ARM64 checks
+are structural and integrity checks; they do not establish native ARM64 execution.
+
+Each release includes actual SPDX and CycloneDX documents and `release-inputs.json`.
+The latter records source commit/version, build tool versions, authenticated
+microfat source identity, archive/member digests, launcher mode, payload hashes and
+bundle/archive hashes. Archive SBOMs may not enumerate every compressed embedded
+payload dependency; the input manifest explicitly identifies all payloads and the
+launcher. Checksums cover the release archives, SBOMs, provenance and release notes.
+
+### Workflow and publishing authority
+
+External actions use full commit SHAs and explicit tool versions. Validation jobs
+have read-only repository tokens, do not retain checkout credentials, and publish
+JUnit/results through artifacts and job summaries. PR and manual release rehearsals
+have neither signing identity nor release-write permissions. Tag builds perform
+strict lint, race coverage, dependency verification, vulnerability and secret scans,
+shell/workflow checks, and the same artifact rehearsal. Required tool absence is an
+error; full lint does not fall back to `go vet`.
+
+A separate publisher runs only for canonical-repository release-tag pushes whose
+commit is reachable from `main`. It downloads the immutable artifact ID from the
+same run, checks the independent job-output digest, accepts only the expected flat
+regular-file set, verifies its checksums and source identity, and rechecks tag
+provenance. It performs no checkout or compilation and executes no handoff scripts.
+Only this job receives release-write and OIDC signing authority. It signs and
+verifies the checksum file before publishing, and refuses to replace an existing
+release. A maintainer-created release tag remains the publishing trigger; manual
+dispatch only rehearses the pipeline.
+
+This closes the build/release trust work in #31/#38 when its delivery checks pass.
+M1.1 remains gated by its separate fuzz, fault, resource, and final verification
+issues (#44–#46 and #49).
 
 The hardening gate combines race tests, full lint, architectural contracts, vulnerability and secret scanning, resource regressions, bounded fuzz/fault tests and packaged-artifact verification. A clean dependency scan is not a source audit or proof that downloaded launcher binaries are trustworthy. Architecture checks enforce declared imports and recognizable host-I/O patterns; they are not a security sandbox for arbitrary code.
 

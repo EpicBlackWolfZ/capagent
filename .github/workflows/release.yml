@@ -1,84 +1,167 @@
 name: Release
-
 on:
   push:
-    tags:
-      - 'v*'
-
+    tags: ['v*']
+  workflow_dispatch:
 permissions:
-  contents: write
-  packages: write
-  id-token: write
-
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  gate:
+  build:
     name: Pre-Release Verification Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+      sha256: ${{ steps.package.outputs.sha256 }}
+      commit: ${{ steps.package.outputs.commit }}
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v7.0.0
-        with:
-          go-version: '1.27.1'
-          cache: true
-
-      - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@v7.2.3
-        with:
-          distribution: goreleaser
-          version: 'v2.18.0'
-          install-only: true
-
-      - name: Run Full Pipeline (tidy, lint, vuln, test, coverage gate, build)
-        run: make all
-
-  goreleaser:
-    name: Build, Smoke Test & Publish Release
-    runs-on: ubuntu-latest
-    needs: gate
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v7.0.1
-        with:
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v7.0.0
-        with:
-          go-version: '1.27.1'
-          cache: true
-
-      - name: Install Cosign (Keyless Signing)
-        uses: sigstore/cosign-installer@v4.1.2
-
-      - name: Install Syft (SBOM Generation)
-        uses: anchore/sbom-action/download-syft@v0.24.2
-
-      - name: Install GoReleaser
-        uses: goreleaser/goreleaser-action@v7.2.3
-        with:
-          distribution: goreleaser
-          version: 'v2.18.0'
-          install-only: true
-
-      - name: Ensure microfat Tooling
-        run: ./scripts/ensure-microfat.sh
-
-      - name: Compile All Microarchitecture Variants
-        run: goreleaser build --clean
-
-      - name: Bundle Universal Fat Binaries (Minimal Stub)
-        run: ./scripts/bundle-fat.sh minimal
-
-      - name: Release (Archive, Checksum, SBOM, Sign & Publish)
-        uses: goreleaser/goreleaser-action@v7.2.3
-        with:
-          distribution: goreleaser
-          version: 'v2.18.0'
-          args: release --skip=build
+          persist-credentials: false
+      - name: Validate tag provenance
+        if: github.event_name == 'push'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][a-zA-Z0-9.-]+)?$ ]]
+          test "$(git rev-parse "$RELEASE_TAG^{commit}")" = "$GITHUB_SHA"
+          git merge-base --is-ancestor HEAD origin/main
+      - uses: ./.github/actions/setup-tools
+        with:
+          profile: full
+      - name: Strict source and regression gate
+        run: |
+          make check-mod lint vuln coverage build-contracts
+          gitleaks git --redact --no-banner
+      - name: Package verified release inputs
+        id: package
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == push ]]; then
+            ./scripts/release-check.sh tag
+          else
+            ./scripts/release-check.sh snapshot
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        id: upload
+        with:
+          name: release-inputs-${{ github.run_attempt }}
+          path: dist/release-inputs.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: release-verification-${{ github.run_attempt }}
+          path: |
+            coverage.out
+            dist/verify-*.json
+            dist/verified-*.json
+          retention-days: 14
+  publish:
+    name: Sign and publish verified tag artifacts
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && github.repository == 'EpicBlackWolfZ/capagent'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      id-token: write
+      actions: read
+    steps:
+      # No checkout, compilation, or execution of code from the artifact handoff.
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          merge-multiple: true
+          path: incoming
+      - name: Revalidate release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          BUILT_COMMIT: ${{ needs.build.outputs.commit }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][a-zA-Z0-9.-]+)?$ ]]
+          test "$(gh api "repos/$GITHUB_REPOSITORY/commits/$RELEASE_TAG" --jq .sha)" = "$BUILT_COMMIT"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/compare/$BUILT_COMMIT...main" --jq .merge_base_commit.sha)" = "$BUILT_COMMIT"
+      - name: Verify and unpack allowlisted release data
+        id: verify-handoff
+        env:
+          EXPECTED_SHA256: ${{ needs.build.outputs.sha256 }}
+          BUILT_COMMIT: ${{ needs.build.outputs.commit }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, re, tarfile
+          tag = os.environ['RELEASE_TAG']
+          if not re.fullmatch(r'v[0-9]+\.[0-9]+\.[0-9]+([.-][a-zA-Z0-9.-]+)?', tag):
+              raise SystemExit('invalid release tag')
+          source = pathlib.Path('incoming/release-inputs.tar.gz')
+          if source.is_symlink() or not source.is_file() or source.stat().st_size > 512 * 1024 * 1024:
+              raise SystemExit('invalid handoff file')
+          with source.open('rb') as stream:
+              actual = hashlib.file_digest(stream, 'sha256').hexdigest()
+          if actual != os.environ['EXPECTED_SHA256']:
+              raise SystemExit('handoff SHA-256 mismatch')
+          expected = {'release-inputs.json', 'release-notes.md', 'checksums.txt'}
+          for arch in ('amd64', 'arm64'):
+              name = f'capagent_{tag[1:]}_linux_{arch}.tar.gz'
+              expected.update((name, name + '.spdx.json', name + '.cyclonedx.json'))
+          files = {}
+          total = 0
+          with tarfile.open(source, 'r:gz') as archive:
+              for member in archive:
+                  total += member.size
+                  if member.name not in expected or member.name in files or not member.isfile() or total > 512 * 1024 * 1024:
+                      raise SystemExit('invalid handoff member set')
+                  with archive.extractfile(member) as stream:
+                      files[member.name] = stream.read(member.size + 1)
+                  if len(files[member.name]) != member.size:
+                      raise SystemExit('incomplete handoff member')
+          if set(files) != expected:
+              raise SystemExit('incomplete handoff')
+          checksums = {}
+          for line in files['checksums.txt'].decode().splitlines():
+              digest, name = line.split('  ')
+              if name in checksums or not re.fullmatch('[a-f0-9]{64}', digest):
+                  raise SystemExit('invalid checksum record')
+              checksums[name] = digest
+          if set(checksums) != expected - {'checksums.txt'}:
+              raise SystemExit('checksum set mismatch')
+          for name, digest in checksums.items():
+              if hashlib.sha256(files[name]).hexdigest() != digest:
+                  raise SystemExit('release file SHA-256 mismatch')
+          provenance = json.loads(files['release-inputs.json'])
+          if (provenance['schema_version'], provenance['commit'], provenance['version'], provenance['launcher_mode']) != (1, os.environ['BUILT_COMMIT'], tag[1:], 'minimal'):
+              raise SystemExit('release provenance mismatch')
+          output = pathlib.Path('release')
+          output.mkdir(mode=0o700)
+          for name, data in files.items():
+              (output / name).write_bytes(data)
+          PY
+      - name: Install pinned signing tool
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.0.6
+      - name: Sign and verify checksums
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cosign sign-blob --yes --bundle=release/checksums.txt.sig release/checksums.txt
+          cosign verify-blob --bundle=release/checksums.txt.sig \
+            --certificate-identity="https://github.com/$GITHUB_REPOSITORY/.github/workflows/release.yml@refs/tags/$RELEASE_TAG" \
+            --certificate-oidc-issuer=https://token.actions.githubusercontent.com release/checksums.txt
+      - name: Publish verified bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Release already exists; refusing replacement' >&2
+            exit 1
+          fi
+          gh release create "$RELEASE_TAG" release/* --repo "$GITHUB_REPOSITORY" \
+            --verify-tag --title "$RELEASE_TAG" --notes-file release/release-notes.md
