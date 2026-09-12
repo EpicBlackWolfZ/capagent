@@ -1,0 +1,6 @@
+# fresh rootless Podman 5.8.4, explicit existing HOME/XDG directories
+4     mkdirat(AT_FDCWD, "/tmp/probe/runtime/libpod", 01700) = 0
+4     mkdirat(AT_FDCWD, "/tmp/probe/runtime/containers", 0700) = 0
+# initialized rootless Podman 5.8.4, explicit existing HOME/XDG directories
+4     mkdirat(AT_FDCWD, "/tmp/probe/runtime/libpod", 01700) = -1 EEXIST (File exists)
+4     fchmodat(AT_FDCWD, "/tmp/probe/runtime/libpod", 01700) = 0

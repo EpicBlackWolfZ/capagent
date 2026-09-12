@@ -10,6 +10,23 @@ import (
 	"github.com/EpicBlackWolfZ/capagent/internal/probe"
 )
 
+func TestSnapshotRuntimePayloadOwnership(t *testing.T) {
+	t.Parallel()
+	present, runnable, owner := true, true, uint32(0)
+	obs := model.Observation{Discovery: &model.RuntimeDiscovery{Installed: &present,
+		File: &model.ExecutableMetadata{UID: &owner, GID: &owner}},
+		Version: &model.PodmanVersionObservation{Runnable: &runnable, Version: &model.PodmanVersion{Canonical: "5.8.4"}}}
+	copy := probe.SnapshotObservation(obs)
+	*obs.Discovery.Installed = false
+	*obs.Discovery.File.UID = 1000
+	*obs.Version.Runnable = false
+	obs.Version.Version.Canonical = "changed"
+	if !*copy.Discovery.Installed || *copy.Discovery.File.UID != 0 || *copy.Discovery.File.GID != 0 ||
+		!*copy.Version.Runnable || copy.Version.Version.Canonical != "5.8.4" {
+		t.Fatal("runtime observation retained mutable input aliases")
+	}
+}
+
 func TestObservationScopeAndOwnership(t *testing.T) {
 	t.Parallel()
 	scope := model.EvaluationScope{RunID: "run", ContextID: "user", Runtime: "podman", Endpoint: "local"}
