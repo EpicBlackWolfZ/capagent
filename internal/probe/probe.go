@@ -75,7 +75,10 @@ type Probe interface {
 	// the probe has no dependencies.
 	Dependencies() []string
 
-	// Run executes the probe under ctx and returns an Observation describing
+	// Run executes under ctx and the explicit candidate in env.Scope(). Scope IDs
+	// resolve to the application-owned context snapshot. Returned mutable payloads
+	// are copied by the orchestrator; implementations must not mutate them during
+	// return/transfer. The result is an Observation describing
 	// the measurement. Returning a non-nil error does NOT mean the probe
 	// was skipped; the orchestrator records the result with status
 	// ProbeFailed. Cancellation via ctx surfaces as ProbeCancelled.

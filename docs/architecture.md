@@ -4,7 +4,7 @@ This document defines the architectural boundaries, domain model, evaluation sem
 
 ## Implementation status and planned integration
 
-This document describes both the current foundation and its target architecture. The current CLI does not yet evaluate hosts. [M1.1](https://github.com/EpicBlackWolfZ/capagent/milestone/23) closes known resource, filesystem and execution-contract gaps; [M1.2](https://github.com/EpicBlackWolfZ/capagent/milestone/24) supplies a minimal evaluation path before broader capability work. See [roadmap.md](roadmap.md) and [security.md](security.md) for delivery status and limits.
+This document describes the current foundation and target architecture. The [M1.2 fixture slice](fixture-evaluation.md) implements the first complete evaluation path. Live host/runtime collection remains future work; M1.1 confinement, command authority and lifecycle contracts apply to every adapter. See [roadmap.md](roadmap.md) and [security.md](security.md) for limits.
 
 The planned application/composition layer in [#61](https://github.com/EpicBlackWolfZ/capagent/issues/61) owns context selection, dependency construction, evaluation order and resource teardown after workers join. It sits above the pure engines and probe framework. `cmd/capagent` remains flags/formatting only, and `internal/probe` remains limited to model/platform dependencies. Today environments are caller-owned; `Orchestrator.Run` does not create or close them.
 
@@ -559,9 +559,9 @@ The domain model explicitly separates executing identity (`Current`) from target
 
 | Schema v1 Field | Domain Expression | Semantics / Fallback |
 | :--- | :--- | :--- |
-| `context.uid` | `evalCtx.Identity.Target.UID` | Target user UID (falls back to `Current.UID` if `Target` is unpopulated) |
-| `context.gid` | `evalCtx.Identity.Target.GID` | Target user GID (falls back to `Current.GID` if `Target` is unpopulated) |
-| `context.target_user` | `evalCtx.Identity.Target.Username` | Target username (falls back to `Current.Username` if `Target` is unpopulated) |
+| `context.uid` | `evalCtx.Identity.Target.UID` | Target user UID (falls back to `Current.UID` only if `Target` is nil; explicit UID/GID 0 is retained) |
+| `context.gid` | `evalCtx.Identity.Target.GID` | Target user GID (falls back to `Current.GID` only if `Target` is nil; explicit UID/GID 0 is retained) |
+| `context.target_user` | `evalCtx.Identity.Target.Username` | Target username (falls back to `Current.Username` only if `Target` is nil; explicit UID/GID 0 is retained) |
 | `context.is_rootless` | `evalCtx.Identity.IsRootless` | Whether target execution runs under rootless user namespaces |
 | `context.in_container` | `evalCtx.Identity.InContainer` | Whether the evaluation environment runs inside a container |
 | `host.systemd` | `evalCtx.Host.SystemdActive` | Intentional external rename of model-level `SystemdActive` |
@@ -579,7 +579,7 @@ Schema v1 enforces strict non-null containers:
 - **Standard Library `encoding/json/v2`**: All JSON processing exclusively uses `encoding/json/v2` and `encoding/json/jsontext`. Legacy `encoding/json` (v1) is strictly forbidden across the codebase and mechanically prevented by AST contract tests.
 - **Immutability**: `output.Marshal(r)` clones evidence slices before sorting. Serialization never mutates the input `Report`.
 - **Deterministic Key & Slice Ordering**:
-  - Canonical Go struct field declaration order guarantees root key sequencing: `schema_version` $\to$ `context` $\to$ `host` $\to$ `runtimes` $\to$ `capabilities`.
+  - Canonical Go struct field declaration order guarantees root key sequencing: `schema_version` $\to$ `context` $\to$ `host` $\to$ `runtimes` $\to$ `capabilities` $\to$ optional `evaluation`.
   - Built-in `json.Deterministic(true)` ensures map keys (`runtimes`, `capabilities`) are sorted lexicographically.
   - Cloned evidence slices are sorted lexicographically before emission.
   - Canonical formatting applies standard 2-space indentation via `jsontext.WithIndent("  ")` with a trailing newline. `output.MarshalCompact` provides unindented output for stream pipelines.
@@ -591,6 +591,8 @@ Schema v1 enforces strict non-null containers:
   - `output.Marshal(r)`: Serializes without implicitly validating; callers assembling reports manually should invoke `r.Validate()` prior to serialization.
 
 ### 7.5 Additive Evolution & Versioning Rules
+
+Schema v1 remains pre-release. M1.2 corrects UID/GID bounds and missing-value representation, as documented in [fixture evaluation](fixture-evaluation.md#consumer-and-pre-release-contract). The following compatibility rules apply after the M19 freeze.
 
 Schema v1 adheres to an open additive evolution model (`additionalProperties: true`):
 - **Permitted (Non-Breaking)**:
@@ -610,104 +612,7 @@ Sample reports in `testdata/expected/` (`minimal_linux.json`, `rhel9_podman.json
 
 ### 7.7 Canonical Schema Definition (`schema/v1/schema.json`)
 
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/EpicBlackWolfZ/capagent/schema/v1/schema.json",
-  "title": "CapagentReportV1",
-  "description": "Authoritative machine-readable report format for container host compatibility evaluations (Schema v1).",
-  "type": "object",
-  "additionalProperties": true,
-  "required": [
-    "schema_version",
-    "context",
-    "host",
-    "runtimes",
-    "capabilities"
-  ],
-  "properties": {
-    "schema_version": {
-      "type": "integer",
-      "const": 1,
-      "description": "Canonical schema major version integer (fixed to 1 for Schema v1)."
-    },
-    "context": {
-      "type": "object",
-      "description": "Evaluation execution context summarizing target user identity and environment boundaries.",
-      "additionalProperties": true,
-      "required": [
-        "uid",
-        "gid",
-        "target_user",
-        "is_rootless",
-        "in_container"
-      ],
-      "properties": {
-        "uid": { "type": "integer" },
-        "gid": { "type": "integer" },
-        "target_user": { "type": "string" },
-        "is_rootless": { "type": "boolean" },
-        "in_container": { "type": "boolean" }
-      }
-    },
-    "host": {
-      "type": "object",
-      "description": "Observed host-level kernel, distribution, cgroup, and init system facts.",
-      "additionalProperties": true,
-      "required": [
-        "os",
-        "os_version",
-        "kernel",
-        "architecture",
-        "cgroup_version",
-        "systemd"
-      ],
-      "properties": {
-        "os": { "type": "string" },
-        "os_version": { "type": "string" },
-        "kernel": { "type": "string" },
-        "architecture": { "type": "string" },
-        "cgroup_version": { "type": "string", "enum": ["v1", "v2", "mixed", "unavailable", "unknown"] },
-        "systemd": { "type": "boolean" }
-      }
-    },
-    "runtimes": {
-      "type": "object",
-      "description": "Observed container runtimes discovered on the host environment.",
-      "additionalProperties": {
-        "type": "object",
-        "additionalProperties": true,
-        "properties": {
-          "installed": { "type": "boolean" },
-          "version": { "type": "string" },
-          "accessible": { "type": "boolean" },
-          "network_backend": { "type": "string" },
-          "storage_driver": { "type": "string" }
-        }
-      }
-    },
-    "capabilities": {
-      "type": "object",
-      "description": "Evaluated canonical capabilities mapped to operational state, confidence, and evidence.",
-      "additionalProperties": {
-        "type": "object",
-        "additionalProperties": true,
-        "required": [
-          "state",
-          "confidence",
-          "evidence"
-        ],
-        "properties": {
-          "state": { "type": "string", "enum": ["supported", "unsupported", "misconfigured", "unavailable", "unknown"] },
-          "confidence": { "type": "string", "enum": ["verified", "derived", "heuristic", "unknown"] },
-          "reason": { "type": "string" },
-          "evidence": { "type": "array", "items": { "type": "string" } }
-        }
-      }
-    }
-  }
-}
-```
+The authoritative schema is [schema/v1/schema.json](../schema/v1/schema.json), embedded in the binary and compiled by contract tests. It defines canonical capability keys, bounded nullable identities, completeness, scope, provenance, evidence references and requirement results. Keeping one source avoids a stale copied schema in this document.
 
 ---
 

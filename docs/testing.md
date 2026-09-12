@@ -193,3 +193,12 @@ artifacts to the existing isolated tag publisher. Local verification and manual
 release rehearsals do not sign or publish. Milestone closure follows a passing
 merged-commit gate; repository branch-protection settings are a separate
 maintainer policy.
+
+
+## Fixture evaluation contracts
+
+Run `go test -race ./...` to exercise the M1.2 fixture path alongside the complete M1.1 suite. `tests/contract/evaluation_test.go` builds the actual CLI, checks all five capability states and three requirement outcomes, validates every expected report against JSON Schema, and executes `examples/check-report.py`. It also checks additive unknown fields and the full published capability catalog.
+
+`tests/contract/fixture_conformance_test.go` replays the same fixture definitions through the existing scoped OS and memory readers and compares real parser observations. The shared platform conformance tests remain authoritative for symlinks, partial reads, descriptor lifetime and intentional OS/memory differences; this harness does not replace them.
+
+Application tests cover concurrent borrowed services, close-after-join ownership, failures and cancellation. Pure evaluator tests cover precedence, equal-rank conflict, stale/incomplete evidence, graph integrity, bounded ASTs and candidate isolation. Fixture timestamps are fixed; generated `expected.json` files are committed regression expectations and must be reviewed when behavior changes. All included fixtures are explicitly synthetic and contain no live captures.

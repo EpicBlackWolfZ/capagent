@@ -4,9 +4,9 @@ This roadmap separates delivered scaffolding from usable product behavior. GitHu
 
 ## Current availability
 
-M0 and the initial M1 foundation are delivered. The CLI currently prints help, version information and a startup banner. It does not yet run host evaluation, accept `--json`, or emit capability reports. Schema v1 is a pre-release skeleton, not the final M19 compatibility freeze.
+M0/M1 and M1.1 foundation hardening are implemented. The M1.2 fixture slice now runs typed observations through scoped evidence, capabilities, requirements and JSON, with an executable consumer. The CLI supports `--fixture DIR`, `--json`, `--pretty`, `--debug`, help and version. See [fixture evaluation](fixture-evaluation.md) for its narrow Netavark configuration semantics. It does not yet evaluate the live host or invoke Podman. Schema v1 remains pre-release.
 
-M1.1 foundation hardening and its [permanent verification gate](testing.md#complete-m11-gate) are implemented. Milestone closure requires the complete gate to pass on the merged commit. M1.2 introduces an early fixture-backed evaluation path so later host/runtime capabilities share tested context, evidence, requirement and output contracts.
+The [permanent hardening gate](testing.md#complete-m11-gate) still applies to every extension. M1.2 supplies a reusable application path; subsequent work adds actual host/context discovery and reviewed runtime collection.
 
 Execution support targets **Linux 5.6+ with functioning `openat2` confinement**, on amd64 and arm64. A kernel version alone does not prove the syscall is permitted. Unsupported kernels or policies must produce explicit diagnostics; there is no insecure fallback. Historical RHEL 8 data may be used for parser fixtures, but stock pre-5.6 execution is not a supported target. A broader compatibility policy requires a separate secure implementation and real-host tests.
 
@@ -33,11 +33,11 @@ Pure parser, fixture and domain work may proceed before the hardening gate close
 | [M0 — Architecture & Contract](https://github.com/EpicBlackWolfZ/capagent/milestone/1) | Initial skeleton delivered | Initial models, state algebra and schema skeleton; remaining semantics have explicit follow-ups. |
 | [M1 — Probe Core](https://github.com/EpicBlackWolfZ/capagent/milestone/2) | Initial foundation delivered | Static payload, OS abstractions and scheduler scaffolding; host-report CLI is not delivered. |
 | [M1.1 — Hardening, Security & Performance](https://github.com/EpicBlackWolfZ/capagent/milestone/23) | Implemented; closure requires passing gate | Confinement, descriptor ownership, bounded I/O, parser fidelity, execution/build policy and regression gate. |
-| [M1.2 — Context & Evaluation Slice](https://github.com/EpicBlackWolfZ/capagent/milestone/24) | Queued; pure work may overlap | Typed context/evidence, minimal evaluator/requirements, reusable fixtures, application lifecycle and JSON consumer smoke. |
+| [M1.2 — Context & Evaluation Slice](https://github.com/EpicBlackWolfZ/capagent/milestone/24) | Implemented fixture slice | Typed context/evidence, minimal evaluator/requirements, reusable fixtures, application lifecycle and JSON consumer smoke. |
 | [M2 — Host Facts](https://github.com/EpicBlackWolfZ/capagent/milestone/3) | Queued | First live host probes, mockable syscall adapters and real-host JSON validation. |
 | [M3 — Execution Context](https://github.com/EpicBlackWolfZ/capagent/milestone/4) | Queued | Target identity validation, groups, subordinate ranges, helper metadata, XDG and user systemd. |
 | [M4 — Runtime Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/5) | Queued | Explicit binary/endpoint/identity policy and runtime availability. |
-| [M5 — Podman Core](https://github.com/EpicBlackWolfZ/capagent/milestone/6) | Queued | Bounded passive version/effective-info observations and first real rootless fixture. |
+| [M5 — Podman Core](https://github.com/EpicBlackWolfZ/capagent/milestone/6) | Queued | Version discovery and explicitly gated effective-info observations and first real rootless fixture. |
 | [M6 — Configuration Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/7) | Queued | Effective configuration and provenance across source/user scopes. |
 | [M7 — Configuration Capabilities](https://github.com/EpicBlackWolfZ/capagent/milestone/8) | Queued | Use the M1.2 evaluator for registry/storage/network mappings. |
 | [M8 — Capability Catalog Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/9) | Queued | Expand lifecycle and dependency mappings; engine infrastructure already exists. |
@@ -125,7 +125,7 @@ Public documentation and executable examples are updated alongside features. M20
 
 ## Planned capability catalog
 
-These IDs describe intended scope, not capabilities emitted by the current CLI. The `context` namespace is planned and will be aligned with model validation in [#64](https://github.com/EpicBlackWolfZ/capagent/issues/64). Each shipped capability must satisfy the Definition of Done in [philosophy.md](philosophy.md).
+These IDs describe intended scope. Only `runtime.podman.netavark` is currently emitted, with the fixture semantics documented above. The `context` namespace is accepted, and a contract test validates every catalog ID. Each shipped capability must satisfy the Definition of Done in [philosophy.md](philosophy.md).
 
 ### 1 Host Capabilities
 - `host.os`: Host distribution identification.

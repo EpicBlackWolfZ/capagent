@@ -2,10 +2,12 @@ package model
 
 // UserIdentity models a Linux user credential set.
 type UserIdentity struct {
-	UID      uint32 `json:"uid"`
-	GID      uint32 `json:"gid"`
-	Username string `json:"username"`
-	HomeDir  string `json:"home_dir"`
+	UID                 uint32   `json:"uid"`
+	GID                 uint32   `json:"gid"`
+	Username            string   `json:"username"`
+	HomeDir             string   `json:"home_dir"`
+	SupplementaryGroups []uint32 `json:"supplementary_groups,omitempty"`
+	GroupsKnown         bool     `json:"groups_known"`
 }
 
 // SubIDRange models an allocated subuid or subgid contiguous range.
@@ -20,14 +22,14 @@ type SubIDRange struct {
 // identity (Target) under which container capabilities should be evaluated, supporting
 // delegation modes such as root running checks on behalf of a non-root target user.
 type IdentityContext struct {
-	Current        UserIdentity `json:"current"`
-	Target         UserIdentity `json:"target"`
-	IsRootless     bool         `json:"is_rootless"`
-	SubUIDRanges   []SubIDRange `json:"sub_uid_ranges,omitempty"`
-	SubGIDRanges   []SubIDRange `json:"sub_gid_ranges,omitempty"`
-	XDGRuntimeDir  string       `json:"xdg_runtime_dir,omitempty"`
-	HasUserSystemd bool         `json:"has_user_systemd"`
-	InContainer    bool         `json:"in_container"`
+	Current        *UserIdentity `json:"current"`
+	Target         *UserIdentity `json:"target"`
+	IsRootless     *bool         `json:"is_rootless"`
+	SubUIDRanges   []SubIDRange  `json:"sub_uid_ranges,omitempty"`
+	SubGIDRanges   []SubIDRange  `json:"sub_gid_ranges,omitempty"`
+	XDGRuntimeDir  string        `json:"xdg_runtime_dir,omitempty"`
+	HasUserSystemd *bool         `json:"has_user_systemd"`
+	InContainer    *bool         `json:"in_container"`
 }
 
 // HostContext captures observed host-level kernel and distribution environment details.
@@ -37,7 +39,7 @@ type HostContext struct {
 	Kernel        string `json:"kernel"`
 	Architecture  string `json:"architecture"`
 	CgroupVersion string `json:"cgroup_version"`
-	SystemdActive bool   `json:"systemd_active"`
+	SystemdActive *bool  `json:"systemd_active"`
 }
 
 // RuntimeContext holds structural runtime environment metadata.
@@ -60,6 +62,8 @@ type ConfigContext struct {
 // EvaluationContext represents the complete execution identity and host environment
 // under which capabilities and requirements are evaluated.
 type EvaluationContext struct {
+	ID            string          `json:"id"`
+	Namespaces    []Namespace     `json:"namespaces,omitempty"`
 	Host          HostContext     `json:"host"`
 	Identity      IdentityContext `json:"identity"`
 	Runtime       RuntimeContext  `json:"runtime"`

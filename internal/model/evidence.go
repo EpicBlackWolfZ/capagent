@@ -70,6 +70,11 @@ type Evidence struct {
 	Precedence   EvidencePrecedence `json:"precedence"`
 	Observations []ObservationRef   `json:"observations,omitempty"`
 	Timestamp    time.Time          `json:"timestamp"`
+	Scope        EvaluationScope    `json:"scope"`
+	Completeness Completeness       `json:"completeness"`
+	State        CapabilityState    `json:"state"`
+	Confidence   ConfidenceLevel    `json:"confidence"`
+	DependsOn    []EvidenceRef      `json:"depends_on,omitempty"`
 }
 
 // Validate verifies that the Evidence struct contains required fields and valid precedence.

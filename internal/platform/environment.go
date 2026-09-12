@@ -1,6 +1,11 @@
 package platform
 
-import "context"
+import (
+	"context"
+	"os"
+
+	"github.com/EpicBlackWolfZ/capagent/internal/model"
+)
 
 // Environment is an owner-constructed, read-only view of shared probe services.
 // Copies share the services, which must support concurrent operations. Owners
@@ -14,7 +19,37 @@ type Environment struct {
 	procfs ProcfsView
 	sysfs  SysfsView
 	runner CommandRunner
+	scope  model.EvaluationScope
+	files  ScopedView
 }
+
+// ScopedView retains the kernel/memory containment boundary without exposing
+// the owner's Close method to probes.
+type ScopedView interface {
+	ReadFile(context.Context, string) ([]byte, error)
+	Stat(string) (os.FileInfo, error)
+	ReadDir(context.Context, string) ([]os.DirEntry, error)
+	Readlink(string) (string, error)
+	FileCapabilities(context.Context, string) (CapabilityAttribute, error)
+	Root() string
+}
+
+type scopedView struct{ ScopedView }
+
+func (e Environment) WithFiles(files ScopedReader) Environment {
+	if files == nil {
+		e.files = nil
+	} else {
+		e.files = scopedView{files}
+	}
+	return e
+}
+func (e Environment) Files() ScopedView { return e.files }
+
+// WithScope returns a new service view bound to an explicit evaluation candidate.
+// Scope is a value of immutable strings; no caller-owned aliases are retained.
+func (e Environment) WithScope(scope model.EvaluationScope) Environment { e.scope = scope; return e }
+func (e Environment) Scope() model.EvaluationScope                      { return e.scope }
 
 // ProcfsView exposes measurements without access to the shared wrapper itself.
 type ProcfsView interface {

@@ -1,8 +1,8 @@
 package output
 
 import (
-	json "encoding/json/v2"
 	"encoding/json/jsontext"
+	json "encoding/json/v2"
 	"errors"
 	"fmt"
 	"slices"
@@ -20,34 +20,38 @@ const (
 
 // Context encapsulates execution context details projected from model.EvaluationContext.
 type Context struct {
-	UID         uint32 `json:"uid"`
-	GID         uint32 `json:"gid"`
-	TargetUser  string `json:"target_user"`
-	IsRootless  bool   `json:"is_rootless"`
-	InContainer bool   `json:"in_container"`
+	Completeness string  `json:"completeness,omitempty"`
+	UID          *uint32 `json:"uid"`
+	GID          *uint32 `json:"gid"`
+	TargetUser   string  `json:"target_user"`
+	IsRootless   *bool   `json:"is_rootless"`
+	InContainer  *bool   `json:"in_container"`
 }
 
 // Host encapsulates observed kernel, distribution, and init system facts.
 type Host struct {
+	Completeness  string `json:"completeness,omitempty"`
 	OS            string `json:"os"`
 	OSVersion     string `json:"os_version"`
 	Kernel        string `json:"kernel"`
 	Architecture  string `json:"architecture"`
 	CgroupVersion string `json:"cgroup_version"`
-	Systemd       bool   `json:"systemd"`
+	Systemd       *bool  `json:"systemd"`
 }
 
 // RuntimeInfo models discovered container runtime state.
 type RuntimeInfo struct {
-	Installed      bool   `json:"installed"`
+	Completeness   string `json:"completeness,omitempty"`
+	Installed      *bool  `json:"installed"`
 	Version        string `json:"version,omitempty"`
-	Accessible     bool   `json:"accessible"`
+	Accessible     *bool  `json:"accessible"`
 	NetworkBackend string `json:"network_backend,omitempty"`
 	StorageDriver  string `json:"storage_driver,omitempty"`
 }
 
 // CapabilityReport models canonical capability status, confidence, and supporting evidence.
 type CapabilityReport struct {
+	Superseded []string `json:"superseded,omitempty"`
 	State      string   `json:"state"`
 	Confidence string   `json:"confidence"`
 	Reason     string   `json:"reason,omitempty"`
@@ -61,6 +65,7 @@ type Report struct {
 	Host          Host                        `json:"host"`
 	Runtimes      map[string]RuntimeInfo      `json:"runtimes"`
 	Capabilities  map[string]CapabilityReport `json:"capabilities"`
+	Evaluation    *EvaluationTrace            `json:"evaluation,omitempty"`
 }
 
 // NewReport constructs an empty Schema v1 report with initialized non-nil maps and
@@ -79,25 +84,27 @@ func NewReport() *Report {
 // NewReportFromModel projects internal domain types into a canonical Schema v1 Report.
 //
 // Semantics:
-//   - Target user identity is favored; falls back to current identity if target is zero-valued.
+//   - Target user identity is favored; falls back to current identity only if target is nil.
 //   - Host SystemdActive is projected onto external contract field 'systemd'.
 //   - Structured model.EvidenceRef.ID is flattened into []string.
 //   - Non-null containers: runtimes and capabilities maps and evidence slices are guaranteed non-nil.
 func NewReportFromModel(evalCtx model.EvaluationContext, runtimes map[string]RuntimeInfo, caps []model.Capability) *Report {
 	report := NewReport()
 
-	// Identity projection: Target identity takes precedence, falling back to Current if unpopulated.
+	// Only nil means no explicit target. A target with UID zero remains root.
 	target := evalCtx.Identity.Target
-	if target == (model.UserIdentity{}) {
+	if target == nil {
 		target = evalCtx.Identity.Current
 	}
 
 	report.Context = Context{
-		UID:         target.UID,
-		GID:         target.GID,
-		TargetUser:  target.Username,
-		IsRootless:  evalCtx.Identity.IsRootless,
-		InContainer: evalCtx.Identity.InContainer,
+		IsRootless:  copyValue(evalCtx.Identity.IsRootless),
+		InContainer: copyValue(evalCtx.Identity.InContainer),
+	}
+	if target != nil {
+		report.Context.UID = copyValue(&target.UID)
+		report.Context.GID = copyValue(&target.GID)
+		report.Context.TargetUser = target.Username
 	}
 
 	report.Host = Host{
@@ -106,10 +113,11 @@ func NewReportFromModel(evalCtx model.EvaluationContext, runtimes map[string]Run
 		Kernel:        evalCtx.Host.Kernel,
 		Architecture:  evalCtx.Host.Architecture,
 		CgroupVersion: evalCtx.Host.CgroupVersion,
-		Systemd:       evalCtx.Host.SystemdActive,
+		Systemd:       copyValue(evalCtx.Host.SystemdActive),
 	}
 
 	for k, v := range runtimes {
+		v.Installed, v.Accessible = copyValue(v.Installed), copyValue(v.Accessible)
 		report.Runtimes[k] = v
 	}
 
@@ -248,12 +256,18 @@ func (r *Report) Validate() error {
 			return err
 		}
 	}
+	if r.Evaluation != nil {
+		return r.Evaluation.Validate()
+	}
 
 	return nil
 }
 
 // Validate checks whether the CapabilityReport satisfies state, confidence, and evidence invariants.
 func (c CapabilityReport) Validate(name string) error {
+	if err := model.CapabilityID(name).Validate(); err != nil {
+		return err
+	}
 	if err := model.CapabilityState(c.State).IsValid(); err != nil {
 		return fmt.Errorf("invalid capability %q: %w", name, err)
 	}
@@ -264,6 +278,14 @@ func (c CapabilityReport) Validate(name string) error {
 		return fmt.Errorf("invalid capability %q: 'evidence' cannot be nil", name)
 	}
 	return nil
+}
+
+func copyValue[T any](value *T) *T {
+	if value == nil {
+		return nil
+	}
+	copy := *value
+	return &copy
 }
 
 // validateCgroupVersion checks that the cgroup_version string is a valid enum value.
