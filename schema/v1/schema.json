@@ -135,7 +135,7 @@
               "boolean",
               "null"
             ],
-            "description": "Whether the runtime executable exists on host PATH or standard locations."
+            "description": "Whether a regular executable candidate exists at the explicitly selected path or in the documented fixed search locations."
           },
           "version": {
             "type": "string",
@@ -158,6 +158,101 @@
           },
           "completeness": {
             "$ref": "#/$defs/completeness"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^/",
+            "description": "Selected executable path; a missing explicit override remains visible."
+          },
+          "cli_runnable": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Selected CLI returned a recognizable version, independently of engine accessibility. Absent or null means unobserved."
+          },
+          "file": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "regular": {
+                "type": "boolean"
+              },
+              "executable_bits": {
+                "type": "boolean"
+              },
+              "mode": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 511
+              },
+              "uid": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "gid": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 4294967295
+              }
+            },
+            "required": [
+              "regular",
+              "executable_bits",
+              "mode",
+              "uid",
+              "gid"
+            ]
+          },
+          "version_details": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "major": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "minor": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "patch": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "canonical": {
+                "type": "string"
+              },
+              "suffix": {
+                "type": "string"
+              },
+              "build": {
+                "type": "string"
+              },
+              "trailing": {
+                "type": "string"
+              },
+              "raw": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "major",
+              "minor",
+              "patch",
+              "canonical",
+              "raw"
+            ]
           }
         }
       }
@@ -538,13 +633,17 @@
       "additionalProperties": true,
       "properties": {
         "mode": {
-          "const": "fixture"
+          "enum": [
+            "fixture",
+            "live"
+          ]
         },
         "provenance": {
           "type": "string",
           "enum": [
             "captured",
-            "synthetic"
+            "synthetic",
+            "live"
           ]
         },
         "scope": {
@@ -600,6 +699,34 @@
         "evidence",
         "requirement",
         "diagnostics"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "live"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "provenance": {
+                "const": "live"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "provenance": {
+                "enum": [
+                  "synthetic",
+                  "captured"
+                ]
+              }
+            }
+          }
+        }
       ]
     }
   }

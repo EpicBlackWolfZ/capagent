@@ -41,12 +41,35 @@ type Host struct {
 
 // RuntimeInfo models discovered container runtime state.
 type RuntimeInfo struct {
-	Completeness   string `json:"completeness,omitempty"`
-	Installed      *bool  `json:"installed"`
-	Version        string `json:"version,omitempty"`
-	Accessible     *bool  `json:"accessible"`
-	NetworkBackend string `json:"network_backend,omitempty"`
-	StorageDriver  string `json:"storage_driver,omitempty"`
+	Completeness   string          `json:"completeness,omitempty"`
+	Installed      *bool           `json:"installed"`
+	Version        string          `json:"version,omitempty"`
+	Accessible     *bool           `json:"accessible"`
+	NetworkBackend string          `json:"network_backend,omitempty"`
+	StorageDriver  string          `json:"storage_driver,omitempty"`
+	Path           string          `json:"path,omitempty"`
+	CLIRunnable    *bool           `json:"cli_runnable,omitempty"`
+	File           *ExecutableInfo `json:"file,omitempty"`
+	VersionDetails *VersionInfo    `json:"version_details,omitempty"`
+}
+
+type ExecutableInfo struct {
+	Regular        bool    `json:"regular"`
+	ExecutableBits bool    `json:"executable_bits"`
+	Mode           uint32  `json:"mode"`
+	UID            *uint32 `json:"uid"`
+	GID            *uint32 `json:"gid"`
+}
+
+type VersionInfo struct {
+	Major     uint32 `json:"major"`
+	Minor     uint32 `json:"minor"`
+	Patch     uint32 `json:"patch"`
+	Canonical string `json:"canonical"`
+	Suffix    string `json:"suffix,omitempty"`
+	Build     string `json:"build,omitempty"`
+	Trailing  string `json:"trailing,omitempty"`
+	Raw       string `json:"raw"`
 }
 
 // CapabilityReport models canonical capability status, confidence, and supporting evidence.
@@ -118,6 +141,10 @@ func NewReportFromModel(evalCtx model.EvaluationContext, runtimes map[string]Run
 
 	for k, v := range runtimes {
 		v.Installed, v.Accessible = copyValue(v.Installed), copyValue(v.Accessible)
+		v.CLIRunnable, v.File, v.VersionDetails = copyValue(v.CLIRunnable), copyValue(v.File), copyValue(v.VersionDetails)
+		if v.File != nil {
+			v.File.UID, v.File.GID = copyValue(v.File.UID), copyValue(v.File.GID)
+		}
 		report.Runtimes[k] = v
 	}
 

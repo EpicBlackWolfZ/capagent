@@ -1,0 +1,32 @@
+[
+  {
+    "raw": "podman version 3.4.4",
+    "canonical": "3.4.4",
+    "suffix": ""
+  },
+  {
+    "raw": "podman version 4.6.1",
+    "canonical": "4.6.1",
+    "suffix": ""
+  },
+  {
+    "raw": "podman version 5.1.0",
+    "canonical": "5.1.0",
+    "suffix": ""
+  },
+  {
+    "raw": "podman version 4.4.1-12.el9_2",
+    "canonical": "4.4.1",
+    "suffix": "12.el9_2"
+  },
+  {
+    "raw": "podman version 4.9.4-3.el9_4",
+    "canonical": "4.9.4",
+    "suffix": "3.el9_4"
+  },
+  {
+    "raw": "podman version 5.0.0-dev",
+    "canonical": "5.0.0",
+    "suffix": "dev"
+  }
+]

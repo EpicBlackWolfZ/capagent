@@ -34,7 +34,7 @@ type failingWriter struct{}
 func (failingWriter) Write([]byte) (int, error) { return 0, io.ErrClosedPipe }
 
 func evaluationInput() Input {
-	scope := model.EvaluationScope{RunID: "run", ContextID: "user", Runtime: "podman", Endpoint: "local"}
+	scope := model.EvaluationScope{RunID: "run", ContextID: "user", Runtime: testPodmanRuntime, Endpoint: "local"}
 	identity := model.UserIdentity{UID: 1000, GID: 1000}
 	return Input{Scope: scope, At: time.Unix(1, 0), Provenance: "synthetic",
 		Requirement: &requirement.Node{Capability: "runtime.podman.netavark"},

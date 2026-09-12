@@ -92,6 +92,9 @@ Exit: one deterministic fixture can pass through facts, observations, evidence, 
 | M4 | [#23](https://github.com/EpicBlackWolfZ/capagent/issues/23) runtime discovery | Explicit executable and endpoint policy; binary existence, service availability and target accessibility stay distinct. |
 | M5 | [#24](https://github.com/EpicBlackWolfZ/capagent/issues/24) versions; [#25](https://github.com/EpicBlackWolfZ/capagent/issues/25) effective info; [#82](https://github.com/EpicBlackWolfZ/capagent/issues/82) lifecycle/helper observations | Real Podman fixtures and bounded target-scoped observations whose passive behavior is verified. |
 
+The phase 2 current-user slices of #65/#20/#3 and local Podman discovery from #23 are implemented. #24 has a bounded version parser, observation and replay path. Live version execution is deferred: source review and traces confirmed rootless startup writes even for `--version`. These broader issues remain open for their remaining acceptance. See [local Podman discovery](podman-discovery.md).
+
+
 Read-only system metadata interrogation such as `systemctl --version` must use the explicit command policy. It is not permission for arbitrary shell utilities. Active namespace creation, storage writes, network reachability tests and container execution remain outside default observation.
 
 ## Expansion and release ownership
@@ -125,7 +128,7 @@ Public documentation and executable examples are updated alongside features. M20
 
 ## Planned capability catalog
 
-These IDs describe intended scope. Only `runtime.podman.netavark` is currently emitted, with the fixture semantics documented above. The `context` namespace is accepted, and a contract test validates every catalog ID. Each shipped capability must satisfy the Definition of Done in [philosophy.md](philosophy.md).
+These IDs describe intended scope. `runtime.podman.netavark` is emitted by info fixtures. `runtime.podman` describes CLI availability: live discovery can establish absence or unsuitable metadata, while a supported version result is currently available only through fixture replay. The `context` namespace is accepted, and a contract test validates every catalog ID. Each shipped capability must satisfy the Definition of Done in [philosophy.md](philosophy.md).
 
 ### 1 Host Capabilities
 - `host.os`: Host distribution identification.
@@ -170,7 +173,7 @@ These IDs describe intended scope. Only `runtime.podman.netavark` is currently e
 - `container.lifecycle.kubernetes`: `podman kube apply` manifest execution.
 
 ### 4 Runtime Specific Capabilities
-- `runtime.podman`: Podman installed and runnable.
+- `runtime.podman`: Selected Podman CLI returned a recognizable version; engine access remains unverified.
 - `runtime.podman.quadlet`: Podman Quadlet generator present and functional.
 - `runtime.podman.kube_apply`: Podman `kube play`/`apply` support.
 - `runtime.podman.generate_systemd`: Podman legacy systemd unit generation.

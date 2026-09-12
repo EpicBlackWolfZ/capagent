@@ -1,0 +1,17 @@
+{
+  "captured": [
+    {
+      "file": "fedora-5.8.4.txt",
+      "package": "podman-5.8.4-1.fc44.x86_64",
+      "date": "2026-09-13",
+      "command": [
+        "/usr/bin/podman",
+        "--version"
+      ],
+      "environment": "Explicit HOME/XDG paths in a disposable bwrap user namespace; UID 1000; host filesystem read-only.",
+      "scope": "Actual command transcript for parser replay. This invocation modified its owned runtime directory and is not classified as passive."
+    }
+  ],
+  "synthetic_file": "synthetic.json",
+  "note": "Upstream/enterprise examples in synthetic.json are issue #24 test vectors, not claimed as live enterprise captures. Live version collection remains deferred."
+}

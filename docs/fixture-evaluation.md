@@ -9,7 +9,7 @@ go build -o bin/capagent ./cmd/capagent
 ./bin/capagent --fixture testdata/fixtures/v1/supported --json --pretty
 ```
 
-`--json` is the default format. `--pretty` adds indentation and a trailing newline. `--debug` writes diagnostic codes to stderr; stdout contains only the report. `--help` and `--version` remain available. A missing fixture, unknown command or `--active` invocation fails visibly. Live discovery and runtime inspection follow in later batches; no command from a fixture can reach an OS command runner.
+`--json` is the default format. `--pretty` adds indentation and a trailing newline. `--debug` writes diagnostic codes to stderr; stdout contains only the report. `--help` and `--version` remain available. A missing fixture, unknown command or `--active` invocation fails visibly. [Passive local discovery](podman-discovery.md) is available separately; live runtime execution remains deferred; no command from a fixture can reach an OS command runner.
 
 | Exit code | Meaning |
 |---|---|
@@ -33,11 +33,11 @@ A failed or interrupted probe can still produce a report and exit 1 or 2 accordi
 | Runtime inspection fails without partial-output uncertainty | `unavailable`, derived confidence | `INDETERMINATE` |
 | Missing fields, unknown backend, permission uncertainty, truncation or timeout | `unknown`, unknown confidence | `INDETERMINATE` |
 
-The five directories under [`testdata/fixtures/v1`](../testdata/fixtures/v1) exercise these outcomes. Version strings in them are synthetic parser input, not claims of validation on those Podman releases.
+The original five info directories under [`testdata/fixtures/v1`](../testdata/fixtures/v1) exercise these outcomes. Version strings in them are synthetic parser input, not claims of validation on those Podman releases.
 
 ## Fixture document
 
-Each scenario contains `fixture.json` and its reviewed `expected.json` report. The document contains:
+Each scenario contains `fixture.json` and its reviewed `expected.json` report. The optional `probe` field selects `info` (the default) or `version`. A version fixture supplies exactly one literal `--version` command and executable metadata; all commands still use fake services. The document contains:
 
 - `schema_version: 1`, a fixed `run_id` and RFC 3339 `timestamp`.
 - Explicit `provenance.kind` (`synthetic` or `captured`) and a description. Captures must be sanitized before committing; derived negative scenarios must be labeled synthetic.
@@ -88,3 +88,5 @@ This is an offline consumer smoke test, not deployment authorization for the cur
 Schema v1 remains pre-release. This slice corrects UID/GID to nullable integers bounded by 0..4,294,967,295, makes unobserved booleans null, adds the `context` capability namespace and validates canonical map keys. An explicit root target is preserved. Context, host and runtime sections include completeness; empty host strings and `unknown` cgroup values carry no negative capability claim. `evaluation` adds scope, identity presence, provenance, the reference trace and the requirement result. Unknown additive report properties are accepted and discarded deterministically by the DTO decoder; fixture and requirement inputs are intentionally stricter.
 
 `Report.Validate` checks application report invariants, not every JSON Schema rule. The wire-contract test suite performs full schema validation. Domain records and output DTOs remain separate, and the final compatibility freeze stays with M19.
+
+Version replay scenarios additionally cover successful output, a nonzero command, malformed output and timeout. Their descriptions identify captured command text and synthetic context or failure data; fixture replay never becomes live evidence. See [Podman discovery](podman-discovery.md#version-fixture-replay).

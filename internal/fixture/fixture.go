@@ -52,6 +52,7 @@ type Command struct {
 }
 type Document struct {
 	SchemaVersion int                     `json:"schema_version"`
+	Probe         string                  `json:"probe,omitempty"`
 	RunID         string                  `json:"run_id"`
 	Timestamp     time.Time               `json:"timestamp"`
 	Provenance    Provenance              `json:"provenance"`
@@ -117,8 +118,11 @@ func validate(d *Document) error {
 	if (d.Provenance.Kind != "synthetic" && d.Provenance.Kind != "captured") || d.Provenance.Description == "" {
 		return errors.New("fixture requires explicit captured or synthetic provenance")
 	}
+	if d.Probe != "" && d.Probe != "info" && d.Probe != "version" {
+		return errors.New("unknown fixture probe")
+	}
 	if len(d.Files) > maxFiles || len(d.Commands) != 1 {
-		return errors.New("fixture requires at most 4096 files and exactly one info command")
+		return errors.New("fixture requires at most 4096 files and exactly one command")
 	}
 	if _, err := config.ParseRequirement(d.Requirement); err != nil {
 		return err

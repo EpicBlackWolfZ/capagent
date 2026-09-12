@@ -73,6 +73,15 @@ jobs:
           go-version: '1.27.1'
       - name: Run shared test verification
         run: python3 -B scripts/gate.py stage --stage test
+      - name: Verify passive Podman discovery as user and root
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends podman strace
+          mkdir -p .work/gate/podman
+          CGO_ENABLED=0 go build -o .work/gate/podman/capagent ./cmd/capagent
+          dpkg-query -W podman > .work/gate/podman/package.txt
+          python3 -B scripts/podman-discovery-smoke.py --binary .work/gate/podman/capagent --output .work/gate/podman/user
+          python3 -B scripts/podman-discovery-smoke.py --binary .work/gate/podman/capagent --output .work/gate/podman/root --sudo
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
