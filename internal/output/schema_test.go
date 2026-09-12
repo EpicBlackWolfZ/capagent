@@ -47,17 +47,17 @@ func TestNewReportFromModel(t *testing.T) {
 			name: "target identity preferred when populated",
 			evalCtx: model.EvaluationContext{
 				Identity: model.IdentityContext{
-					Current: model.UserIdentity{UID: 0, GID: 0, Username: "root"},
-					Target:  model.UserIdentity{UID: 1000, GID: 1000, Username: "ansible"},
+					Current: &model.UserIdentity{UID: 0, GID: 0, Username: "root"},
+					Target:  &model.UserIdentity{UID: 1000, GID: 1000, Username: "ansible"},
 				},
 				Host: model.HostContext{
 					OS:            "rhel",
 					OSVersion:     "9.4",
-					SystemdActive: true,
+					SystemdActive: boolPointer(true),
 				},
 			},
 			runtimes: map[string]output.RuntimeInfo{
-				"podman": {Installed: true, Version: "5.0.0"},
+				"podman": {Installed: boolPointer(true), Version: "5.0.0"},
 			},
 			caps: []model.Capability{
 				{
@@ -81,12 +81,12 @@ func TestNewReportFromModel(t *testing.T) {
 			name: "fallback to current identity when target is empty",
 			evalCtx: model.EvaluationContext{
 				Identity: model.IdentityContext{
-					Current: model.UserIdentity{UID: 1001, GID: 1001, Username: "developer"},
+					Current: &model.UserIdentity{UID: 1001, GID: 1001, Username: "developer"},
 				},
 				Host: model.HostContext{
 					OS:            "debian",
 					OSVersion:     "12",
-					SystemdActive: false,
+					SystemdActive: boolPointer(false),
 				},
 			},
 			runtimes:     nil,
@@ -102,8 +102,8 @@ func TestNewReportFromModel(t *testing.T) {
 			name: "target identity with only UID is considered populated",
 			evalCtx: model.EvaluationContext{
 				Identity: model.IdentityContext{
-					Current: model.UserIdentity{UID: 2000, GID: 2000, Username: "foo"},
-					Target:  model.UserIdentity{UID: 1000},
+					Current: &model.UserIdentity{UID: 2000, GID: 2000, Username: "foo"},
+					Target:  &model.UserIdentity{UID: 1000},
 				},
 				Host: model.HostContext{
 					OS: "fedora",
@@ -120,16 +120,16 @@ func TestNewReportFromModel(t *testing.T) {
 			t.Parallel()
 
 			r := output.NewReportFromModel(tt.evalCtx, tt.runtimes, tt.caps)
-			if r.Context.UID != tt.wantUID {
+			if r.Context.UID == nil || *r.Context.UID != tt.wantUID {
 				t.Errorf("UID: got %d, want %d", r.Context.UID, tt.wantUID)
 			}
-			if r.Context.GID != tt.wantGID {
+			if r.Context.GID == nil || *r.Context.GID != tt.wantGID {
 				t.Errorf("GID: got %d, want %d", r.Context.GID, tt.wantGID)
 			}
 			if r.Context.TargetUser != tt.wantUser {
 				t.Errorf("TargetUser: got %q, want %q", r.Context.TargetUser, tt.wantUser)
 			}
-			if r.Host.Systemd != tt.wantSystemd {
+			if (r.Host.Systemd != nil && *r.Host.Systemd) != tt.wantSystemd {
 				t.Errorf("Host.Systemd: got %v, want %v", r.Host.Systemd, tt.wantSystemd)
 			}
 			if len(r.Runtimes) != tt.wantRuntimes {
@@ -273,9 +273,9 @@ func TestReport_Validate(t *testing.T) {
 			Kernel:        "6.0",
 			Architecture:  "x86_64",
 			CgroupVersion: "v2",
-			Systemd:       true,
+			Systemd:       testPointer(true),
 		}
-		r.Capabilities["test.cap"] = output.CapabilityReport{
+		r.Capabilities["runtime.test"] = output.CapabilityReport{
 			State:      "supported",
 			Confidence: "verified",
 			Evidence:   []string{"ev=1"},
@@ -345,9 +345,9 @@ func TestReport_Validate(t *testing.T) {
 		{
 			name: "invalid capability state returns error",
 			mutate: func(r *output.Report) *output.Report {
-				c := r.Capabilities["test.cap"]
+				c := r.Capabilities["runtime.test"]
 				c.State = "super_supported"
-				r.Capabilities["test.cap"] = c
+				r.Capabilities["runtime.test"] = c
 				return r
 			},
 			wantError: true,
@@ -355,9 +355,9 @@ func TestReport_Validate(t *testing.T) {
 		{
 			name: "invalid capability confidence returns error",
 			mutate: func(r *output.Report) *output.Report {
-				c := r.Capabilities["test.cap"]
+				c := r.Capabilities["runtime.test"]
 				c.Confidence = "super_confident"
-				r.Capabilities["test.cap"] = c
+				r.Capabilities["runtime.test"] = c
 				return r
 			},
 			wantError: true,
@@ -365,9 +365,9 @@ func TestReport_Validate(t *testing.T) {
 		{
 			name: "nil capability evidence returns error",
 			mutate: func(r *output.Report) *output.Report {
-				c := r.Capabilities["test.cap"]
+				c := r.Capabilities["runtime.test"]
 				c.Evidence = nil
-				r.Capabilities["test.cap"] = c
+				r.Capabilities["runtime.test"] = c
 				return r
 			},
 			wantError: true,
@@ -389,3 +389,5 @@ func TestReport_Validate(t *testing.T) {
 		})
 	}
 }
+
+func boolPointer(value bool) *bool { return &value }

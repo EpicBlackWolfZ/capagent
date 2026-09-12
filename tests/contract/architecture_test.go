@@ -165,6 +165,7 @@ var ArchitectureRules = []Rule{
 			pkgInternalModel, pkgInternalPlatform, pkgInternalProbe, pkgInternalCapability,
 			pkgInternalRequirement, pkgInternalOutput, pkgInternalHost, pkgInternalRuntime,
 			pkgInternalConfig, pkgInternalKnowledge, pkgInternalDiagnostics, "internal/version",
+			"internal/fixture",
 		},
 		Rationale: "application owns composition; it must not depend on cmd",
 	},

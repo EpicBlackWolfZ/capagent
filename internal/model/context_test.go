@@ -35,14 +35,14 @@ func TestEvaluationContext_ConstructionAndSeparation(t *testing.T) {
 	}
 
 	idCtx := model.IdentityContext{
-		Current:        currentIdentity,
-		Target:         targetIdentity,
-		IsRootless:     true,
+		Current:        &currentIdentity,
+		Target:         &targetIdentity,
+		IsRootless:     boolPointer(true),
 		SubUIDRanges:   subUIDs,
 		SubGIDRanges:   subGIDs,
 		XDGRuntimeDir:  "/run/user/1000",
-		HasUserSystemd: true,
-		InContainer:    false,
+		HasUserSystemd: boolPointer(true),
+		InContainer:    boolPointer(false),
 	}
 
 	hostCtx := model.HostContext{
@@ -51,7 +51,7 @@ func TestEvaluationContext_ConstructionAndSeparation(t *testing.T) {
 		Kernel:        "5.14.0-427.el9.x86_64",
 		Architecture:  "x86_64",
 		CgroupVersion: "v2",
-		SystemdActive: true,
+		SystemdActive: boolPointer(true),
 	}
 
 	runtimeCtx := model.RuntimeContext{
@@ -77,7 +77,7 @@ func TestEvaluationContext_ConstructionAndSeparation(t *testing.T) {
 	if evalCtx.Identity.Target.UID != 1000 || evalCtx.Identity.Target.Username != "appuser" {
 		t.Errorf("expected Target identity UID=1000, got %d", evalCtx.Identity.Target.UID)
 	}
-	if !evalCtx.Identity.IsRootless {
+	if evalCtx.Identity.IsRootless == nil || !*evalCtx.Identity.IsRootless {
 		t.Error("expected IsRootless to be true")
 	}
 	if len(evalCtx.Identity.SubUIDRanges) != 1 || evalCtx.Identity.SubUIDRanges[0].Start != 100000 {
@@ -104,22 +104,22 @@ func TestEvaluationContext_Serialization(t *testing.T) {
 			Kernel:        "5.14.0-427.el9.x86_64",
 			Architecture:  "x86_64",
 			CgroupVersion: "v2",
-			SystemdActive: true,
+			SystemdActive: boolPointer(true),
 		},
 		Identity: model.IdentityContext{
-			Current: model.UserIdentity{
+			Current: &model.UserIdentity{
 				UID:      0,
 				GID:      0,
 				Username: "root",
 				HomeDir:  "/root",
 			},
-			Target: model.UserIdentity{
+			Target: &model.UserIdentity{
 				UID:      1000,
 				GID:      1000,
 				Username: "appuser",
 				HomeDir:  "/home/appuser",
 			},
-			IsRootless: true,
+			IsRootless: boolPointer(true),
 			SubUIDRanges: []model.SubIDRange{
 				{Start: 100000, Length: 65536},
 			},
@@ -127,8 +127,8 @@ func TestEvaluationContext_Serialization(t *testing.T) {
 				{Start: 100000, Length: 65536},
 			},
 			XDGRuntimeDir:  "/run/user/1000",
-			HasUserSystemd: true,
-			InContainer:    false,
+			HasUserSystemd: boolPointer(true),
+			InContainer:    boolPointer(false),
 		},
 		Runtime: model.RuntimeContext{
 			ActiveRuntimes: []string{testRuntimePodman},
@@ -170,3 +170,4 @@ func TestEvaluationContext_Serialization(t *testing.T) {
 	}
 }
 
+func boolPointer(value bool) *bool { return &value }

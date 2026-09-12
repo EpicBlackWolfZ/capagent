@@ -154,11 +154,11 @@ func TestSchemaV1_MarshalGoStruct(t *testing.T) {
 
 	report := output.NewReport()
 	report.Context = output.Context{
-		UID:         1000,
-		GID:         1000,
+		UID:         testPointer(uint32(1000)),
+		GID:         testPointer(uint32(1000)),
 		TargetUser:  "developer",
-		IsRootless:  true,
-		InContainer: false,
+		IsRootless:  testPointer(true),
+		InContainer: testPointer(false),
 	}
 	report.Host = output.Host{
 		OS:            "fedora",
@@ -166,12 +166,12 @@ func TestSchemaV1_MarshalGoStruct(t *testing.T) {
 		Kernel:        "6.8.5-301.fc40.x86_64",
 		Architecture:  "x86_64",
 		CgroupVersion: "v2",
-		Systemd:       true,
+		Systemd:       testPointer(true),
 	}
 	report.Runtimes["podman"] = output.RuntimeInfo{
-		Installed:      true,
+		Installed:      testPointer(true),
 		Version:        "5.0.1",
-		Accessible:     true,
+		Accessible:     testPointer(true),
 		NetworkBackend: "netavark",
 		StorageDriver:  "overlay",
 	}
@@ -202,8 +202,8 @@ func TestSchemaV1_NonMutatingSerialization(t *testing.T) {
 
 	report := output.NewReport()
 	report.Context = output.Context{
-		UID:        1000,
-		GID:        1000,
+		UID:        testPointer(uint32(1000)),
+		GID:        testPointer(uint32(1000)),
 		TargetUser: "testuser",
 	}
 	report.Host = output.Host{
@@ -216,7 +216,7 @@ func TestSchemaV1_NonMutatingSerialization(t *testing.T) {
 
 	// Deliberately unsorted evidence
 	originalEvidence := []string{"zeta=3", "alpha=1", "mu=2"}
-	report.Capabilities["test.cap"] = output.CapabilityReport{
+	report.Capabilities["runtime.test"] = output.CapabilityReport{
 		State:      "supported",
 		Confidence: "verified",
 		Evidence:   originalEvidence,
@@ -245,7 +245,7 @@ func TestSchemaV1_NonMutatingSerialization(t *testing.T) {
 	}
 
 	// Verify the original slice ordering was preserved
-	currentEvidence := report.Capabilities["test.cap"].Evidence
+	currentEvidence := report.Capabilities["runtime.test"].Evidence
 	if !reflect.DeepEqual(currentEvidence, []string{"zeta=3", "alpha=1", "mu=2"}) {
 		t.Errorf("evidence slice in caller's report was mutated: got %v, want %v", currentEvidence, originalEvidence)
 	}
@@ -256,8 +256,8 @@ func TestSchemaV1_NonMutatingSerialization(t *testing.T) {
 		t.Fatalf("failed to unmarshal marshaled JSON: %v", err)
 	}
 	wantSorted := []string{"alpha=1", "mu=2", "zeta=3"}
-	if !reflect.DeepEqual(outReport.Capabilities["test.cap"].Evidence, wantSorted) {
-		t.Errorf("marshaled evidence was not sorted: got %v, want %v", outReport.Capabilities["test.cap"].Evidence, wantSorted)
+	if !reflect.DeepEqual(outReport.Capabilities["runtime.test"].Evidence, wantSorted) {
+		t.Errorf("marshaled evidence was not sorted: got %v, want %v", outReport.Capabilities["runtime.test"].Evidence, wantSorted)
 	}
 }
 
@@ -267,8 +267,8 @@ func TestSchemaV1_DeterministicByteStability(t *testing.T) {
 
 	report := output.NewReport()
 	report.Context = output.Context{
-		UID:        1000,
-		GID:        1000,
+		UID:        testPointer(uint32(1000)),
+		GID:        testPointer(uint32(1000)),
 		TargetUser: "testuser",
 	}
 	report.Host = output.Host{
@@ -393,7 +393,7 @@ func TestSchemaV1_DiagnosticsAndEdgeCases(t *testing.T) {
 				"host": {"os": "linux", "os_version": "1", "kernel": "6", "architecture": "x86_64", "cgroup_version": "v2", "systemd": true},
 				"runtimes": {},
 				"capabilities": {
-					"test": {
+					"runtime.test": {
 						"confidence": "verified",
 						"evidence": []
 					}
@@ -409,7 +409,7 @@ func TestSchemaV1_DiagnosticsAndEdgeCases(t *testing.T) {
 				"host": {"os": "linux", "os_version": "1", "kernel": "6", "architecture": "x86_64", "cgroup_version": "v2", "systemd": true},
 				"runtimes": {},
 				"capabilities": {
-					"test": {
+					"runtime.test": {
 						"state": "super_supported",
 						"confidence": "verified",
 						"evidence": []
@@ -426,7 +426,7 @@ func TestSchemaV1_DiagnosticsAndEdgeCases(t *testing.T) {
 				"host": {"os": "linux", "os_version": "1", "kernel": "6", "architecture": "x86_64", "cgroup_version": "v2", "systemd": true},
 				"runtimes": {},
 				"capabilities": {
-					"test": {
+					"runtime.test": {
 						"state": "supported",
 						"confidence": "verified"
 					}
@@ -453,7 +453,7 @@ func TestSchemaV1_DiagnosticsAndEdgeCases(t *testing.T) {
 				"host": {"os": "linux", "os_version": "1", "kernel": "6", "architecture": "x86_64", "cgroup_version": "v2", "systemd": true},
 				"runtimes": {},
 				"capabilities": {
-					"test": {
+					"runtime.test": {
 						"state": "unsupported",
 						"confidence": "verified",
 						"reason": "error: \"permission denied\" on path /run/user/0\n\tfailed syscall \\ socket connection\nunicode: 🚀",
@@ -479,3 +479,5 @@ func TestSchemaV1_DiagnosticsAndEdgeCases(t *testing.T) {
 		})
 	}
 }
+
+func testPointer[T any](value T) *T { return &value }

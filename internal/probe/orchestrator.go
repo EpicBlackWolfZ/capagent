@@ -322,6 +322,10 @@ func (o *Orchestrator) processProbe(
 	// Execute the probe.
 	start := time.Now()
 	obs, runErr := p.Run(ctx, env)
+	obs, scopeErr := retainObservation(obs, env.Scope())
+	if scopeErr != nil {
+		runErr = errors.Join(runErr, scopeErr)
+	}
 	duration := time.Since(start)
 
 	var result ProbeResult

@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "context": {
+    "completeness": "partial",
+    "uid": 1000,
+    "gid": 1000,
+    "target_user": "fixture-user",
+    "is_rootless": null,
+    "in_container": null
+  },
+  "host": {
+    "completeness": "unobserved",
+    "os": "unknown",
+    "os_version": "",
+    "kernel": "",
+    "architecture": "",
+    "cgroup_version": "unknown",
+    "systemd": null
+  },
+  "runtimes": {
+    "podman": {
+      "completeness": "partial",
+      "installed": null,
+      "version": "5.8.1",
+      "accessible": true,
+      "storage_driver": "overlay"
+    }
+  },
+  "capabilities": {
+    "runtime.podman.netavark": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    }
+  },
+  "evaluation": {
+    "mode": "fixture",
+    "provenance": "synthetic",
+    "scope": {
+      "run_id": "fixture-unknown",
+      "context_id": "fixture-user",
+      "runtime": "podman",
+      "endpoint": "local"
+    },
+    "timestamp": "2026-09-12T00:00:00Z",
+    "current": {
+      "uid": 1000,
+      "gid": 1000,
+      "supplementary_groups": [
+        1000
+      ],
+      "groups_known": true
+    },
+    "target": {
+      "uid": 1000,
+      "gid": 1000,
+      "supplementary_groups": [
+        1000
+      ],
+      "groups_known": true
+    },
+    "namespaces": [
+      {
+        "kind": "mount",
+        "id": "fixture-mountns"
+      },
+      {
+        "kind": "user",
+        "id": "fixture-userns"
+      }
+    ],
+    "observations": [
+      {
+        "id": "podman.info",
+        "probe_id": "podman.info",
+        "scope": {
+          "run_id": "fixture-unknown",
+          "context_id": "fixture-user",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-12T00:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.info.stdout",
+            "source": "podman.info",
+            "timestamp": "2026-09-12T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "missing_network_backend",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "podman.info.netavark",
+        "source": "podman effective info and helper metadata",
+        "claim": "runtime.podman.netavark",
+        "scope": {
+          "run_id": "fixture-unknown",
+          "context_id": "fixture-user",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-12T00:00:00Z",
+        "completeness": "partial",
+        "precedence": "runtime",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.info"
+        ],
+        "depends_on": []
+      }
+    ],
+    "requirement": {
+      "state": "INDETERMINATE",
+      "reason": "any complete deployment candidate",
+      "diagnostics": [
+        {
+          "code": "indeterminate_capability",
+          "message": "runtime.podman.netavark: unknown"
+        }
+      ],
+      "children": [
+        {
+          "state": "INDETERMINATE",
+          "reason": "runtime.podman.netavark: unknown",
+          "scope": {
+            "run_id": "fixture-unknown",
+            "context_id": "fixture-user",
+            "runtime": "podman",
+            "endpoint": "local"
+          },
+          "diagnostics": [
+            {
+              "code": "indeterminate_capability",
+              "message": "runtime.podman.netavark: unknown"
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "code": "missing_network_backend",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.info.netavark"
+      },
+      {
+        "code": "indeterminate_capability",
+        "message": "runtime.podman.netavark: unknown"
+      }
+    ]
+  }
+}

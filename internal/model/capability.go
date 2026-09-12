@@ -19,6 +19,7 @@ var (
 		"network":   {},
 		"storage":   {},
 		"systemd":   {},
+		"context":   {},
 	}
 )
 
@@ -92,19 +93,28 @@ func (id CapabilityID) Validate() error {
 // EvidenceRef identifies an authoritative evidence item supporting a capability.
 //
 // At the domain model layer, EvidenceRef is an opaque reference identifier. Relational
-// graph integrity, acyclicity, and dangling reference checks are explicitly deferred to
-// the capability/evidence dependency graph engine (Milestone 8).
+// graph integrity, acyclicity, and dangling reference checks belong to
+// internal/capability, which validates the evaluation graph before resolution.
 type EvidenceRef struct {
 	ID string `json:"id"`
 }
 
 // Capability represents an authoritative feature determination.
 type Capability struct {
+	Scope      EvaluationScope `json:"scope"`
 	ID         CapabilityID    `json:"id"`
 	State      CapabilityState `json:"state"`
 	Confidence ConfidenceLevel `json:"confidence"`
 	Reason     string          `json:"reason,omitempty"`
 	Evidence   []EvidenceRef   `json:"evidence,omitempty"`
+}
+
+// Candidate is one independently evaluated deployment. Requirements evaluate
+// each candidate as a whole; its capabilities cannot be pooled with another.
+type Candidate struct {
+	Scope        EvaluationScope `json:"scope"`
+	Capabilities []Capability    `json:"capabilities"`
+	Evidence     []Evidence      `json:"evidence"`
 }
 
 // Validate verifies that the Capability fields are structurally valid.

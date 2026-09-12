@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "run_id": "fixture-unsupported",
+  "timestamp": "2026-09-12T00:00:00Z",
+  "provenance": {
+    "kind": "synthetic",
+    "description": "Derived Podman-shaped input for the unsupported configuration case; not a live capture"
+  },
+  "context": {
+    "id": "fixture-user",
+    "identity": {
+      "current": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "fixture-user",
+        "home_dir": "/home/fixture-user",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      },
+      "target": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "fixture-user",
+        "home_dir": "/home/fixture-user",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      }
+    },
+    "namespaces": [
+      {
+        "kind": "user",
+        "id": "fixture-userns"
+      },
+      {
+        "kind": "mount",
+        "id": "fixture-mountns"
+      }
+    ]
+  },
+  "runtime": "podman",
+  "endpoint": "local",
+  "files": [
+    {
+      "path": "usr",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/libexec",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/libexec/podman",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/libexec/podman/netavark",
+      "kind": "file",
+      "mode": 493,
+      "uid": 0,
+      "gid": 0
+    }
+  ],
+  "commands": [
+    {
+      "path": "/usr/bin/podman",
+      "args": [
+        "--remote=false",
+        "info",
+        "--format",
+        "json"
+      ],
+      "environment": {
+        "LC_ALL": "C"
+      },
+      "directory": "/",
+      "timeout_ms": 1000,
+      "stdout": "{\"version\":{\"Version\":\"5.8.1\"},\"host\":{\"networkBackend\":\"cni\",\"networkBackendInfo\":{\"path\":\"/usr/libexec/podman/netavark\"},\"security\":{\"rootless\":true}},\"store\":{\"graphDriverName\":\"overlay\"}}",
+      "stderr": "",
+      "exit_code": 0
+    }
+  ],
+  "requirement": {
+    "capability": "runtime.podman.netavark"
+  }
+}

@@ -2,7 +2,7 @@
 
 ## Current availability
 
-The current CLI provides help, version information and a startup banner. Host evaluation and JSON report commands are planned in [M1.2](https://github.com/EpicBlackWolfZ/capagent/milestone/24). The existing platform/probe packages are infrastructure, and their [M1.1 hardening gate](https://github.com/EpicBlackWolfZ/capagent/issues/49) remains open. Their presence is not a claim of production-ready host scanning.
+The CLI supports [offline fixture evaluation](fixture-evaluation.md), including JSON reports and requirement verdicts. It reads the selected fixture through kernel-backed confinement and simulates every fixture command through the existing fake runner. It never invokes live Podman. The M1.1 platform/probe hardening contracts and full verification gate continue to apply.
 
 Execution targets Linux 5.6+ with working `openat2` confinement on amd64 and arm64. Syscall availability and security policy matter in addition to kernel version. `NewScopedOSReader` reports unsupported syscall availability or the relevant policy error when confinement cannot be established. There is no insecure pathname fallback. Older distribution fixtures, including historical RHEL 8 data, test parsers; they do not establish support for execution on those kernels.
 
@@ -10,7 +10,7 @@ Execution targets Linux 5.6+ with working `openat2` confinement on amd64 and arm
 
 Default evaluation is intended to observe host and runtime state without creating containers, pulling images, changing namespaces, writing configuration or modifying networking. Native filesystem/kernel APIs are preferred. Bounded read-only system metadata interrogation may be used through an explicit execution policy when needed.
 
-A command called `info` is not automatically passive. An adapter must verify that its chosen interrogation does not initialize storage or otherwise mutate host state. Network reachability, registry authentication, writable storage tests and disposable container execution belong to the separate, explicitly enabled active track. `--active` is not currently implemented; future active dispatch must be opt-in and isolated from default evaluation.
+A command called `info` is not automatically passive. An adapter must verify that its chosen interrogation does not initialize storage or otherwise mutate host state. Network reachability, registry authentication, writable storage tests and disposable container execution belong to the separate, explicitly enabled active track. `--active` is currently rejected; future active dispatch must be opt-in and isolated from default evaluation.
 
 Passive inspection may establish configuration or prerequisites without proving end-to-end usability. Confidence and evidence must reflect that distinction.
 

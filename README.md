@@ -67,7 +67,7 @@ Deployment Decision
 
 ## Current Status and Roadmap
 
-The current CLI provides `--help` and `--version`; it does not yet evaluate hosts or accept `--json`. M0 and the initial M1 scaffolding are delivered. M1.1 foundation hardening and its permanent verification gate are implemented; milestone closure requires a passing gate on the merged commit. The M1.2 context/evaluation slice follows. The full [roadmap](docs/roadmap.md) links each deliverable to its GitHub issues and milestones.
+The CLI now replays offline fixtures with `--fixture DIR --json --pretty`, evaluates one Podman Netavark configuration capability and emits a scoped evidence/requirement report. See [fixture evaluation](docs/fixture-evaluation.md) for commands, exit codes and the executable consumer. M1.1 hardening is implemented; this M1.2 slice provides the shared evaluation path. Live host and Podman discovery remain next. Schema v1 is still pre-release. The [roadmap](docs/roadmap.md) tracks broader delivery.
 
 Execution targets Linux 5.6+ with working `openat2` confinement on amd64/arm64. Historical distribution fixtures do not imply supported execution on older kernels. See the [security and support contract](docs/security.md).
 
@@ -76,11 +76,11 @@ Execution targets Linux 5.6+ with working `openat2` confinement on amd64/arm64. 
 | [M0 — Architecture & Contract](https://github.com/EpicBlackWolfZ/capagent/milestone/1) | Initial skeleton delivered | Initial models, state algebra and schema skeleton; remaining semantics have explicit follow-ups. |
 | [M1 — Probe Core](https://github.com/EpicBlackWolfZ/capagent/milestone/2) | Initial foundation delivered | Static payload, OS abstractions and scheduler scaffolding; host-report CLI is not delivered. |
 | [M1.1 — Hardening, Security & Performance](https://github.com/EpicBlackWolfZ/capagent/milestone/23) | Active gate | Confinement, descriptor ownership, bounded I/O, parser fidelity, execution/build policy and regression gate. |
-| [M1.2 — Context & Evaluation Slice](https://github.com/EpicBlackWolfZ/capagent/milestone/24) | Queued; pure work may overlap | Typed context/evidence, minimal evaluator/requirements, reusable fixtures, application lifecycle and JSON consumer smoke. |
+| [M1.2 — Context & Evaluation Slice](https://github.com/EpicBlackWolfZ/capagent/milestone/24) | Implemented fixture slice | Typed context/evidence, minimal evaluator/requirements, reusable fixtures, application lifecycle and JSON consumer smoke. |
 | [M2 — Host Facts](https://github.com/EpicBlackWolfZ/capagent/milestone/3) | Queued | First live host probes, mockable syscall adapters and real-host JSON validation. |
 | [M3 — Execution Context](https://github.com/EpicBlackWolfZ/capagent/milestone/4) | Queued | Target identity validation, groups, subordinate ranges, helper metadata, XDG and user systemd. |
 | [M4 — Runtime Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/5) | Queued | Explicit binary/endpoint/identity policy and runtime availability. |
-| [M5 — Podman Core](https://github.com/EpicBlackWolfZ/capagent/milestone/6) | Queued | Bounded passive version/effective-info observations and first real rootless fixture. |
+| [M5 — Podman Core](https://github.com/EpicBlackWolfZ/capagent/milestone/6) | Queued | Version discovery and explicitly gated effective-info observations and first real rootless fixture. |
 | [M6 — Configuration Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/7) | Queued | Effective configuration and provenance across source/user scopes. |
 | [M7 — Configuration Capabilities](https://github.com/EpicBlackWolfZ/capagent/milestone/8) | Queued | Use the M1.2 evaluator for registry/storage/network mappings. |
 | [M8 — Capability Catalog Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/9) | Queued | Expand lifecycle and dependency mappings; engine infrastructure already exists. |

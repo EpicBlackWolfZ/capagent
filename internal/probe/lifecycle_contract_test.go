@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -91,7 +92,7 @@ func TestOrchestrator_PreservesPartialObservation(t *testing.T) {
 			if got[0].Status != expectedStatus || got[0].Err == nil {
 				t.Errorf("outcome = %+v", got[0])
 			}
-			if got[0].Observation != want {
+			if !reflect.DeepEqual(got[0].Observation, want) {
 				t.Errorf("observation = %+v", got[0].Observation)
 			}
 			if got[1].Status != probe.ProbeSkipped {
