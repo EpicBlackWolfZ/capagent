@@ -92,7 +92,9 @@ func (s Scope) Validate() error {
 	return (model.EvaluationScope{RunID: s.RunID, ContextID: s.ContextID, Runtime: s.Runtime, Endpoint: s.Endpoint}).IsValid()
 }
 func (e *EvaluationTrace) Validate() error {
-	if e.Mode != "fixture" || (e.Provenance != "synthetic" && e.Provenance != "captured") || e.Timestamp.IsZero() {
+	fixture := e.Mode == "fixture" && (e.Provenance == "synthetic" || e.Provenance == "captured")
+	live := e.Mode == "live" && e.Provenance == "live"
+	if (!fixture && !live) || e.Timestamp.IsZero() {
 		return errors.New("invalid evaluation mode, provenance or timestamp")
 	}
 	if err := e.Scope.Validate(); err != nil {

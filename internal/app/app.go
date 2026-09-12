@@ -1,5 +1,5 @@
-// Package app owns application composition and the fixture-to-report lifecycle.
-// It performs no host I/O directly and never constructs a live command runner.
+// Package app owns application composition and the observation-to-report lifecycle.
+// Passive live discovery never constructs a command runner.
 package app
 
 import (
@@ -28,20 +28,27 @@ const (
 )
 
 type Options struct {
-	Fixture string
-	Pretty  bool
-	Debug   bool
-	Active  bool
+	Fixture    string
+	Pretty     bool
+	Debug      bool
+	Active     bool
+	Runtime    string
+	Context    string
+	PodmanPath string
 }
 
 // Input is a single explicit deployment candidate. All data is borrowed during
 // the call; Evaluate snapshots context metadata before starting workers.
 type Input struct {
-	Scope       model.EvaluationScope
-	Context     model.EvaluationContext
-	At          time.Time
-	Provenance  string
-	Requirement *requirement.Node
+	Scope        model.EvaluationScope
+	Context      model.EvaluationContext
+	At           time.Time
+	Provenance   string
+	Requirement  *requirement.Node
+	Mode         string
+	Now          func() time.Time
+	Observations []model.Observation
+	Definitions  []capability.Definition
 }
 
 // Evaluate joins every worker before returning and never closes borrowed
@@ -53,6 +60,9 @@ func Evaluate(ctx context.Context, input Input, env platform.Environment, probes
 	}
 	input.Context = snapshotContext(input.Context)
 	dataset := capability.Dataset{RunID: input.Scope.RunID, At: input.At, Contexts: []model.EvaluationContext{input.Context}}
+	for _, obs := range input.Observations {
+		dataset.Observations = append(dataset.Observations, probe.SnapshotObservation(obs))
+	}
 	if err := capability.ValidateDataset(dataset); err != nil {
 		return nil, err
 	}
@@ -74,7 +84,18 @@ func Evaluate(ctx context.Context, input Input, env platform.Environment, probes
 			dataset.Observations = append(dataset.Observations, result.Observation)
 		}
 	}
-	capabilities, err := capability.NewRegistry([]capability.Definition{capability.NetavarkDefinition()})
+	if err := validateRuntimeSelection(input.Scope, dataset.Observations); err != nil {
+		return nil, err
+	}
+	if input.Now != nil {
+		input.At = input.Now()
+		dataset.At = input.At
+	}
+	definitions := input.Definitions
+	if definitions == nil {
+		definitions = []capability.Definition{capability.NetavarkDefinition()}
+	}
+	capabilities, err := capability.NewRegistry(definitions)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +109,32 @@ func Evaluate(ctx context.Context, input Input, env platform.Environment, probes
 		return nil, err
 	}
 	return report, nil
+}
+
+func validateRuntimeSelection(scope model.EvaluationScope, observations []model.Observation) error {
+	var selected string
+	for _, obs := range observations {
+		if obs.Scope != scope {
+			return errors.New("application observation scope mismatch")
+		}
+		var paths []string
+		if obs.Discovery != nil {
+			paths = append(paths, obs.Discovery.Path)
+		}
+		if obs.Version != nil {
+			paths = append(paths, obs.Version.Path)
+		}
+		for _, path := range paths {
+			if path == "" {
+				continue
+			}
+			if selected != "" && selected != path {
+				return errors.New("application executable selection mismatch")
+			}
+			selected = path
+		}
+	}
+	return nil
 }
 
 func evaluateOwned(
@@ -106,6 +153,12 @@ func evaluateFixture(ctx context.Context, doc *fixture.Document) (*output.Report
 	input := Input{Scope: doc.Scope(), Context: doc.Context, At: doc.Timestamp, Provenance: doc.Provenance.Kind,
 		Requirement: services.Requirement}
 	probes := []probe.Probe{podman.InfoProbe{Command: services.Command, Timestamp: doc.Timestamp}}
+	if doc.Probe == "version" {
+		input.Definitions = []capability.Definition{capability.PodmanDefinition()}
+		now := func() time.Time { return doc.Timestamp }
+		probes = []probe.Probe{podman.DiscoveryProbe{Path: services.Command.Path, Now: now},
+			podman.VersionProbe{Command: services.Command, Now: now}}
+	}
 	return evaluateOwned(ctx, input, services.Environment, probes, services)
 }
 
@@ -113,26 +166,48 @@ func evaluateFixture(ctx context.Context, doc *fixture.Document) (*output.Report
 // Parser/command error strings may contain untrusted data and are not printed.
 // --debug emits structured codes and fixed application messages only.
 func Execute(ctx context.Context, opts Options, stdout, stderr io.Writer) int {
-	if opts.Active || opts.Fixture == "" {
-		return failure(stderr, ExitUsage, "select --fixture DIR; live and active evaluation are unavailable")
+	if !validOptions(opts) {
+		return failure(stderr, ExitUsage, "select --fixture DIR or --runtime podman with current context; active execution is unavailable")
 	}
+	var report *output.Report
+	var err error
+	if opts.Runtime != "" {
+		report, err = evaluateLive(ctx, opts)
+	} else {
+		var code int
+		report, code = readFixture(ctx, opts, stderr)
+		if code != 0 {
+			return code
+		}
+	}
+	if err != nil {
+		return failure(stderr, ExitExecution, "live evaluation failed")
+	}
+	return writeReport(report, opts, stdout, stderr)
+}
+
+func readFixture(ctx context.Context, opts Options, stderr io.Writer) (*output.Report, int) {
 	data, err := platform.ReadDocument(ctx, opts.Fixture, "fixture.json", fixture.MaxBytes)
 	if err != nil {
-		return failure(stderr, ExitExecution, "cannot read fixture document")
+		return nil, failure(stderr, ExitExecution, "cannot read fixture document")
 	}
 	doc, err := fixture.Parse(data)
 	if err != nil {
-		return failure(stderr, ExitUsage, "invalid fixture document")
+		return nil, failure(stderr, ExitUsage, "invalid fixture document")
 	}
 	report, err := evaluateFixture(ctx, doc)
 	if err != nil {
-		return failure(stderr, ExitExecution, "fixture evaluation failed")
+		return nil, failure(stderr, ExitExecution, "fixture evaluation failed")
 	}
+	return report, 0
+}
+
+func writeReport(report *output.Report, opts Options, stdout, stderr io.Writer) int {
 	encode := output.MarshalCompact
 	if opts.Pretty {
 		encode = output.Marshal
 	}
-	data, err = encode(report)
+	data, err := encode(report)
 	if err != nil {
 		return failure(stderr, ExitExecution, "report encoding failed")
 	}

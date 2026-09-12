@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "run_id": "version-nonzero",
+  "timestamp": "2026-09-12T00:00:00Z",
+  "provenance": {
+    "kind": "synthetic",
+    "description": "Synthetic identity and filesystem; successful version stdout captured from Fedora podman-5.8.4-1.fc44.x86_64 in an isolated test environment on 2026-09-13. Negative outcomes are synthetic."
+  },
+  "context": {
+    "id": "fixture-user",
+    "identity": {
+      "current": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "fixture-user",
+        "home_dir": "/home/fixture-user",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      },
+      "target": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "fixture-user",
+        "home_dir": "/home/fixture-user",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      }
+    },
+    "namespaces": [
+      {
+        "kind": "user",
+        "id": "fixture-userns"
+      },
+      {
+        "kind": "mount",
+        "id": "fixture-mountns"
+      }
+    ]
+  },
+  "runtime": "podman",
+  "endpoint": "local",
+  "files": [
+    {
+      "path": "usr",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/bin",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/bin/podman",
+      "kind": "file",
+      "mode": 493,
+      "uid": 0,
+      "gid": 0
+    }
+  ],
+  "commands": [
+    {
+      "path": "/usr/bin/podman",
+      "args": [
+        "--version"
+      ],
+      "directory": "/",
+      "timeout_ms": 1000,
+      "stdout": "podman version 5.8.4\n",
+      "exit_code": 1,
+      "stderr": "SECRET error"
+    }
+  ],
+  "requirement": {
+    "capability": "runtime.podman"
+  },
+  "probe": "version"
+}

@@ -4,7 +4,7 @@ This document defines the architectural boundaries, domain model, evaluation sem
 
 ## Implementation status and planned integration
 
-This document describes the current foundation and target architecture. The [M1.2 fixture slice](fixture-evaluation.md) implements the first complete evaluation path. Live host/runtime collection remains future work; M1.1 confinement, command authority and lifecycle contracts apply to every adapter. See [roadmap.md](roadmap.md) and [security.md](security.md) for limits.
+This document describes the current foundation and target architecture. The [M1.2 fixture slice](fixture-evaluation.md) implements the first complete evaluation path. [Current-user identity and static Podman discovery](podman-discovery.md) also use this pipeline; live runtime execution remains deferred; M1.1 confinement, command authority and lifecycle contracts apply to every adapter. See [roadmap.md](roadmap.md) and [security.md](security.md) for limits.
 
 The planned application/composition layer in [#61](https://github.com/EpicBlackWolfZ/capagent/issues/61) owns context selection, dependency construction, evaluation order and resource teardown after workers join. It sits above the pure engines and probe framework. `cmd/capagent` remains flags/formatting only, and `internal/probe` remains limited to model/platform dependencies. Today environments are caller-owned; `Orchestrator.Run` does not create or close them.
 
