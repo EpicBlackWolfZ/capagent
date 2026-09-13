@@ -121,7 +121,7 @@ func (p ConfiguredHelperProbe) candidate(ctx context.Context, files platform.Sco
 	if fallback && !info.IsDir() && !info.Mode().IsRegular() {
 		// LookPath can select an executable special file. Our suitable-program
 		// metadata does not measure that lookup access, so a later candidate
-		// cannot be asserted as selected. Never execute or open the special file.
+		// cannot be asserted as selected. Never execute or read the special file.
 		*obs, _ = failedRuntimeObservation(*obs, "configured_special_file_selection_unknown", platform.ErrIncomplete)
 		return true
 	}

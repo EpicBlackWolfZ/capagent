@@ -100,6 +100,17 @@ rootless command metadata, while reconstructing info JSON from published fields.
 It does not retain raw configuration contents or command output. Native execution
 evidence is Linux amd64; arm64 builds and packaging are checked statically.
 
+| Captured native environment | Target | Evidence |
+| --- | --- | --- |
+| Nobara 43, Podman 5.8.4 | Current rootless user | Local inspection, configuration and helper metadata |
+| Ubuntu 24.04, Podman 4.9.3 | Hosted runner account, rootless | Owned fresh/initialized inspection environment; sanitized initialized capture |
+| Ubuntu 24.04, Podman 4.9.3 | Host root | Owned fresh/initialized inspection environment; sanitized initialized capture |
+
+The permanent CI gate also validates delegated target contexts, passive syscall
+traces and denied/incomplete cases. These captures qualify interpretation of the
+observed packaging and configuration; distribution-specific patches, unqualified
+Podman versions and working workload networking remain outside that evidence.
+
 The search and defaults are pinned to upstream sources:
 [4.9.3 helper selection](https://github.com/containers/podman/blob/v4.9.3/vendor/github.com/containers/common/pkg/config/config.go),
 [5.8.4 helper selection](https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/pkg/config/config.go),
