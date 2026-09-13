@@ -76,12 +76,25 @@ jobs:
       - name: Verify passive Podman discovery as user and root
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends podman strace
+          sudo apt-get install -y --no-install-recommends podman strace uidmap
           mkdir -p .work/gate/podman
           CGO_ENABLED=0 go build -o .work/gate/podman/capagent ./cmd/capagent
           dpkg-query -W podman > .work/gate/podman/package.txt
           python3 -B scripts/podman-discovery-smoke.py --binary .work/gate/podman/capagent --output .work/gate/podman/user
           python3 -B scripts/podman-discovery-smoke.py --binary .work/gate/podman/capagent --output .work/gate/podman/root --sudo
+      - name: Verify active local inspection and remote rejection as user and root
+        run: |
+          curl --fail --silent --show-error --location \
+            https://github.com/podman-container-tools/podman/releases/download/v5.8.4/podman-remote-static-linux_amd64.tar.gz \
+            --output .work/gate/podman/remote.tar.gz
+          echo '3d2a1a45f668fe5c240deb8df83d9e2e415429fb91f8a7442985a636edf33654  .work/gate/podman/remote.tar.gz' | sha256sum --check
+          tar -xzf .work/gate/podman/remote.tar.gz -C .work/gate/podman
+          mkdir .work/gate/podman/remote-client
+          cp .work/gate/podman/bin/podman-remote-static-linux_amd64 .work/gate/podman/remote-client/podman
+          sudo -n env GITHUB_ACTIONS=true python3 -B scripts/podman-inspection-smoke.py \
+            --binary .work/gate/podman/capagent \
+            --remote-binary .work/gate/podman/remote-client/podman \
+            --output .work/gate/podman/active --user "$(id -un)" --ephemeral-host
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
