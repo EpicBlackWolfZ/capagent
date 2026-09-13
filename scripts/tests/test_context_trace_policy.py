@@ -102,5 +102,19 @@ class ContextTracePolicyTests(unittest.TestCase):
                 verify(BASE + suffix, Path('/capagent'), TARGET)
 
 
+class IdleThreadSignalPolicyTests(unittest.TestCase):
+    def test_idle_recipient_requires_prior_thread_lineage(self):
+        clone = '10 clone(flags=CLONE_VM|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD) = 11\n'
+        signal = '10 tgkill(10, 11, SIGURG) = 0\n'
+        verify(BASE + clone + signal, Path('/capagent'), TARGET)
+        for suffix in (signal, signal + clone,
+                       clone + signal.replace('10 tgkill(10', '20 tgkill(20'),
+                       clone + signal.replace('SIGURG', 'SIGKILL'),
+                       clone + signal.replace('SIGURG', 'SIGRT_1'),
+                       clone.replace(' = 11', ' = -1 EAGAIN (Resource temporarily unavailable)') + signal):
+            with self.subTest(suffix=suffix), self.assertRaises(ValueError):
+                verify(BASE + suffix, Path('/capagent'), TARGET)
+
+
 if __name__ == '__main__':
     unittest.main()

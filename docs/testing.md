@@ -209,6 +209,11 @@ Application tests cover concurrent borrowed services, close-after-join ownership
 
 ## Native Podman inspection evidence
 
+Runtime SIGURG recipients must have a successful prior clone in the validated
+thread lineage, even when an idle thread has no other selected syscalls. Complete
+terminal records and same-thread-group checks still apply. Credential signals
+remain restricted to the delegated worker.
+
 CI keeps the passive syscall smoke check for both the runner account and host root. It also builds a CGO-disabled capagent binary and runs `scripts/podman-inspection-smoke.py` on the disposable hosted machine. The active harness requires root, `GITHUB_ACTIONS=true` and `--ephemeral-host`; do not use it on a persistent host. It temporarily supplies owned rootful storage configuration and restores the original file even on failure. Rootless state uses dedicated HOME/XDG directories. Runtime state and traced pause processes remain until runner teardown; the harness never runs reset/prune.
 
 The root tracer uses `strace -u <account>` so UID/GID/groups and setuid mapping helpers retain their normal semantics. Both real accounts run fresh and initialized inspection. A delayed `execve` exceeds the version deadline and traces the runner's cancellation/reaping path. Configured remote mode and a checksum-pinned Podman 5.8.4 remote-only client must fail before any connection attempt. Local D-Bus, nscd and syslog attempts (including /var/run aliases) are recorded separately from remote transports. The rejection cases permit no connection attempts. Captured reports, syscall traces, environment policy, selected argv, process remnants and package identity are uploaded under `.work/gate/podman/`. These checks establish inspection behavior on the tested runner, not general workload readiness or a distribution support matrix.
