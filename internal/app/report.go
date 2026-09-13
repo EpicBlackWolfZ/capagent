@@ -61,6 +61,7 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 		record := output.ObservationRecord{ID: obs.ID, ProbeID: obs.ProbeID, Scope: output.ProjectScope(obs.Scope), Timestamp: obs.Timestamp,
 			Completeness: string(obs.Completeness), Facts: []output.FactRecord{}, Diagnostics: projectDiagnostics(obs.Diagnostics)}
 		projectIdentityObservation(&record, obs, input.Mode, report)
+		record.SubIDs = obs.SubIDs
 		if obs.Host != nil {
 			payload := output.HostObservation(*obs.Host)
 			record.Host = &payload
@@ -98,6 +99,7 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 		}
 	}
 	trace.Diagnostics = append(trace.Diagnostics, runtimeDiagnostics...)
+	projectContextCompleteness(report, observations)
 	report.Evaluation = trace
 	return report
 }
@@ -181,5 +183,22 @@ func projectIdentityObservation(record *output.ObservationRecord, obs model.Obse
 	}
 	if obs.Identity != nil {
 		report.Context.Completeness = string(obs.Completeness)
+	}
+}
+
+func projectContextCompleteness(report *output.Report, observations []model.Observation) {
+	seen := false
+	complete := true
+	for _, obs := range observations {
+		if obs.Identity != nil || obs.SubIDs != nil {
+			seen = true
+			complete = complete && obs.Completeness == model.Complete
+		}
+	}
+	if seen {
+		report.Context.Completeness = string(model.Partial)
+		if complete {
+			report.Context.Completeness = string(model.Complete)
+		}
 	}
 }

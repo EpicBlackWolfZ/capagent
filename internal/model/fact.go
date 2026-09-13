@@ -33,6 +33,7 @@ type ObservationRef struct {
 // Completeness and diagnostics survive failure; no generic attribute bag or
 // capability evaluation is part of the model.
 type Observation struct {
+	SubIDs       *SubIDObservation         `json:"subids,omitempty"`
 	Authority    string                    `json:"authority,omitempty"`
 	Identity     *IdentityObservation      `json:"identity,omitempty"`
 	Host         *HostObservation          `json:"host,omitempty"`

@@ -11,7 +11,10 @@ import (
 )
 
 type UnameInfo struct{ Release, Version, Machine string }
-type FilesystemInfo struct{ Type int64 }
+type FilesystemInfo struct {
+	Type                       int64
+	NoSUID, NoExec, FlagsKnown bool
+}
 
 // HostQueries exposes only fixed read-only operations. No operation changes credentials or namespaces.
 type HostQueries interface {
@@ -52,7 +55,8 @@ func (r *ScopedOSReader) StatFS(ctx context.Context, subpath string) (Filesystem
 		return FilesystemInfo{}, err
 	}
 	err := r.readSubpath(subpath, unix.O_PATH, func(fd int) error { return unix.Fstatfs(fd, &info) })
-	return FilesystemInfo{Type: info.Type}, err
+	return FilesystemInfo{Type: info.Type, NoSUID: info.Flags&unix.ST_NOSUID != 0,
+		NoExec: info.Flags&unix.ST_NOEXEC != 0, FlagsKnown: err == nil}, err
 }
 
 // NewScopedMemReaderWithFilesystems snapshots explicit filesystem mount responses.

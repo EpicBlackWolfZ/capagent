@@ -40,14 +40,16 @@ const (
 
 // VirtualFile is an in-memory filesystem node used exclusively by MemPlatformReader.
 type VirtualFile struct {
-	Ownership      FileOwnership
-	OwnershipKnown bool
-	Capabilities   CapabilityAttribute
-	CapabilityErr  error
-	Kind           VirtualFileKind
-	Content        []byte
-	Mode           os.FileMode
-	Target         string
+	ExecutableAccess *bool
+	AccessErr        error
+	Ownership        FileOwnership
+	OwnershipKnown   bool
+	Capabilities     CapabilityAttribute
+	CapabilityErr    error
+	Kind             VirtualFileKind
+	Content          []byte
+	Mode             os.FileMode
+	Target           string
 	// ForcedErr, when non-nil, is returned verbatim by ReadFile/Stat/ReadDir/Readlink.
 	// This is used by tests to simulate EACCES, EIO, or any other POSIX failure.
 	ForcedErr error

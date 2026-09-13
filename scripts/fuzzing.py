@@ -29,6 +29,7 @@ TARGETS = {
     'FuzzHostNetwork': ('tests/contract', 65536),
     'FuzzTargetRequest': ('internal/platform', 65536),
     'FuzzLocalIdentity': ('tests/contract', 65536),
+    'FuzzSubIDs': ('tests/contract', 65536),
 }
 
 

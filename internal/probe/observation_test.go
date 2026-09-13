@@ -110,3 +110,25 @@ func TestObservationRejectsChangedScope(t *testing.T) {
 }
 
 const changedObservation = "mutated observation"
+
+func TestSubIDObservationOwnsRangesAndPrivileges(t *testing.T) {
+	t.Parallel()
+	flag, owner, total := true, uint32(0), uint64(3)
+	r := model.SubIDRange{Start: 100000, Length: 3}
+	obs := model.Observation{SubIDs: &model.SubIDObservation{
+		UID: model.SubIDAllocation{Present: &flag, Valid: &flag, Total: &total, Ranges: []model.SubIDRange{r},
+			Records: []model.SubIDRecord{{Range: &r}}},
+		Helpers: []model.MappingHelper{{UID: &owner, Executable: &flag, PrivilegeBlocked: &flag,
+			Capabilities: &model.MappingCapabilities{RootID: &owner}}}}}
+	copy := probe.SnapshotObservation(obs)
+	flag = false
+	owner = 1000
+	total = 0
+	r.Length = 0
+	obs.SubIDs.UID.Ranges[0].Length = 0
+	if !*copy.SubIDs.UID.Valid || *copy.SubIDs.UID.Total != 3 || copy.SubIDs.UID.Ranges[0].Length != 3 ||
+		copy.SubIDs.UID.Records[0].Range.Length != 3 || *copy.SubIDs.Helpers[0].UID != 0 || !*copy.SubIDs.Helpers[0].PrivilegeBlocked ||
+		*copy.SubIDs.Helpers[0].Capabilities.RootID != 0 {
+		t.Fatal("subordinate observation retained input aliases")
+	}
+}

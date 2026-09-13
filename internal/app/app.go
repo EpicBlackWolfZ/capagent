@@ -98,6 +98,7 @@ func Evaluate(ctx context.Context, input Input, env platform.Environment, probes
 	if err := capability.ValidateDataset(dataset); err != nil {
 		return nil, err
 	}
+	input.Context = projectContextMeasurements(input.Context, dataset.Observations)
 	input.Context.Host, _ = projectHost(input.Context.Host, dataset.Observations)
 	dataset.Contexts[0] = input.Context
 	if input.Scope.Runtime == "" {
@@ -174,6 +175,11 @@ func evaluateFixture(ctx context.Context, doc *fixture.Document) (*output.Report
 	}
 	input := Input{Scope: doc.Scope(), Context: doc.Context, At: doc.Timestamp, Provenance: doc.Provenance.Kind,
 		Requirement: services.Requirement}
+	if doc.Probe == "context" {
+		now := func() time.Time { return doc.Timestamp }
+		probes := []probe.Probe{host.SubIDProbe{Target: *doc.Context.Identity.Target, Now: now}}
+		return evaluateOwned(ctx, input, services.Environment, probes, services)
+	}
 	if doc.Probe == "host" {
 		now := func() time.Time { return doc.Timestamp }
 		return evaluateOwned(ctx, input, services.Environment, host.Probes(now), services)

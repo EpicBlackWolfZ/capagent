@@ -8,6 +8,7 @@ from pathlib import Path
 import pwd
 import re
 import signal
+import stat
 import subprocess
 import tempfile
 import time
@@ -41,6 +42,33 @@ def verify_report(report, current, target, groups):
     expected = {kind: os.readlink('/proc/self/ns/' + kind) for kind in ('user', 'pid', 'net', 'mnt', 'ipc', 'uts', 'cgroup')}
     if observed != expected:
         raise ValueError('delegation changed namespaces')
+
+
+
+def verify_subids(report, account):
+    observations = [row['subids'] for row in report['evaluation']['observations'] if 'subids' in row]
+    if len(observations) != 1:
+        raise ValueError('missing subordinate ID observation')
+    subids = observations[0]
+    for pool, path in [('uid', '/etc/subuid'), ('gid', '/etc/subgid')]:
+        expected = []
+        for line in Path(path).read_text().splitlines():
+            if not line or line.startswith('#'):
+                continue
+            owner, start, length = line.split(':')
+            if owner == account.pw_name or owner.isdecimal() and int(owner) == account.pw_uid:
+                expected.append({'start': int(start), 'length': int(length)})
+        allocation = subids[pool]
+        if not expected or allocation['ranges'] != expected or allocation['total'] != sum(r['length'] for r in expected):
+            raise ValueError('rootless allocation differs from independent local-file observation')
+    for helper in subids['helpers']:
+        if helper['path'] not in [prefix + helper['name'] for prefix in ['/usr/bin/', '/usr/local/bin/', '/bin/']]:
+            raise ValueError('mapping helper path escaped fixed discovery')
+        metadata = Path(helper['path']).stat()
+        if helper['uid'] != metadata.st_uid or helper['mode'] != stat.S_IMODE(metadata.st_mode) & 0o777:
+            raise ValueError('mapping helper metadata mismatch')
+        if helper['setuid'] != bool(metadata.st_mode & stat.S_ISUID) or helper['usable'] is True:
+            raise ValueError('mapping privilege metadata was lost or overstated')
 
 
 def verify_trace(text, binary):
@@ -136,13 +164,18 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     environment = {'PATH': '/usr/bin:/bin', 'LC_ALL': 'C', 'HOME': '/deliberately-wrong-launcher-home',
                    'XDG_RUNTIME_DIR': '/deliberately-wrong-launcher-runtime', 'DBUS_SESSION_BUS_ADDRESS': 'tcp:host=127.0.0.1,port=9'}
-    for kind, selector in (('username', 'user:' + account.pw_name), ('numeric', 'uid:' + str(account.pw_uid))):
-        trace = None if args.packaged else output / (kind + '.strace')
-        report = run_case(binary, selector, environment, trace)
-        verify_report(report, 0, account.pw_uid, local_groups(account))
-        (output / (kind + '.json')).write_text(json.dumps(report, indent=2) + '\n')
-        if trace:
-            verify_trace(trace.read_text(), binary)
+    for execution in ('memfd', 'cache') if args.packaged else ('native',):
+        if args.packaged:
+            environment.update(MICROFAT_EXEC_MODE=execution, MICROFAT_CACHE_DIR=str(output / 'cache'))
+        for kind, selector in (('username', 'user:' + account.pw_name), ('numeric', 'uid:' + str(account.pw_uid))):
+            trace = None if args.packaged else output / (kind + '.strace')
+            report = run_case(binary, selector, environment, trace)
+            verify_report(report, 0, account.pw_uid, local_groups(account))
+            if not args.packaged:
+                verify_subids(report, account)
+            (output / (execution + '-' + kind + '.json')).write_text(json.dumps(report, indent=2) + '\n')
+            if trace:
+                verify_trace(trace.read_text(), binary)
     if not args.packaged:
         # Runtime directory setup belongs to the test harness, never the probe.
         runtime = Path('/run/user/' + str(account.pw_uid))

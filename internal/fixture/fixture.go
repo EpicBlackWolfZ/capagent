@@ -28,14 +28,18 @@ type Provenance struct {
 	Description string `json:"description"`
 }
 type File struct {
-	Path    string  `json:"path"`
-	Kind    string  `json:"kind"`
-	Mode    uint32  `json:"mode"`
-	UID     *uint32 `json:"uid,omitempty"`
-	GID     *uint32 `json:"gid,omitempty"`
-	Content string  `json:"content,omitempty"`
-	Target  string  `json:"target,omitempty"`
-	Failure string  `json:"failure,omitempty"`
+	ExecutableAccess  *bool                         `json:"executable_access,omitempty"`
+	AccessFailure     string                        `json:"access_failure,omitempty"`
+	Capabilities      *platform.CapabilityAttribute `json:"capabilities,omitempty"`
+	CapabilityFailure string                        `json:"capability_failure,omitempty"`
+	Path              string                        `json:"path"`
+	Kind              string                        `json:"kind"`
+	Mode              uint32                        `json:"mode"`
+	UID               *uint32                       `json:"uid,omitempty"`
+	GID               *uint32                       `json:"gid,omitempty"`
+	Content           string                        `json:"content,omitempty"`
+	Target            string                        `json:"target,omitempty"`
+	Failure           string                        `json:"failure,omitempty"`
 }
 type Command struct {
 	Path            string            `json:"path"`
@@ -124,12 +128,12 @@ func validate(d *Document) error {
 		return errors.New("fixture requires explicit captured or synthetic provenance")
 	}
 	switch d.Probe {
-	case "", "info", "version", "inspection", hostProbe:
+	case "", "info", "version", "inspection", hostProbe, contextProbe:
 	default:
 		return errors.New("unknown fixture probe")
 	}
 	commands := 1
-	if d.Probe == hostProbe {
+	if d.Probe == hostProbe || d.Probe == contextProbe {
 		commands = len(d.Commands)
 		if err := validateHost(d); err != nil {
 			return err
@@ -144,8 +148,12 @@ func validate(d *Document) error {
 	if _, err := parseRequirement(d); err != nil {
 		return err
 	}
+	return validateFiles(d.Files)
+}
+
+func validateFiles(files []File) error {
 	seen := make(map[string]bool)
-	for _, file := range d.Files {
+	for _, file := range files {
 		if platform.ValidateSubpath(file.Path) != nil || file.Path == "." || path.Clean(file.Path) != file.Path || seen[file.Path] {
 			return errors.New("invalid or duplicate fixture file path")
 		}
@@ -154,12 +162,17 @@ func validate(d *Document) error {
 			return errors.New("fixture ownership requires both UID and GID")
 		}
 		switch file.Kind {
-		case "file", "directory", "symlink", "error":
+		case "file", "directory", "symlink", "socket", "error":
 		default:
 			return errors.New("invalid fixture file kind")
 		}
-		if _, err := failure(file.Failure); err != nil {
-			return err
+		for _, code := range []string{file.Failure, file.AccessFailure, file.CapabilityFailure} {
+			if _, err := failure(code); err != nil {
+				return err
+			}
+		}
+		if file.Capabilities != nil && len(file.Capabilities.Bytes) > 256 {
+			return errors.New("fixture capability attribute too long")
 		}
 	}
 	return nil
@@ -201,11 +214,11 @@ func Open(d *Document) (*Services, error) {
 		return nil, err
 	}
 	files := platform.NewScopedMemReader("/", mem)
-	if d.Probe == hostProbe {
+	if d.Probe == hostProbe || d.Probe == contextProbe {
 		files = platform.NewScopedMemReaderWithFilesystems("/", mem, hostFilesystems(d))
 	}
 	env := platform.NewEnvironment(nil, nil, nil, runner).WithFiles(files).WithScope(d.Scope())
-	if d.Probe == hostProbe {
+	if d.Probe == hostProbe || d.Probe == contextProbe {
 		env = env.WithHost(hostSnapshot(d), platform.NewHostMetadata(runner))
 	}
 	services := &Services{Environment: env, Requirement: node, files: files}
@@ -229,6 +242,10 @@ func addFile(mem *platform.MemPlatformReader, file File) error {
 		mem.AddFile(name, []byte(file.Content), mode)
 	case "directory":
 		mem.AddDir(name, mode)
+	case "socket":
+		if err := mem.AddSpecial(name, mode|os.ModeSocket); err != nil {
+			return err
+		}
 	case "symlink":
 		mem.AddSymlink(name, file.Target)
 	case "error":
@@ -239,7 +256,26 @@ func addFile(mem *platform.MemPlatformReader, file File) error {
 		mem.AddError(name, err)
 	}
 	if file.UID != nil {
-		return mem.SetOwnership(name, platform.FileOwnership{UID: *file.UID, GID: *file.GID})
+		if err := mem.SetOwnership(name, platform.FileOwnership{UID: *file.UID, GID: *file.GID}); err != nil {
+			return err
+		}
+	}
+	if file.ExecutableAccess != nil || file.AccessFailure != "" {
+		allowed := file.ExecutableAccess != nil && *file.ExecutableAccess
+		err, _ := failure(file.AccessFailure)
+		if err := mem.SetExecutableAccess(name, allowed, err); err != nil {
+			return err
+		}
+	}
+	if file.Capabilities != nil || file.CapabilityFailure != "" {
+		var attribute platform.CapabilityAttribute
+		if file.Capabilities != nil {
+			attribute = *file.Capabilities
+		}
+		err, _ := failure(file.CapabilityFailure)
+		if err := mem.SetFileCapabilities(name, attribute, err); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -286,5 +322,5 @@ func registerCommand(runner *platform.FakeCommandRunner, command Command) (platf
 }
 
 func validFixtureRuntime(d *Document) bool {
-	return d.Probe == hostProbe || (d.Runtime == "podman" && d.Endpoint == "local")
+	return (d.Probe == hostProbe || d.Probe == contextProbe) || (d.Runtime == "podman" && d.Endpoint == "local")
 }

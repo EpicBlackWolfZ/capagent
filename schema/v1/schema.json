@@ -591,6 +591,9 @@
             "resolved"
           ],
           "additionalProperties": false
+        },
+        "subids": {
+          "$ref": "#/$defs/subIDs"
         }
       },
       "required": [
@@ -1315,6 +1318,294 @@
         }
       },
       "additionalProperties": false
+    },
+    "subIDRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967294
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967294
+        }
+      },
+      "required": [
+        "start",
+        "length"
+      ]
+    },
+    "subIDRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "owner": {
+          "type": "string"
+        },
+        "range": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/subIDRange"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "problem": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "line",
+        "owner",
+        "range"
+      ]
+    },
+    "subIDAllocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "present": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "valid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "total": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "ranges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/subIDRange"
+          }
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/subIDRecord"
+          }
+        }
+      },
+      "required": [
+        "present",
+        "valid",
+        "total",
+        "ranges",
+        "records"
+      ]
+    },
+    "mappingCapabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "present": {
+          "type": "boolean"
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "effective": {
+          "type": "boolean"
+        },
+        "setuid": {
+          "type": "boolean"
+        },
+        "setgid": {
+          "type": "boolean"
+        },
+        "root_id": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967294
+        }
+      },
+      "required": [
+        "present",
+        "revision",
+        "effective",
+        "setuid",
+        "setgid"
+      ]
+    },
+    "mappingHelper": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "present": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "regular": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "setuid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "setgid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "executable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "nosuid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "noexec": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "no_new_privileges": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "usable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "privilege_blocked": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "uid": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967294
+        },
+        "gid": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967294
+        },
+        "mode": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967294
+        },
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "capabilities": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/mappingCapabilities"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "present",
+        "regular",
+        "setuid",
+        "setgid",
+        "executable",
+        "nosuid",
+        "noexec",
+        "no_new_privileges",
+        "usable",
+        "privilege_blocked",
+        "uid",
+        "gid",
+        "mode",
+        "name",
+        "path",
+        "capabilities"
+      ]
+    },
+    "subIDs": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "uid": {
+          "$ref": "#/$defs/subIDAllocation"
+        },
+        "gid": {
+          "$ref": "#/$defs/subIDAllocation"
+        },
+        "provider": {
+          "enum": [
+            "files",
+            "external",
+            "unknown"
+          ]
+        },
+        "helpers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/mappingHelper"
+          }
+        }
+      },
+      "required": [
+        "uid",
+        "gid",
+        "provider",
+        "helpers"
+      ]
     }
   },
   "allOf": [
