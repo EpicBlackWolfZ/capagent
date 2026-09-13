@@ -17,7 +17,8 @@ func TestCapturedPodmanPrerequisiteReplay(t *testing.T) {
 		{"prerequisites", "nobara-5.8.4-rootless.json"}, {"prerequisites", "ubuntu-4.9.3-rootful.json"},
 		{"prerequisites", "ubuntu-4.9.3-rootless.json"}, {"engine", "nobara-5.8.4-rootless.json"},
 		{"engine", "ubuntu-4.9.3-rootful.json"}, {"engine", "ubuntu-4.9.3-rootless.json"},
-		{"storage", "nobara-5.8.4-rootless.json"},
+		{"storage", "nobara-5.8.4-rootless.json"}, {"storage", "ubuntu-4.9.3-rootless.json"},
+		{"storage", "ubuntu-4.9.3-rootful.json"},
 	} {
 		t.Run(source.directory+"/"+source.name, func(t *testing.T) {
 			t.Parallel()

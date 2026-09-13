@@ -151,6 +151,19 @@ Sanitized native storage measurements in `testdata/podman/storage/` retain typed
 source projections, path metadata and runtime reports. The Nobara Podman 5.8.4
 rootless capture executes natively on amd64. Replay runs the real Podman info
 parser and capability mappings. It reconstructs info JSON from typed fields and
-omits raw configuration and unprojected graph options. The qualification matrix
-will also identify hosted rootful/rootless captures; arm64 artifact checks are
-static unless separately identified as native execution.
+omits raw configuration and unprojected graph options. The supported native capture matrix for these prerequisite meanings is:
+
+| Host / Podman | Target | Execution |
+| --- | --- | --- |
+| Nobara / 5.8.4 | rootless UID 1000 | native amd64 |
+| Ubuntu 24.04 / 4.9.3 | rootless UID 1001 | native amd64 |
+| Ubuntu 24.04 / 4.9.3 | rootful UID 0 | native amd64 |
+
+The Ubuntu captures come from [CI run 34770862020](https://github.com/EpicBlackWolfZ/capagent/actions/runs/34770862020),
+which also validates delegated identities, passive native traces, bounded
+user-manager queries and packaged launchers. All three captures report overlay
+and accessible primary roots. None reports a selected mount program, so that
+predicate remains unknown. Synthetic fixtures provide the positive, missing and
+denied declared-helper cases. Arm64 artifacts receive static checks; this matrix
+contains no native arm64 storage execution. These source/build snapshots do not
+qualify every distribution patch or storage backend.
