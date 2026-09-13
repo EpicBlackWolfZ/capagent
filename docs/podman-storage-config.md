@@ -63,7 +63,14 @@ Recognized options include mount program, ignore-chown behavior, skip-mount-home
 force mask and overlay composefs selection in 5.8.4. Podman 4.9.3 treats
 composefs as an unprojected field; the adapter does not validate it as a newer
 recognized option. Driver-specific options retain their
-own provenance and take precedence over applicable general options. Additional
+own provenance. General options can be emitted before driver-specific options;
+a later valid option cannot repair an earlier invalid option interpreted by the
+driver. Source replacement and rootless conversion happen before interpreting
+string option values. Invalid boolean or mask strings retain a redacted
+`invalid: true` marker and source ID; a selected invalid option produces
+`storage_option_invalid`. Discarded or inactive driver-specific values do not
+block the selected configuration. TOML syntax and type failures remain source
+errors regardless of later replacement. Additional
 layer-store `:ref` syntax is retained in configuration; metadata checks address
 the directory itself. Other options are counted as unprojected, with names and
 values omitted. Parsing success does not validate every driver option.

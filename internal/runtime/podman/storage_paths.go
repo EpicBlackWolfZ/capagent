@@ -27,8 +27,8 @@ func expandStorageRoots(storage *model.StorageConfiguration, values map[string]s
 		}
 		*field = &model.ConfigString{Value: expanded, SourceID: (*field).SourceID}
 	}
-	if storage.Driver != nil && storage.Driver.Value == "overlay2" {
-		storage.Driver = &model.ConfigString{Value: "overlay", SourceID: storage.Driver.SourceID}
+	if storage.Driver != nil && storage.Driver.Value == storageDriverOverlay2 {
+		storage.Driver = &model.ConfigString{Value: storageDriverOverlay, SourceID: storage.Driver.SourceID}
 	}
 	if nonemptyConfig(storage.ImageStore) && nonemptyConfig(storage.GraphRoot) && storage.ImageStore.Value == storage.GraphRoot.Value {
 		storage.Problems = append(storage.Problems, "imagestore_equals_graphroot")

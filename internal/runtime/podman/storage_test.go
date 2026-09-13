@@ -27,12 +27,12 @@ func TestStorageSourceReplacementAndRootlessConversion(t *testing.T) {
 		user, system        string
 		driver, root, mount string
 	}{
-		{"rootful system replaces vendor", 0, "", "[storage]\ndriver='vfs'", "vfs", "/var/lib/containers/storage", ""},
+		{"rootful system replaces vendor", 0, "", "[storage]\ndriver='vfs'", testStorageVFS, "/var/lib/containers/storage", ""},
 		{"rootless system subset", 1001, "", "[storage]\ndriver='overlay'\nrootless_storage_path='/srv/$UID/store'\n" +
 			"[storage.options]\nmount_program='/system-helper'", storageOverlayDriver, "/srv/1001/store", ""},
 		{"rootless user replaces options", 1001, "[storage]\ndriver='vfs'",
 			"[storage]\ndriver='overlay'\n[storage.options]\nmount_program='/system-helper'",
-			"vfs", "/home/target/.local/share/containers/storage", ""},
+			testStorageVFS, "/home/target/.local/share/containers/storage", ""},
 		{"rootful XDG baseline fallback",
 			0,
 			"[storage]\ngraphroot='/xdg-root'",

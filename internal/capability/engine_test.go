@@ -20,7 +20,8 @@ func TestEngineConfigurationEvidence(t *testing.T) {
 	yes := true
 	at := time.Unix(1, 0)
 	scope := model.EvaluationScope{RunID: "engine", ContextID: storageTestTarget, Runtime: storageTestRuntime, Endpoint: storageTestEndpoint}
-	for _, scenario := range []string{"configured", "malformed source", "denied source", "unqualified profile", "wrong version target",
+	for _, scenario := range []string{"configured", "invalid selected value", "malformed source", "denied source",
+		"unqualified profile", "wrong version target",
 		"wrong runtime path", "runtime overrides configuration", "helper missing", "helper wrong source"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
@@ -40,6 +41,9 @@ func TestEngineConfigurationEvidence(t *testing.T) {
 							File: &model.ExecutableMetadata{Regular: true, ExecutableBits: true}}}}}
 			wantParsed, wantMode, wantHelper := model.StateSupported, model.StateSupported, model.StateSupported
 			switch scenario {
+			case "invalid selected value":
+				configuration.Engine.CgroupManager = &model.ConfigString{Invalid: true, SourceID: "source"}
+				wantParsed, wantMode, wantHelper = model.StateMisconfigured, model.StateUnknown, model.StateUnknown
 			case "malformed source":
 				configuration.Sources[0].Status, configuration.ParseComplete = "malformed", false
 				wantParsed, wantMode, wantHelper = model.StateMisconfigured, model.StateUnknown, model.StateUnknown

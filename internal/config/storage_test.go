@@ -68,7 +68,7 @@ func TestStorageUnsupportedAndMalformedFields(t *testing.T) {
 		{"[storage.options]\nadditionalimagestores=['relative']", config.ErrConfigFieldUnsupported},
 		{"[storage.options]\nadditionallayerstores=['/data:secret']", config.ErrConfigFieldUnsupported},
 		{"[storage.options]\nmount_program=3", config.ErrConfigFieldInvalid},
-		{"[storage.options.overlay]\nignore_chown_errors='invalid'", config.ErrConfigFieldInvalid},
+		{"[storage.options.overlay]\nignore_chown_errors=3", config.ErrConfigFieldInvalid},
 		{"[storage.options]\nforce_mask=-1", config.ErrConfigFieldInvalid},
 		{"[storage.options]\nforce_mask=4294967296", config.ErrConfigFieldUnsupported},
 		{"[storage.options]\nadditionalimagestores=['/a',{append=true}]", config.ErrConfigFieldInvalid},
@@ -124,7 +124,7 @@ func TestStorageRecognizedOptionShapes(t *testing.T) {
 		{"[storage]\noptions=3", true}, {"[storage.options]\noverlay=3", true},
 		{"[storage.options]\nmount_program='relative'", true},
 		{"[storage.options]\nadditionalimagestores=3", true},
-		{"[storage.options.overlay]\nforce_mask='broken'", true},
+		{"[storage.options.overlay]\nforce_mask='broken'", false},
 		{"[storage.options.overlay]\nforce_mask='private'\nuse_composefs='true'\nskip_mount_home=''", false},
 		{"[storage.options.overlay]\nforce_mask='755'", false},
 		{"[storage.options.vfs]\nignore_chown_errors='true'\nunknown='not-retained'", false},
@@ -134,6 +134,23 @@ func TestStorageRecognizedOptionShapes(t *testing.T) {
 			_, err := config.ParseStorage([]byte(test.text))
 			if (err != nil) != test.invalid {
 				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestStorageInvalidStringOptionsAreRedactedUntilSelection(t *testing.T) {
+	t.Parallel()
+	for _, key := range []string{"ignore_chown_errors", "skip_mount_home", "force_mask", "use_composefs"} {
+		t.Run(key, func(t *testing.T) {
+			t.Parallel()
+			layer, err := config.ParseStorage([]byte("[storage.options.overlay]\n" + key + "='synthetic-secret'"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			value := config.ProjectStorage(layer, "source").Options["overlay."+key]
+			if !value.Invalid || value.Value != "" || value.SourceID != "source" {
+				t.Fatal("invalid value or provenance was lost or exposed")
 			}
 		})
 	}

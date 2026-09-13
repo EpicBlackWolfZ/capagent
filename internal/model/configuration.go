@@ -36,6 +36,8 @@ type ConfigurationObservation struct {
 // separately from runtime-effective measurements. An inherited default is not
 // known merely because a configuration appends additional entries to it.
 type ConfigString struct {
+	// Invalid retains a redacted, semantically invalid value until source selection.
+	Invalid  bool   `json:"invalid,omitzero"`
 	Value    string `json:"value"`
 	SourceID string `json:"source_id"`
 }

@@ -1936,6 +1936,9 @@
         },
         "source_id": {
           "type": "string"
+        },
+        "invalid": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -2297,7 +2300,8 @@
             "enum": [
               "runroot_required",
               "graphroot_required",
-              "imagestore_equals_graphroot"
+              "imagestore_equals_graphroot",
+              "storage_option_invalid"
             ]
           }
         }

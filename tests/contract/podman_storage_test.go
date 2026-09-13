@@ -49,6 +49,7 @@ func TestStorageAssessmentFixtures(t *testing.T) {
 		name string
 		exit int
 	}{
+		{"superseded-value", 0}, {"invalid-value", 1},
 		{"rootless", 0}, {"rootful", 0}, {"replacement", 1}, {"helper-denied", 2}, {"helper-missing", 1}, {"source-denied", 2},
 		{"malformed", 1}, {"runtime-override", 1}, {"missing-root", 2}, {"missing-additional", 1}, {"read-only", 1}, {"legacy-roots", 1},
 	} {
