@@ -51,6 +51,7 @@ type Command struct {
 	StderrTruncated bool              `json:"stderr_truncated,omitempty"`
 }
 type Document struct {
+	Host          *HostCalls              `json:"host,omitempty"`
 	SchemaVersion int                     `json:"schema_version"`
 	Probe         string                  `json:"probe,omitempty"`
 	RunID         string                  `json:"run_id"`
@@ -112,25 +113,31 @@ func validate(d *Document) error {
 	if d == nil || d.SchemaVersion != 1 || d.Timestamp.IsZero() || d.Scope().IsValid() != nil {
 		return errors.New("invalid fixture identity or version")
 	}
-	if d.Runtime != "podman" || d.Endpoint != "local" {
+	if !validFixtureRuntime(d) {
 		return errors.New("fixture runtime must be local Podman")
 	}
 	if (d.Provenance.Kind != "synthetic" && d.Provenance.Kind != "captured") || d.Provenance.Description == "" {
 		return errors.New("fixture requires explicit captured or synthetic provenance")
 	}
 	switch d.Probe {
-	case "", "info", "version", "inspection":
+	case "", "info", "version", "inspection", hostProbe:
 	default:
 		return errors.New("unknown fixture probe")
 	}
 	commands := 1
+	if d.Probe == hostProbe {
+		commands = len(d.Commands)
+		if err := validateHost(d); err != nil {
+			return err
+		}
+	}
 	if d.Probe == "inspection" {
 		commands = inspectionCommandCount
 	}
 	if len(d.Files) > maxFiles || len(d.Commands) != commands {
 		return errors.New("fixture file or command count exceeds its probe contract")
 	}
-	if _, err := config.ParseRequirement(d.Requirement); err != nil {
+	if _, err := parseRequirement(d); err != nil {
 		return err
 	}
 	seen := make(map[string]bool)
@@ -185,13 +192,22 @@ func Open(d *Document) (*Services, error) {
 		}
 		specs = append(specs, spec)
 	}
-	node, err := config.ParseRequirement(d.Requirement)
+	node, err := parseRequirement(d)
 	if err != nil {
 		return nil, err
 	}
 	files := platform.NewScopedMemReader("/", mem)
+	if d.Probe == hostProbe {
+		files = platform.NewScopedMemReaderWithFilesystems("/", mem, hostFilesystems(d))
+	}
 	env := platform.NewEnvironment(nil, nil, nil, runner).WithFiles(files).WithScope(d.Scope())
-	services := &Services{Environment: env, Command: specs[0], Requirement: node, files: files}
+	if d.Probe == hostProbe {
+		env = env.WithHost(hostSnapshot(d), platform.NewHostMetadata(runner))
+	}
+	services := &Services{Environment: env, Requirement: node, files: files}
+	if len(specs) > 0 {
+		services.Command = specs[0]
+	}
 	if d.Probe == "inspection" {
 		services.InfoCommand = specs[1]
 		if err := validateInspection(d, services); err != nil {
@@ -263,4 +279,8 @@ func registerCommand(runner *platform.FakeCommandRunner, command Command) (platf
 		return platform.CommandSpec{}, err
 	}
 	return spec, nil
+}
+
+func validFixtureRuntime(d *Document) bool {
+	return d.Probe == hostProbe || (d.Runtime == "podman" && d.Endpoint == "local")
 }

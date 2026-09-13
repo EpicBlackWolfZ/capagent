@@ -16,7 +16,7 @@ func TestCLIFlags(t *testing.T) {
 		want int
 	}{
 		{"help", []string{"--help"}, 0}, {"version", []string{"-v"}, 0},
-		{"no fixture", nil, app.ExitUsage}, {"unknown command", []string{"inspect"}, app.ExitUsage},
+		{"unknown command", []string{"inspect"}, app.ExitUsage},
 		{"unknown flag", []string{"--invalid"}, app.ExitUsage}, {"active", []string{"--active"}, app.ExitUsage},
 		{"fixture", []string{"--fixture", "../../testdata/fixtures/v1/supported", "--json", "--pretty"}, 0},
 	}
@@ -39,4 +39,16 @@ func TestMainHelp(t *testing.T) {
 	defer func() { os.Args = old }()
 	os.Args = []string{"capagent", "--help"}
 	main()
+}
+
+func TestDefaultHostCollection(t *testing.T) {
+	t.Parallel()
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--json"}, &stdout, &stderr)
+	if code != app.ExitSatisfied && code != app.ExitIndeterminate {
+		t.Fatalf("host collection: %d %s", code, stderr.String())
+	}
+	if !bytes.Contains(stdout.Bytes(), []byte(`"host"`)) || bytes.Contains(stdout.Bytes(), []byte(`"requirement"`)) {
+		t.Fatal("invalid host report")
+	}
 }

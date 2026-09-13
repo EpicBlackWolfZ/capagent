@@ -1,5 +1,5 @@
 // Package app owns application composition and the observation-to-report lifecycle.
-// Passive live discovery never constructs a command runner.
+// Passive metadata collection has a separate allowlisted command service.
 package app
 
 import (
@@ -7,10 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"time"
 
 	"github.com/EpicBlackWolfZ/capagent/internal/capability"
 	"github.com/EpicBlackWolfZ/capagent/internal/fixture"
+	"github.com/EpicBlackWolfZ/capagent/internal/host"
 	"github.com/EpicBlackWolfZ/capagent/internal/model"
 	"github.com/EpicBlackWolfZ/capagent/internal/output"
 	"github.com/EpicBlackWolfZ/capagent/internal/platform"
@@ -93,6 +95,18 @@ func Evaluate(ctx context.Context, input Input, env platform.Environment, probes
 		input.At = input.Now()
 		dataset.At = input.At
 	}
+	if err := capability.ValidateDataset(dataset); err != nil {
+		return nil, err
+	}
+	input.Context.Host, _ = projectHost(input.Context.Host, dataset.Observations)
+	dataset.Contexts[0] = input.Context
+	if input.Scope.Runtime == "" {
+		if input.Requirement != nil || len(input.Definitions) != 0 {
+			return nil, errors.New("host collection cannot evaluate requirements")
+		}
+		report := projectReport(input, dataset.Observations, capability.Evaluation{}, requirement.Result{}, results)
+		return report, report.Validate()
+	}
 	definitions := input.Definitions
 	if definitions == nil {
 		definitions = []capability.Definition{capability.NetavarkDefinition()}
@@ -160,6 +174,10 @@ func evaluateFixture(ctx context.Context, doc *fixture.Document) (*output.Report
 	}
 	input := Input{Scope: doc.Scope(), Context: doc.Context, At: doc.Timestamp, Provenance: doc.Provenance.Kind,
 		Requirement: services.Requirement}
+	if doc.Probe == "host" {
+		now := func() time.Time { return doc.Timestamp }
+		return evaluateOwned(ctx, input, services.Environment, host.Probes(now), services)
+	}
 	probes := []probe.Probe{podman.InfoProbe{Command: services.Command, LegacyInfo: true, Timestamp: doc.Timestamp}}
 	if doc.Probe == "version" {
 		input.Definitions = []capability.Definition{capability.PodmanDefinition()}
@@ -188,11 +206,11 @@ func evaluateFixture(ctx context.Context, doc *fixture.Document) (*output.Report
 // --debug emits structured codes and fixed application messages only.
 func Execute(ctx context.Context, opts Options, stdout, stderr io.Writer) int {
 	if !validOptions(opts) {
-		return failure(stderr, ExitUsage, "select --fixture DIR or --runtime podman; --active permits current-user local inspection")
+		return failure(stderr, ExitUsage, "use --json, --fixture DIR or --runtime podman; --active requires a runtime")
 	}
 	var report *output.Report
 	var err error
-	if opts.Runtime != "" {
+	if opts.Fixture == "" {
 		report, err = evaluateLive(ctx, opts)
 	} else {
 		var code int
@@ -202,7 +220,7 @@ func Execute(ctx context.Context, opts Options, stdout, stderr io.Writer) int {
 		}
 	}
 	if err != nil {
-		return failure(stderr, ExitExecution, "live evaluation failed")
+		return failure(stderr, ExitExecution, executionMessage(err))
 	}
 	return writeReport(report, opts, stdout, stderr)
 }
@@ -242,6 +260,9 @@ func writeReport(report *output.Report, opts Options, stdout, stderr io.Writer) 
 	if _, err := stdout.Write(data); err != nil {
 		return failure(stderr, ExitExecution, "cannot write report")
 	}
+	if report.Evaluation.Scope.Runtime == "" {
+		return hostExit(report)
+	}
 	return exitCode(report.Evaluation.Requirement.State)
 }
 func failure(stderr io.Writer, code int, message string) int {
@@ -277,4 +298,14 @@ func collectHelpers(ctx context.Context, env platform.Environment, observations 
 		observations = append(observations, helper)
 	}
 	return observations
+}
+
+func executionMessage(err error) string {
+	if errors.Is(err, platform.ErrSymlinkUnsupported) {
+		return "host confinement unavailable: openat2 requires Linux 5.6+"
+	}
+	if errors.Is(err, fs.ErrPermission) {
+		return "required host access blocked by execution policy"
+	}
+	return "live evaluation failed"
 }

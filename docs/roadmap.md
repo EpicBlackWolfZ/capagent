@@ -34,7 +34,7 @@ Pure parser, fixture and domain work may proceed before the hardening gate close
 | [M1 — Probe Core](https://github.com/EpicBlackWolfZ/capagent/milestone/2) | Initial foundation delivered | Static payload, OS abstractions and scheduler scaffolding; host-report CLI is not delivered. |
 | [M1.1 — Hardening, Security & Performance](https://github.com/EpicBlackWolfZ/capagent/milestone/23) | Implemented; closure requires passing gate | Confinement, descriptor ownership, bounded I/O, parser fidelity, execution/build policy and regression gate. |
 | [M1.2 — Context & Evaluation Slice](https://github.com/EpicBlackWolfZ/capagent/milestone/24) | Implemented fixture slice | Typed context/evidence, minimal evaluator/requirements, reusable fixtures, application lifecycle and JSON consumer smoke. |
-| [M2 — Host Facts](https://github.com/EpicBlackWolfZ/capagent/milestone/3) | Queued | First live host probes, mockable syscall adapters and real-host JSON validation. |
+| [M2 — Host Facts](https://github.com/EpicBlackWolfZ/capagent/milestone/3) | OS/kernel/systemd slice implemented | Passive host report, syscall adapters and fixture/native validation; cgroups, security and network prerequisites follow. |
 | [M3 — Execution Context](https://github.com/EpicBlackWolfZ/capagent/milestone/4) | Queued | Target identity validation, groups, subordinate ranges, helper metadata, XDG and user systemd. |
 | [M4 — Runtime Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/5) | Queued | Explicit binary/endpoint/identity policy and runtime availability. |
 | [M5 — Podman Core](https://github.com/EpicBlackWolfZ/capagent/milestone/6) | Queued | Version discovery and explicitly gated effective-info observations and first real rootless fixture. |

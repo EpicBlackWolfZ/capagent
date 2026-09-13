@@ -73,6 +73,7 @@ const sentinelClosedRootFD = int64(-1)
 //   - Root() remains valid after Close.
 //   - Close is idempotent: subsequent calls return nil.
 type ScopedReader interface {
+	StatFS(context.Context, string) (FilesystemInfo, error)
 	ReadFile(ctx context.Context, subpath string) ([]byte, error)
 	Stat(subpath string) (os.FileInfo, error)
 	ReadDir(ctx context.Context, subpath string) ([]os.DirEntry, error)
@@ -378,9 +379,10 @@ func mapOpenError(err error, subpath string) error {
 // The memory reader does NOT model Linux magic links; /proc/self is just a
 // regular symlink with a stored target string.
 type ScopedMemReader struct {
-	root   string
-	mem    *MemPlatformReader
-	limits ReadLimits
+	filesystems map[string]FilesystemInfo
+	root        string
+	mem         *MemPlatformReader
+	limits      ReadLimits
 	// closed is set to 1 by Close; reads are non-atomic on zero-value
 	// struct initialization so a closed flag protects accidental misuse.
 	closed atomic.Bool

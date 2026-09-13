@@ -112,7 +112,7 @@ var ArchitectureRules = []Rule{
 		},
 		AllowedThirdParty: []string{pkgUnix},
 		Rationale: "internal/platform is a low-level OS abstraction; depends on internal/model, standard library, " +
-			"and golang.org/x/sys/unix for kernel-confined filesystem operations",
+			"and golang.org/x/sys/unix for kernel-confined filesystem operations and read-only Linux host queries",
 	},
 	{
 		SourcePrefix: pkgInternalProbe,
