@@ -3,7 +3,7 @@
 `capagent --json --pretty` collects facts in the executing user's current mount,
 PID, user and network namespaces. Bare invocation uses the same JSON mode.
 `--runtime podman` includes these facts in its existing runtime report.
-Alternate target identities remain outside this mode.
+Select a local target with `--context=user:NAME` or `--context=uid:ID`; root delegates collection in an isolated worker. Live reports also include [execution-context observations](execution-context.md) for subordinate IDs, runtime-directory metadata and lingering. `--active` permits a bounded user-manager query, including without a runtime selection.
 
 The M2 host report includes OS identity, kernel release and architecture,
 systemd installation, PID-1 state, utility presence and version, cgroup topology,

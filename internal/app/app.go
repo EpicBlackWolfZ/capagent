@@ -177,7 +177,11 @@ func evaluateFixture(ctx context.Context, doc *fixture.Document) (*output.Report
 		Requirement: services.Requirement}
 	if doc.Probe == "context" {
 		now := func() time.Time { return doc.Timestamp }
-		probes := []probe.Probe{host.SubIDProbe{Target: *doc.Context.Identity.Target, Now: now}}
+		user := host.UserContextProbe{Target: *doc.Context.Identity.Target, Now: now, Active: doc.UserQuery}
+		if doc.Context.Identity.XDGRuntimeDir != "" {
+			user.RuntimeDirectory = &doc.Context.Identity.XDGRuntimeDir
+		}
+		probes := []probe.Probe{host.SubIDProbe{Target: *doc.Context.Identity.Target, Now: now}, user}
 		return evaluateOwned(ctx, input, services.Environment, probes, services)
 	}
 	if doc.Probe == "host" {

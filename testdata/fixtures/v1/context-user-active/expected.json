@@ -32,7 +32,7 @@
     "mode": "fixture",
     "provenance": "synthetic",
     "scope": {
-      "run_id": "context-rootless",
+      "run_id": "context-user-active",
       "context_id": "user:alice",
       "runtime": "",
       "endpoint": ""
@@ -167,7 +167,7 @@
         "id": "context.subids",
         "probe_id": "context.subids",
         "scope": {
-          "run_id": "context-rootless",
+          "run_id": "context-user-active",
           "context_id": "user:alice",
           "runtime": "",
           "endpoint": ""
@@ -281,15 +281,15 @@
           },
           "socket_present": true,
           "socket_valid": true,
-          "accessible": null,
+          "accessible": true,
           "linger_enabled": true,
-          "query_attempted": false,
-          "manager_version": ""
+          "query_attempted": true,
+          "manager_version": "258.3"
         },
         "id": "context.user",
         "probe_id": "context.user",
         "scope": {
-          "run_id": "context-rootless",
+          "run_id": "context-user-active",
           "context_id": "user:alice",
           "runtime": "",
           "endpoint": ""
@@ -314,15 +314,21 @@
             "source": "user manager private socket",
             "timestamp": "2026-09-13T12:00:00Z",
             "completeness": "complete"
+          },
+          {
+            "id": "context.user.3",
+            "source": "/usr/bin/systemctl",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.user.4",
+            "source": "user manager query",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
           }
         ],
-        "diagnostics": [
-          {
-            "code": "user_manager_query_deferred",
-            "message": "host measurement diagnostic",
-            "reference": "context.user"
-          }
-        ]
+        "diagnostics": []
       }
     ],
     "evidence": [],
@@ -336,11 +342,6 @@
         "code": "mapping_execution_unverified",
         "message": "host measurement diagnostic",
         "reference": "context.subids"
-      },
-      {
-        "code": "user_manager_query_deferred",
-        "message": "host measurement diagnostic",
-        "reference": "context.user"
       }
     ]
   }

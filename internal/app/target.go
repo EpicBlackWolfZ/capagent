@@ -149,7 +149,8 @@ func executeTargetWorker(ctx context.Context, stdout, stderr io.Writer,
 	}
 	credentials, groupErr := platform.CurrentCredentials()
 	services := currentServices{files: files, credentials: credentials, groupErr: groupErr, now: time.Now, worker: &payload,
-		host: platform.LinuxHostQueries{}, metadata: platform.NewHostMetadata(platform.NewOSCommandRunner(platform.HostVersionTimeout)),
+		manager: platform.NewUserManager(platform.NewOSCommandRunner(platform.UserManagerTimeout)),
+		host:    platform.LinuxHostQueries{}, metadata: platform.NewHostMetadata(platform.NewOSCommandRunner(platform.HostVersionTimeout)),
 		runner:  func() platform.CommandRunner { return platform.NewOSCommandRunner(podman.InfoTimeout) },
 		capture: func() (platform.EnvPolicy, error) { return targetEnvironment(request.Target) }}
 	report, evalErr := evaluateCurrentServices(ctx, payload.Options, services)

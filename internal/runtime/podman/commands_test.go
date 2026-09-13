@@ -2,6 +2,7 @@ package podman_test
 
 import (
 	"context"
+	"os"
 	"reflect"
 	"slices"
 	"testing"
@@ -73,3 +74,23 @@ func TestInspectionCommandPolicy(t *testing.T) {
 }
 
 const testRuntimeEnv = "XDG_RUNTIME_DIR"
+
+func TestRuntimeDirectoryRejectsGroupOrOtherPermissions(t *testing.T) {
+	t.Parallel()
+	for _, mode := range []uint32{0o750, 0o755, 0o777} {
+		mem := platform.NewMemPlatformReader()
+		mem.AddDir("/home", 0o755)
+		mem.AddDir("/home/test", 0o700)
+		mem.AddDir("/run", 0o755)
+		mem.AddDir("/run/user", 0o755)
+		mem.AddDir(testRuntimeDir, os.FileMode(mode))
+		mem.SetOwnership(testRuntimeDir, platform.FileOwnership{UID: 1000})
+		files := platform.NewScopedMemReader("/", mem)
+		env, _ := platform.NewEnvPolicy(nil, map[string]string{testRuntimeEnv: testRuntimeDir})
+		_, err := podman.PrepareInspection(t.Context(), files, model.UserIdentity{UID: 1000, HomeDir: "/home/test"}, testPodmanPath, env)
+		files.Close()
+		if err == nil {
+			t.Fatal("accepted non-private runtime directory", mode)
+		}
+	}
+}

@@ -15,7 +15,6 @@ const (
 	VersionTimeout    = 5 * time.Second
 	InfoTimeout       = 30 * time.Second
 	InspectionTimeout = 40 * time.Second
-	privateAccess     = 0o700
 )
 
 func InspectionEnvNames() []string {
@@ -64,7 +63,7 @@ func PrepareInspection(ctx context.Context, files platform.ScopedView, user mode
 		return InspectionCommands{}, errors.New("rootless inspection requires an explicit runtime directory")
 	}
 	if present {
-		if err := validateRuntimeDirectory(files, runtimeDir, user.UID); err != nil {
+		if err := platform.ValidateRuntimeDirectory(ctx, files, runtimeDir, user.UID); err != nil {
 			return InspectionCommands{}, err
 		}
 	}
@@ -76,16 +75,4 @@ func PrepareInspection(ctx context.Context, files platform.ScopedView, user mode
 		Version: platform.CommandSpec{Path: executable, Args: []string{"--version"}, Env: policy, Dir: "/", Timeout: VersionTimeout},
 		Info:    platform.CommandSpec{Path: executable, Args: LocalInfoArgs(), Env: policy, Dir: "/", Timeout: InfoTimeout},
 	}, nil
-}
-
-func validateRuntimeDirectory(files platform.ScopedView, name string, uid uint32) error {
-	info, err := files.Stat(path.Clean(strings.TrimPrefix(name, "/")))
-	if err != nil || !info.IsDir() || info.Mode().Perm()&privateAccess != privateAccess {
-		return errors.New("runtime directory is inaccessible")
-	}
-	owner, known := platform.OwnershipOf(info)
-	if !known || owner.UID != uid {
-		return errors.New("runtime directory ownership does not match current user")
-	}
-	return nil
 }

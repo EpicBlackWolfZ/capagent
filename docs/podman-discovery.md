@@ -53,7 +53,7 @@ This permits the selected local Podman CLI to collect its version and effective 
 
 The literal commands are `podman --version`, then `podman --remote=false --trace=false info --format json`. The hidden local-only trace option is explicitly false, its normal default. A remote-only build or configuration-selected tunnel mode rejects this option before transport setup; capagent never retries without the guard. `--remote=false` alone is insufficient for these cases. Source checks cover [3.4.4](https://github.com/containers/podman/blob/v3.4.4/cmd/podman/root.go), [4.4.4](https://github.com/containers/podman/blob/v4.4.4/cmd/podman/root.go) and [5.8.4](https://github.com/containers/podman/blob/v5.8.4/cmd/podman/root.go). Other builds that reject the guard produce an unavailable inspection result.
 
-Both commands use an immutable policy: `PATH=/usr/bin:/bin`, `LC_ALL=C`, directory `/`, and named snapshots of HOME, XDG_CONFIG_HOME, XDG_DATA_HOME and XDG_RUNTIME_DIR. If HOME is absent, known current-user account metadata supplies it. Supplied directory values must be absolute, canonical and valid; HOME must exist. Rootless inspection requires an existing runtime directory owned by the current UID with owner read/write/search permissions. Missing optional config/data directories may be created by Podman. The application checks these prerequisites without creating directories itself. Unknown supplementary groups or mismatched real/effective credentials prevent command dispatch.
+Both commands use an immutable policy: `PATH=/usr/bin:/bin`, `LC_ALL=C`, directory `/`, and named snapshots of HOME, XDG_CONFIG_HOME, XDG_DATA_HOME and XDG_RUNTIME_DIR. If HOME is absent, known current-user account metadata supplies it. Supplied directory values must be absolute, canonical and valid; HOME must exist. Rootless inspection requires an existing runtime directory owned by the current UID with mode exactly 0700. Missing optional config/data directories may be created by Podman. The application checks these prerequisites without creating directories itself. Unknown supplementary groups or mismatched real/effective credentials prevent command dispatch.
 
 The policy excludes ambient endpoint, proxy, authentication, configuration-selection, storage-override, loader, D-Bus-address and Podman-internal environment variables. Podman reads normal configuration under the declared HOME/XDG policy, so the result describes that policy rather than every shell-specific override. Local D-Bus discovery can fail or fall back according to Podman's configuration; diagnostics never fabricate a universal missing-socket explanation for daemonless local Podman.
 
@@ -77,7 +77,7 @@ Runtime cgroups are reported under `runtimes.podman`; they are not direct host m
 | No executable candidates | UNSATISFIED / 1; no Podman commands |
 | Complete info with CNI or a missing Netavark helper | Inspection may be SATISFIED / 0; separate Netavark verdict remains negative/unknown |
 
-Exit 0 authorizes no deployment. Rootless suitability, user systemd, Quadlet and workload requirements remain future work. Consumers can require both inspection predicates:
+Exit 0 authorizes no deployment. User-systemd observations are available through the execution context. Rootless suitability, Quadlet and workload requirement verdicts remain future work. Consumers can require both inspection predicates:
 
 ```sh
 set -o pipefail

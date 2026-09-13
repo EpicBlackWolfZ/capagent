@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
   "probe": "context",
-  "run_id": "context-rootless",
+  "run_id": "context-user-active",
   "timestamp": "2026-09-13T12:00:00Z",
   "provenance": {
     "kind": "synthetic",
-    "description": "Local rootless allocations and mapping-helper metadata; no mapping command executed."
+    "description": "Synthetic successful user-manager query under explicit target credentials; no live connection during replay."
   },
   "context": {
     "id": "user:alice",
@@ -200,5 +200,25 @@
       "gid": 0
     }
   ],
-  "commands": []
+  "commands": [
+    {
+      "path": "/usr/bin/systemctl",
+      "args": [
+        "--user",
+        "--no-pager",
+        "--no-ask-password",
+        "show",
+        "--property=Version",
+        "--value"
+      ],
+      "environment": {
+        "XDG_RUNTIME_DIR": "/run/user/1000",
+        "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1000/systemd/private"
+      },
+      "directory": "/",
+      "timeout_ms": 2000,
+      "stdout": "258.3\n"
+    }
+  ],
+  "user_query": true
 }

@@ -127,8 +127,12 @@ func (c IdentityContext) IsValid() error {
 			len(e.SupplementaryGroups) != len(t.SupplementaryGroups) {
 			return errors.New("execution does not match target")
 		}
+		groups := make(map[uint32]bool, len(t.SupplementaryGroups))
+		for _, gid := range t.SupplementaryGroups {
+			groups[gid] = true
+		}
 		for _, gid := range e.SupplementaryGroups {
-			if !slices.Contains(t.SupplementaryGroups, gid) {
+			if !groups[gid] {
 				return errors.New("execution groups differ from target")
 			}
 		}

@@ -20,7 +20,7 @@ func validOptions(opts Options) bool {
 		return !opts.Active && opts.Runtime == "" && opts.Context == "" && opts.PodmanPath == ""
 	}
 	if opts.Runtime == "" {
-		return !opts.Active && opts.PodmanPath == "" && (model.TargetSelector{Value: opts.Context}).IsValid() == nil
+		return opts.PodmanPath == "" && (model.TargetSelector{Value: opts.Context}).IsValid() == nil
 	}
 	return opts.Runtime == "podman" && (model.TargetSelector{Value: opts.Context}).IsValid() == nil &&
 		podman.ValidateExecutablePath(opts.PodmanPath) == nil
@@ -33,10 +33,13 @@ func evaluateLive(ctx context.Context, opts Options) (*output.Report, error) {
 	}
 	credentials, groupErr := platform.CurrentCredentials()
 	services := currentServices{files: files, credentials: credentials, groupErr: groupErr, now: time.Now,
-		target:  platform.RunTarget,
-		capture: func() (platform.EnvPolicy, error) { return platform.NewEnvPolicy(podman.InspectionEnvNames(), nil) },
-		runner:  func() platform.CommandRunner { return platform.NewOSCommandRunner(podman.InfoTimeout) },
-		host:    platform.LinuxHostQueries{}, metadata: platform.NewHostMetadata(platform.NewOSCommandRunner(platform.HostVersionTimeout))}
+		target:          platform.RunTarget,
+		manager:         platform.NewUserManager(platform.NewOSCommandRunner(platform.UserManagerTimeout)),
+		userEnvironment: func() (platform.EnvPolicy, error) { return platform.NewEnvPolicy([]string{"XDG_RUNTIME_DIR"}, nil) },
+		capture:         func() (platform.EnvPolicy, error) { return platform.NewEnvPolicy(podman.InspectionEnvNames(), nil) },
+		runner:          func() platform.CommandRunner { return platform.NewOSCommandRunner(podman.InfoTimeout) },
+		host:            platform.LinuxHostQueries{},
+		metadata:        platform.NewHostMetadata(platform.NewOSCommandRunner(platform.HostVersionTimeout))}
 	report, evalErr := evaluateCurrentServices(ctx, opts, services)
 	return report, errors.Join(evalErr, files.Close())
 }
@@ -51,16 +54,18 @@ func evaluateCurrent(ctx context.Context, opts Options, files platform.ScopedRea
 }
 
 type currentServices struct {
-	target      func(context.Context, platform.TargetRequest) (platform.ExecResult, error)
-	worker      *targetPayload
-	host        platform.HostQueries
-	metadata    platform.HostMetadata
-	files       platform.ScopedReader
-	credentials model.CurrentCredentials
-	groupErr    error
-	now         func() time.Time
-	capture     func() (platform.EnvPolicy, error)
-	runner      func() platform.CommandRunner
+	manager         platform.UserManager
+	userEnvironment func() (platform.EnvPolicy, error)
+	target          func(context.Context, platform.TargetRequest) (platform.ExecResult, error)
+	worker          *targetPayload
+	host            platform.HostQueries
+	metadata        platform.HostMetadata
+	files           platform.ScopedReader
+	credentials     model.CurrentCredentials
+	groupErr        error
+	now             func() time.Time
+	capture         func() (platform.EnvPolicy, error)
+	runner          func() platform.CommandRunner
 }
 
 func evaluateCurrentServices(ctx context.Context, opts Options, services currentServices) (*output.Report, error) {
@@ -99,13 +104,18 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 	}
 	if opts.Active {
 		input.Collection = "active"
+	}
+	if opts.Active && opts.Runtime != "" {
+		input.Collection = "active"
 		input.Requirement = &requirement.Node{All: []*requirement.Node{{Capability: capability.PodmanID}, {Capability: capability.PodmanInfoID}}}
 		input.Definitions = append(input.Definitions, capability.PodmanInfoDefinition(), capability.NetavarkDefinition())
 	}
-	env := platform.NewEnvironment(nil, nil, nil, nil).WithFiles(services.files).WithScope(scope).WithHost(services.host, services.metadata)
+	env := platform.NewEnvironment(nil, nil, nil, nil).WithFiles(services.files).WithScope(scope).
+		WithHost(services.host, services.metadata).WithUserManager(services.manager)
 	probes := host.Probes(services.now)
 	if current.Identity.Execution != nil {
-		probes = append(probes, host.SubIDProbe{Target: *current.Identity.Target, Now: services.now})
+		probes = append(probes, host.SubIDProbe{Target: *current.Identity.Target, Now: services.now},
+			currentUserProbe(opts, services, *current.Identity.Target))
 	}
 	if current.Identity.Execution == nil {
 		probes = nil
@@ -155,7 +165,7 @@ func activeProbes(ctx context.Context, services currentServices, current model.E
 		return env, nil, err
 	}
 	activeEnv := platform.NewEnvironment(nil, nil, nil, services.runner()).WithFiles(services.files).WithScope(env.Scope()).
-		WithHost(services.host, services.metadata)
+		WithHost(services.host, services.metadata).WithUserManager(env.UserManager())
 	probes := []probe.Probe{podman.VersionProbe{Command: commands.Version, Now: services.now},
 		podman.InfoProbe{Command: commands.Info, Now: services.now, AfterVersion: true}}
 	return activeEnv, probes, nil

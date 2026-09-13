@@ -15,6 +15,7 @@ import (
 // synchronized command-call recording may still change. Custom providers must
 // honor the same ownership and concurrency contract.
 type Environment struct {
+	manager  UserManager
 	host     HostQueries
 	metadata HostMetadata
 	reader   PlatformReader

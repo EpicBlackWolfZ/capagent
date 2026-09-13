@@ -2,6 +2,8 @@ package fixture
 
 import (
 	"errors"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/EpicBlackWolfZ/capagent/internal/config"
@@ -34,8 +36,10 @@ func validateHost(d *Document) error {
 	if len(d.Requirement) > 0 && string(d.Requirement) != "null" {
 		return errors.New("host fixture cannot evaluate a requirement")
 	}
-	if d.Probe == contextProbe && (d.Context.Identity.Execution == nil || len(d.Commands) != 0) {
-		return errors.New("context fixture requires execution authority and no commands")
+	if d.Probe == contextProbe {
+		if err := validateContextQuery(d); err != nil {
+			return err
+		}
 	}
 	if err := validateMounts(d.Host); err != nil {
 		return err
@@ -44,6 +48,9 @@ func validateHost(d *Document) error {
 		if _, err := failure(code); err != nil {
 			return err
 		}
+	}
+	if d.Probe == contextProbe {
+		return nil
 	}
 	for _, c := range d.Commands {
 		if (c.Path != "/usr/bin/systemctl" && c.Path != "/bin/systemctl") || len(c.Args) != 1 || c.Args[0] != "--version" ||
@@ -101,6 +108,40 @@ func validateMounts(host *HostCalls) error {
 		if !strings.HasPrefix(mount, "/") || mount != "/" && platform.ValidateSubpath(strings.TrimPrefix(mount, "/")) != nil {
 			return errors.New("invalid fixture mount")
 		}
+	}
+	return nil
+}
+
+func validateContextQuery(d *Document) error {
+	if d.Context.Identity.Execution == nil {
+		return errors.New("context fixture requires execution authority")
+	}
+	count := 0
+	if d.UserQuery {
+		count = 1
+	}
+	if len(d.Commands) != count {
+		return errors.New("context fixture command count mismatch")
+	}
+	if count == 0 {
+		return nil
+	}
+	dir := d.Context.Identity.XDGRuntimeDir
+	if dir == "" {
+		dir = "/run/user/" + strconv.FormatUint(uint64(d.Context.Identity.Target.UID), 10)
+	}
+	c := d.Commands[0]
+	spec, err := platform.UserManagerCommand(c.Path, dir)
+	if err != nil {
+		return err
+	}
+	policy, err := platform.NewEnvPolicy(nil, c.Environment)
+	if err != nil {
+		return err
+	}
+	if !slices.Equal(c.Args, spec.Args) || !slices.Equal(policy.Variables(), spec.Env.Variables()) ||
+		c.Directory != spec.Dir || c.TimeoutMillis != hostVersionMillis {
+		return errors.New("context fixture query not allowlisted")
 	}
 	return nil
 }

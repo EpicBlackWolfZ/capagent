@@ -36,6 +36,7 @@ func retainObservation(obs model.Observation, scope model.EvaluationScope) (mode
 func SnapshotObservation(obs model.Observation) model.Observation {
 	obs.Identity = copyValue(obs.Identity)
 	obs.SubIDs = snapshotSubIDs(obs.SubIDs)
+	obs.UserContext = snapshotUserContext(obs.UserContext)
 	obs.Host = snapshotHost(obs.Host)
 	obs.Facts = slices.Clone(obs.Facts)
 	obs.Diagnostics = slices.Clone(obs.Diagnostics)
@@ -188,5 +189,24 @@ func snapshotSubIDs(input *model.SubIDObservation) *model.SubIDObservation {
 			h.Capabilities.RootID = copyValue(h.Capabilities.RootID)
 		}
 	}
+	return out
+}
+
+func snapshotUserContext(input *model.UserContextObservation) *model.UserContextObservation {
+	out := copyValue(input)
+	if out == nil {
+		return nil
+	}
+	r := &out.Runtime
+	r.Present = copyValue(r.Present)
+	r.Directory = copyValue(r.Directory)
+	r.UID = copyValue(r.UID)
+	r.Mode = copyValue(r.Mode)
+	r.Private = copyValue(r.Private)
+	r.Valid = copyValue(r.Valid)
+	out.SocketPresent = copyValue(out.SocketPresent)
+	out.SocketValid = copyValue(out.SocketValid)
+	out.Accessible = copyValue(out.Accessible)
+	out.LingerEnabled = copyValue(out.LingerEnabled)
 	return out
 }

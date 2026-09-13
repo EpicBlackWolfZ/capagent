@@ -132,3 +132,18 @@ func TestSubIDObservationOwnsRangesAndPrivileges(t *testing.T) {
 		t.Fatal("subordinate observation retained input aliases")
 	}
 }
+
+func TestUserContextObservationOwnsMetadata(t *testing.T) {
+	t.Parallel()
+	flag, uid := true, uint32(1000)
+	obs := model.Observation{UserContext: &model.UserContextObservation{Runtime: model.RuntimeDirectoryObservation{
+		UID: &uid, Valid: &flag, Private: &flag, Present: &flag, Directory: &flag, Mode: &uid},
+		SocketPresent: &flag, SocketValid: &flag, Accessible: &flag, LingerEnabled: &flag}}
+	copy := probe.SnapshotObservation(obs)
+	flag = false
+	uid = 0
+	if !*copy.UserContext.Runtime.Valid || *copy.UserContext.Runtime.UID != 1000 || !*copy.UserContext.Accessible ||
+		!*copy.UserContext.LingerEnabled || !*copy.UserContext.SocketValid {
+		t.Fatal("user context retained aliases")
+	}
+}

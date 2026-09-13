@@ -594,6 +594,9 @@
         },
         "subids": {
           "$ref": "#/$defs/subIDs"
+        },
+        "user_context": {
+          "$ref": "#/$defs/userContext"
         }
       },
       "required": [
@@ -793,7 +796,7 @@
             "passive",
             "active"
           ],
-          "description": "Explicit live collection policy. Active permits reviewed Podman startup/inspection effects."
+          "description": "Explicit live collection policy. Active permits the bounded user-manager query and reviewed Podman inspection effects."
         },
         "execution": {
           "$ref": "#/$defs/identity"
@@ -1606,6 +1609,119 @@
         "provider",
         "helpers"
       ]
+    },
+    "runtimeDirectory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "source": {
+          "enum": [
+            "default",
+            "environment"
+          ]
+        },
+        "present": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "directory": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "uid": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967294
+        },
+        "mode": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967294
+        },
+        "private": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "valid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "path",
+        "source",
+        "present",
+        "directory",
+        "uid",
+        "mode",
+        "private",
+        "valid"
+      ]
+    },
+    "userContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runtime": {
+          "$ref": "#/$defs/runtimeDirectory"
+        },
+        "socket_present": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "socket_valid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "accessible": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "linger_enabled": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "query_attempted": {
+          "type": "boolean"
+        },
+        "manager_version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "runtime",
+        "socket_present",
+        "socket_valid",
+        "accessible",
+        "linger_enabled",
+        "query_attempted",
+        "manager_version"
+      ]
     }
   },
   "allOf": [
@@ -1642,7 +1758,10 @@
                 "maxItems": 0
               },
               "collection": {
-                "const": "passive"
+                "enum": [
+                  "passive",
+                  "active"
+                ]
               }
             }
           }

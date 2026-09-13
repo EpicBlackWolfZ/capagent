@@ -188,7 +188,7 @@ func TestOutputFailures(t *testing.T) {
 	if got := Execute(t.Context(), opts, io.Discard, failingWriter{}); got != ExitExecution {
 		t.Fatal(got)
 	}
-	if got := Execute(t.Context(), Options{Active: true}, io.Discard, failingWriter{}); got != ExitExecution {
+	if got := Execute(t.Context(), Options{Runtime: "docker"}, io.Discard, failingWriter{}); got != ExitExecution {
 		t.Fatal(got)
 	}
 }

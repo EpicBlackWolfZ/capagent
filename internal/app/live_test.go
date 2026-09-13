@@ -63,7 +63,7 @@ func TestLiveDiscoveryPipeline(t *testing.T) {
 			if report.Evaluation.Requirement.State != want {
 				t.Fatal("wrong decision", report.Evaluation.Requirement)
 			}
-			if len(report.Evaluation.Observations) != 12 {
+			if len(report.Evaluation.Observations) != 13 {
 				t.Fatal("missing identity or discovery provenance")
 			}
 		})
