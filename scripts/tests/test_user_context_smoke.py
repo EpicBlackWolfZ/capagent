@@ -60,5 +60,13 @@ class UserQueryNonceTests(unittest.TestCase):
             SMOKE.verify_active_trace(changed, Path('/capagent'), target['uid'], target)
 
 
+class IdleRuntimeThreadTests(unittest.TestCase):
+    def test_authentic_idle_thread_signal_trace(self):
+        fixture = Path(__file__).parent / 'fixtures/context-trace'
+        trace = (fixture / 'active-idle-thread.strace').read_text()
+        target = json.loads((fixture / 'active-idle-thread-provenance.json').read_text())
+        SMOKE.verify_active_trace(trace, Path('/capagent'), target['uid'], target)
+
+
 if __name__ == '__main__':
     unittest.main()

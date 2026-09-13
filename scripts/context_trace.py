@@ -257,14 +257,20 @@ def verify(text, binary, target=None, query=None):
 
 
 def verify_signals(rows, parents, threads, worker):
-    for pid, call, args, _ in rows:
+    # Idle threads may have only clone and terminal records in the selected
+    # syscall inventory. Require their already-observed successful lineage,
+    # not an unrelated syscall emitted by the recipient.
+    known = {pid for pid, _, _, _ in rows if pid not in parents}
+    for pid, call, args, result in rows:
+        if call in {'clone', 'clone3'} and result in parents:
+            known.add(result)
+            continue
         if call not in {'kill', 'tkill', 'tgkill', 'pidfd_send_signal'}:
             continue
         values = args.split(', ')
         if call in {'kill', 'pidfd_send_signal'} and len(values) > 1 and values[1] == '0':
             continue
-        pids = {row[0] for row in rows}
-        if call != 'tgkill' or len(values) != 3 or values[2] not in {'SIGURG', 'SIGRT_1'} or values[1] not in pids:
+        if call != 'tgkill' or len(values) != 3 or values[2] not in {'SIGURG', 'SIGRT_1'} or values[1] not in known:
             raise ValueError('unreviewed process signal')
         owner = group(pid, parents, threads)
         if values[2] == 'SIGRT_1' and owner != worker:

@@ -1,0 +1,14 @@
+{
+  "kind": "captured",
+  "description": "Native Ubuntu24.04 amd64 active delegated user-manager trace from run34770298631 job103758550815. Binary/workspace paths anonymized; syscall arguments/results preserved. Thread11729 has successful clone and terminal records but no selected syscall.",
+  "issue": 125,
+  "uid": 1001,
+  "gid": 1001,
+  "groups": [
+    4,
+    100,
+    118,
+    999,
+    1001
+  ]
+}
