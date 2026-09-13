@@ -28,6 +28,17 @@ class ContextSmokeTests(unittest.TestCase):
             with self.assertRaises((ValueError, RuntimeError)):
                 SMOKE.joined_context_trace(changed)
 
+    def test_thread_group_exit_can_interrupt_the_group_leader(self):
+        trace = ('10 clone(flags=CLONE_THREAD) = 11\n11 clone(flags=CLONE_THREAD) = 12\n'
+                 '12 exit_group(0) = ?\n10 ???( <unfinished ...>\n10 +++ exited with 0 +++\n')
+        self.assertIn('exit_group(0)', SMOKE.joined_context_trace(trace))
+        for changed in (trace.replace('exited with 0', 'exited with 2'),
+                        trace.replace('10 clone(flags=CLONE_THREAD) = 11', '10 clone(flags=SIGCHLD) = 11'),
+                        trace.replace('12 exit_group', '20 exit_group'),
+                        trace.replace('???(', 'openat(')):
+            with self.subTest(trace=changed), self.assertRaises((ValueError, RuntimeError)):
+                SMOKE.joined_context_trace(changed)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -35,6 +35,8 @@ def joined_trace(text):
     joined = _join_syscalls(filtered)
     parents = dict((child, parent) for parent, child in re.findall(
         r'^(\d+)\s+clone3?\(.*CLONE_THREAD.*\)\s+= (\d+)$', joined, re.M))
+    # The initial group leader is also a thread; a child may call exit_group.
+    threads = set(parents) | set(parents.values())
     def group(pid):
         seen = set()
         while pid in parents:
@@ -46,7 +48,7 @@ def joined_trace(text):
     exits = re.findall(r'^(\d+) exit_group\((\d+)\)', joined, re.M)
     for pid in interrupted:
         terminal = re.search(r'^' + pid + r' \+\+\+ exited with (\d+) \+\+\+$', joined, re.M)
-        if pid not in parents or terminal is None or not any(
+        if pid not in threads or terminal is None or not any(
                 group(owner) == group(pid) and code == terminal[1] for owner, code in exits):
             raise ValueError('unexplained interrupted syscall trace')
     return joined
