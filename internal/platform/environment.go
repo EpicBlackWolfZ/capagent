@@ -30,6 +30,7 @@ type Environment struct {
 // the owner's Close method to probes.
 type ScopedView interface {
 	ExecutableAccess(context.Context, string) (bool, error)
+	DirectoryAccess(context.Context, string, bool) (bool, error)
 	StatFS(context.Context, string) (FilesystemInfo, error)
 	ReadFile(context.Context, string) ([]byte, error)
 	Stat(string) (os.FileInfo, error)

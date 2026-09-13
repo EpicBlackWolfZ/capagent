@@ -132,7 +132,7 @@ func (c *engineCollector) source(name, kind string) model.ConfigurationSource {
 func (c *engineCollector) retain(source model.ConfigurationSource) {
 	c.observation.Configuration.Sources = append(c.observation.Configuration.Sources, source)
 	switch source.Status {
-	case "parsed", "listed", "absent", "symlink_skipped":
+	case "parsed", "listed", configStatusAbsent, "symlink_skipped":
 		return
 	default:
 		message := "selected configuration source is " + source.Status
@@ -162,7 +162,7 @@ func (c *engineCollector) directory(name string) {
 	}
 	entries, err := c.files.ReadDir(c.ctx, strings.TrimPrefix(name, "/"))
 	if errors.Is(err, fs.ErrNotExist) {
-		source.Status = "absent"
+		source.Status = configStatusAbsent
 		c.retain(source)
 		return
 	}
@@ -203,7 +203,7 @@ func (c *engineCollector) file(name string, optionalStat bool) {
 	}
 	if optionalStat {
 		if _, err := c.files.Stat(strings.TrimPrefix(name, "/")); err != nil {
-			source.Selected, source.Status = false, "absent"
+			source.Selected, source.Status = false, configStatusAbsent
 			if !errors.Is(err, fs.ErrNotExist) {
 				// 4.9.3 skips optional main files after Stat errors. Preserve that
 				// selection decision while retaining measurement uncertainty.
@@ -218,7 +218,7 @@ func (c *engineCollector) file(name string, optionalStat bool) {
 	}
 	data, err := c.files.ReadFile(c.ctx, strings.TrimPrefix(name, "/"))
 	if errors.Is(err, fs.ErrNotExist) && c.observation.Configuration.Profile != knowledge.Containers493 {
-		source.Status = "absent"
+		source.Status = configStatusAbsent
 		c.retain(source)
 		return
 	}

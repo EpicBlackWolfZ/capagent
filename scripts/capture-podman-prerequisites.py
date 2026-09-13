@@ -35,8 +35,9 @@ def project(report, description, configuration=False):
             executable = original['executable']
             if executable['source'] == 'runtime':
                 selected[executable['role']] = executable['selected_path']
-        engine = configuration and ('configuration' in original or original['probe_id'] == 'podman.version')
-        if not engine and not any(key in original for key in ('executable', 'quadlet', 'user_context')) and not any(
+        configured = configuration and ('configuration' in original or 'storage_paths' in original or
+                                        original['probe_id'] == 'podman.version' or 'filesystems' in original.get('host', {}))
+        if not configured and not any(key in original for key in ('executable', 'quadlet', 'user_context')) and not any(
                 key in original.get('host', {}) for key in ('cgroups', 'systemd')):
             continue
         # Wire fact references omit raw values and their shared scope. Restore
@@ -57,12 +58,16 @@ def project(report, description, configuration=False):
         'ociRuntime': runtime.get('oci_runtime')},
         'store': {'graphDriverName': runtime.get('storage_driver'), 'graphRoot': runtime.get('graph_root'),
                   'runRoot': runtime.get('run_root')}}
+    if selected.get('storage_mount_program'):
+        info['store']['graphOptions'] = {'overlay.mount_program': {'Executable': selected['storage_mount_program']}}
     states = {key: value['state'] for key, value in report['capabilities'].items()
               if key.startswith(('runtime.podman.helper.', 'runtime.podman.quadlet.'))
               or key.endswith('.executable') or key == 'runtime.podman.cgroup_v2'}
     if configuration:
         for key in ('runtime.podman.config.engine.parsed', 'runtime.podman.cgroup_manager.systemd'):
             states[key] = report['capabilities'][key]['state']
+        states.update({key: value['state'] for key, value in report['capabilities'].items()
+                       if key.startswith('runtime.podman.storage.') or key == 'runtime.podman.config.storage.parsed'})
     result = redact({'schema_version': 1, 'provenance': {'kind': 'captured', 'description': description,
                      'conversion': 'Typed native measurements; info JSON reconstructed from published fields; home and user names anonymized.'},
                      'scope': trace['scope'], 'timestamp': trace['timestamp'], 'runtime_path': runtime['path'],
@@ -77,7 +82,7 @@ def main():
     parser.add_argument('--report', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--description', required=True)
-    parser.add_argument('--configuration', action='store_true', help='include typed engine sources and their version evidence')
+    parser.add_argument('--configuration', action='store_true', help='include typed configuration sources, selected paths and their version evidence')
     args = parser.parse_args()
     data = args.report.read_bytes()
     if len(data) > MAX_REPORT_BYTES:

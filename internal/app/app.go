@@ -157,6 +157,9 @@ func validateRuntimeSelection(scope model.EvaluationScope, observations []model.
 		if obs.Executable != nil {
 			paths = append(paths, obs.Executable.RuntimePath)
 		}
+		if obs.StoragePaths != nil {
+			paths = append(paths, obs.StoragePaths.RuntimePath)
+		}
 		if obs.Configuration != nil {
 			paths = append(paths, obs.Configuration.RuntimePath)
 		}

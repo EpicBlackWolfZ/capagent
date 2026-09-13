@@ -623,6 +623,9 @@
         },
         "configuration": {
           "$ref": "#/$defs/configuration_observation"
+        },
+        "storage_paths": {
+          "$ref": "#/$defs/storage_paths_observation"
         }
       },
       "required": [
@@ -2080,7 +2083,8 @@
             "unsupported",
             "limit",
             "incomplete",
-            "denied"
+            "denied",
+            "available"
           ]
         },
         "order": {
@@ -2106,7 +2110,16 @@
             "engine.conmon_path",
             "engine.helper_binaries_dir",
             "engine.runtime_path",
-            "engine.env"
+            "engine.env",
+            "storage",
+            "storage.driver",
+            "storage.driver_priority",
+            "storage.graphroot",
+            "storage.runroot",
+            "storage.rootless_storage_path",
+            "storage.imagestore",
+            "storage.transient_store",
+            "storage.options"
           ]
         },
         "engine": {
@@ -2119,6 +2132,17 @@
             "config_field_invalid",
             "config_field_unsupported",
             "config_toml_version_unsupported"
+          ]
+        },
+        "storage": {
+          "$ref": "#/$defs/storage_configuration"
+        },
+        "phase": {
+          "enum": [
+            "candidate",
+            "selection",
+            "baseline",
+            "override"
           ]
         }
       },
@@ -2137,7 +2161,10 @@
       "type": "object",
       "properties": {
         "family": {
-          "const": "engine"
+          "enum": [
+            "engine",
+            "storage"
+          ]
         },
         "runtime_path": {
           "type": "string"
@@ -2174,6 +2201,9 @@
         },
         "engine": {
           "$ref": "#/$defs/engine_configuration"
+        },
+        "storage": {
+          "$ref": "#/$defs/storage_configuration"
         }
       },
       "required": [
@@ -2183,6 +2213,248 @@
         "selection_complete",
         "parse_complete",
         "sources"
+      ],
+      "additionalProperties": false
+    },
+    "config_bool": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "boolean"
+        },
+        "source_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "source_id"
+      ],
+      "additionalProperties": false
+    },
+    "storage_configuration": {
+      "type": "object",
+      "properties": {
+        "driver": {
+          "$ref": "#/$defs/config_string"
+        },
+        "runroot": {
+          "$ref": "#/$defs/config_string"
+        },
+        "graphroot": {
+          "$ref": "#/$defs/config_string"
+        },
+        "rootless_storage_path": {
+          "$ref": "#/$defs/config_string"
+        },
+        "imagestore": {
+          "$ref": "#/$defs/config_string"
+        },
+        "mount_program": {
+          "$ref": "#/$defs/config_string"
+        },
+        "driver_priority": {
+          "$ref": "#/$defs/config_list"
+        },
+        "additionalimagestores": {
+          "$ref": "#/$defs/config_list"
+        },
+        "additionallayerstores": {
+          "$ref": "#/$defs/config_list"
+        },
+        "transient_store": {
+          "$ref": "#/$defs/config_bool"
+        },
+        "options": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "mount_program",
+              "ignore_chown_errors",
+              "skip_mount_home",
+              "force_mask",
+              "overlay.mount_program",
+              "overlay.ignore_chown_errors",
+              "overlay.skip_mount_home",
+              "overlay.force_mask",
+              "overlay.use_composefs",
+              "vfs.ignore_chown_errors"
+            ]
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/config_string"
+          }
+        },
+        "unprojected_field_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "problems": {
+          "type": "array",
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "runroot_required",
+              "graphroot_required",
+              "imagestore_equals_graphroot"
+            ]
+          }
+        }
+      },
+      "required": [
+        "options",
+        "unprojected_field_count"
+      ],
+      "additionalProperties": false
+    },
+    "storage_filesystem": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "integer"
+        },
+        "read_only": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "nosuid": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "noexec": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "read_only",
+        "nosuid",
+        "noexec"
+      ],
+      "additionalProperties": false
+    },
+    "storage_path_metadata": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "enum": [
+            "graphroot",
+            "runroot",
+            "imagestore",
+            "additionalimagestore",
+            "additionallayerstore"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^/[^\\x00-\\x1f\\x7f]*$"
+        },
+        "present": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "directory": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "checked_path": {
+          "type": "string",
+          "pattern": "^/[^\\x00-\\x1f\\x7f]*$"
+        },
+        "ancestor": {
+          "type": "boolean"
+        },
+        "checked_uid": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "checked_gid": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "checked_mode": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "accessible": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "filesystem": {
+          "$ref": "#/$defs/storage_filesystem"
+        }
+      },
+      "required": [
+        "role",
+        "path",
+        "present",
+        "directory",
+        "ancestor",
+        "checked_uid",
+        "checked_gid",
+        "checked_mode",
+        "accessible"
+      ],
+      "additionalProperties": false
+    },
+    "storage_paths_observation": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "enum": [
+            "configuration",
+            "runtime"
+          ]
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "runtime_path": {
+          "type": "string"
+        },
+        "writable": {
+          "type": "boolean"
+        },
+        "paths": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/storage_path_metadata"
+          }
+        }
+      },
+      "required": [
+        "source",
+        "source_id",
+        "runtime_path",
+        "writable",
+        "paths"
       ],
       "additionalProperties": false
     }

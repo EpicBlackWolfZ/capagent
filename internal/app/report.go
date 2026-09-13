@@ -64,6 +64,7 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 		projectIdentityObservation(&record, obs, input.Mode, report)
 		record.SubIDs = obs.SubIDs
 		record.Configuration = obs.Configuration
+		record.StoragePaths = obs.StoragePaths
 		record.UserContext = obs.UserContext
 		record.Executable, record.Quadlet = obs.Executable, obs.Quadlet
 		if obs.Host != nil {

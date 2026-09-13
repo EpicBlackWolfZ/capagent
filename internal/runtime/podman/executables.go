@@ -19,6 +19,11 @@ const maxExecutableCandidates = 16
 
 // ExecutableProbe never searches ambient PATH or executes a candidate. A source
 // owner supplies bounded absolute paths and its selection provenance.
+const (
+	sourceConfiguration = "configuration"
+	sourceRuntime       = "runtime"
+)
+
 type ExecutableProbe struct {
 	Role, Source, SourceID, RuntimePath string
 	Paths                               []string
@@ -50,7 +55,7 @@ func (p ExecutableProbe) Run(ctx context.Context, env platform.Environment) (mod
 			break
 		}
 	}
-	if p.Source == "runtime" && len(p.Paths) == 1 {
+	if (p.Source == sourceRuntime || p.Source == sourceConfiguration) && len(p.Paths) == 1 {
 		obs.Executable.SelectedPath = p.Paths[0]
 	}
 	return obs, ctx.Err()
@@ -151,7 +156,7 @@ func SelectedHelperProbes(info model.Observation, now func() time.Time) []Execut
 	for _, helper := range []struct{ role, name string }{{"oci_runtime", ociPath}, {conmonName, p.ConmonPath},
 		{"netavark", p.HelperPath}, {"aardvark_dns", p.AardvarkPath}, {"pasta", p.PastaPath}, {"slirp4netns", p.SlirpPath}} {
 		if helper.name != "" {
-			probes = append(probes, ExecutableProbe{Role: helper.role, Paths: []string{helper.name}, Source: "runtime",
+			probes = append(probes, ExecutableProbe{Role: helper.role, Paths: []string{helper.name}, Source: sourceRuntime,
 				SourceID: info.ID, RuntimePath: p.Path, Now: now})
 		}
 	}

@@ -19,7 +19,7 @@ func TestEngineConfigurationEvidence(t *testing.T) {
 	t.Parallel()
 	yes := true
 	at := time.Unix(1, 0)
-	scope := model.EvaluationScope{RunID: "engine", ContextID: "target", Runtime: "podman", Endpoint: "local"}
+	scope := model.EvaluationScope{RunID: "engine", ContextID: storageTestTarget, Runtime: storageTestRuntime, Endpoint: storageTestEndpoint}
 	for _, scenario := range []string{"configured", "malformed source", "denied source", "unqualified profile", "wrong version target",
 		"wrong runtime path", "runtime overrides configuration", "helper missing", "helper wrong source"} {
 		t.Run(scenario, func(t *testing.T) {

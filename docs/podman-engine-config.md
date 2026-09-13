@@ -136,6 +136,9 @@ distribution patches, architectures, or workload operations. CI separately
 checks delegated contexts, passive traces and packaged launchers; arm64 artifact
 verification is static rather than native execution.
 
+Storage has its own [selection and replacement rules](podman-storage-config.md),
+with shared source identity and target environment binding.
+
 ## Parsing and resource contract
 
 The pure-Go compile-time parser dependency is `go-toml/v2` v2.4.3, confined to

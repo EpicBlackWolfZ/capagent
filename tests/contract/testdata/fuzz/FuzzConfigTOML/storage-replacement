@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("[storage]\ndriver='overlay'\ngraphroot='$HOME/store'\n[storage.options]\nadditionalimagestores=['/images,/more']\n[storage.options.overlay]\nmount_program='/usr/bin/fuse-overlayfs'\n")

@@ -67,17 +67,17 @@ Deployment Decision
 
 ## Current Status and Roadmap
 
-The CLI collects [passive host facts](docs/host-facts.md) with `--json` and evaluates offline evidence with `--fixture DIR --json --pretty`. Local `--runtime podman` assessment adds target identity, executable discovery, [OCI/helper and Quadlet prerequisites](docs/podman-prerequisites.md), and [engine configuration provenance](docs/podman-engine-config.md). Explicit `--runtime podman --active` collects the selected CLI version and local effective runtime information, enabling qualified configuration source selection. It permits Podman startup writes; exit 0 establishes successful inspection, not workload readiness. See [Podman discovery](docs/podman-discovery.md) for command authority and [fixture evaluation](docs/fixture-evaluation.md) for requirement outcomes and exits.
+The CLI collects [passive host facts](docs/host-facts.md) with `--json` and evaluates offline evidence with `--fixture DIR --json --pretty`. Local `--runtime podman` assessment adds target identity, executable discovery, [OCI/helper and Quadlet prerequisites](docs/podman-prerequisites.md), [engine configuration provenance](docs/podman-engine-config.md), and [storage prerequisites](docs/podman-storage-config.md). Explicit `--runtime podman --active` collects the selected CLI version and local effective runtime information, enabling qualified configuration source selection. It permits Podman startup writes; exit 0 establishes successful inspection, not workload readiness. See [Podman discovery](docs/podman-discovery.md) for command authority and [fixture evaluation](docs/fixture-evaluation.md) for requirement outcomes and exits.
 
 Root can delegate to a local account with `--context=user:NAME` or `--context=uid:ID`. Reports include subordinate allocations and user-session metadata; `--active` permits the bounded user-manager query. See [execution contexts](docs/execution-context.md). Schema v1 remains pre-release. The [roadmap](docs/roadmap.md) tracks broader delivery.
 
 Execution targets Linux 5.6+ with working `openat2` confinement on amd64/arm64. Historical distribution fixtures do not imply supported execution on older kernels. See the [security and support contract](docs/security.md).
 
-The foundation, fixture evaluation, host facts and execution-context milestones are closed. Baseline correctness fixes, OCI/helper observations, Quadlet prerequisites and engine configuration are delivered. The remaining delivery priorities are:
+The foundation, fixture evaluation, host facts and execution-context milestones are closed. Baseline correctness fixes, OCI/helper observations, Quadlet prerequisites, engine configuration and storage assessment are delivered. The remaining delivery priorities are:
 
 | Order | Outcome |
 |---|---|
-| 1 | Storage and rootless networking configuration with mappings and provenance. |
+| 1 | Rootless networking configuration with mappings and provenance. |
 | 2 | Existing JSON requirements over live Podman evidence, with useful explanations. |
 | 3 | Registry/image-policy configuration and remaining Podman lifecycle metadata. |
 | 4 | [Qualified Podman assessment](https://github.com/EpicBlackWolfZ/capagent/issues/115), focused on rootless Quadlet/user systemd with rootful coverage. |

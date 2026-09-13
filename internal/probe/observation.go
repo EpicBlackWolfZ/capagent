@@ -35,6 +35,7 @@ func retainObservation(obs model.Observation, scope model.EvaluationScope) (mode
 // The caller must not mutate inputs concurrently with the copy.
 func SnapshotObservation(obs model.Observation) model.Observation {
 	obs.Configuration = snapshotConfiguration(obs.Configuration)
+	obs.StoragePaths = snapshotStoragePaths(obs.StoragePaths)
 	obs.Executable = snapshotExecutable(obs.Executable)
 	obs.Quadlet = copyValue(obs.Quadlet)
 	if q := obs.Quadlet; q != nil {

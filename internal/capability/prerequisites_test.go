@@ -36,7 +36,7 @@ func TestExecutablePrerequisiteStates(t *testing.T) {
 func TestRuntimeSelectionCannotBeReplacedByInstalledCandidate(t *testing.T) {
 	t.Parallel()
 	yes, no := true, false
-	scope := model.EvaluationScope{RunID: "run", ContextID: "target", Runtime: "podman", Endpoint: "local"}
+	scope := model.EvaluationScope{RunID: "run", ContextID: storageTestTarget, Runtime: storageTestRuntime, Endpoint: storageTestEndpoint}
 	at := time.Unix(1, 0)
 	info := model.Observation{ID: "info", ProbeID: "podman.info", Scope: scope, Timestamp: at, Completeness: model.Complete,
 		Podman: &model.PodmanInfo{Path: "/usr/bin/podman", Available: &yes,
@@ -107,7 +107,7 @@ func TestCgroupLivePrecedenceAndRootfulManager(t *testing.T) {
 	t.Parallel()
 	yes, no := true, false
 	v2 := "v2"
-	scope := model.EvaluationScope{RunID: "run", ContextID: "root", Runtime: "podman", Endpoint: "local"}
+	scope := model.EvaluationScope{RunID: "run", ContextID: "root", Runtime: storageTestRuntime, Endpoint: storageTestEndpoint}
 	at := time.Unix(1, 0)
 	for _, partial := range []bool{false, true} {
 		t.Run(string(model.Complete)+map[bool]string{true: "-partial"}[partial], func(t *testing.T) {

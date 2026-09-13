@@ -76,6 +76,12 @@
       "reason": "no complete evidence for this candidate",
       "evidence": []
     },
+    "runtime.podman.config.storage.parsed": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
     "runtime.podman.conmon.executable": {
       "state": "unknown",
       "confidence": "unknown",
@@ -277,6 +283,52 @@
       ]
     },
     "runtime.podman.slirp4netns.executable": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.storage.additional_stores.accessible": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.storage.image_store.accessible": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.storage.kernel.fuse": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "host.filesystems.runtime.podman.storage.kernel.fuse"
+      ]
+    },
+    "runtime.podman.storage.kernel.overlay": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "host.filesystems.runtime.podman.storage.kernel.overlay"
+      ]
+    },
+    "runtime.podman.storage.mount_program.executable": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.storage.overlay": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.storage.roots.accessible": {
       "state": "unknown",
       "confidence": "unknown",
       "reason": "no complete evidence for this candidate",
@@ -1213,6 +1265,77 @@
         ]
       },
       {
+        "configuration": {
+          "family": "storage",
+          "runtime_path": "/usr/bin/podman",
+          "version_source_id": "podman.version",
+          "profile": "podman-5.8.4",
+          "references": [
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/storage/types/options.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/storage/types/utils.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/storage/pkg/config/config.go"
+          ],
+          "selection_complete": false,
+          "parse_complete": true,
+          "sources": [
+            {
+              "phase": "candidate",
+              "id": "podman.configuration.storage.source.0",
+              "path": "/usr/share/containers/storage.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 0,
+              "selected": false,
+              "applied": false
+            },
+            {
+              "phase": "candidate",
+              "id": "podman.configuration.storage.source.1",
+              "path": "/etc/containers/storage.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 1,
+              "selected": false,
+              "applied": false
+            },
+            {
+              "phase": "candidate",
+              "id": "podman.configuration.storage.source.2",
+              "path": "/home/alice/.config/containers/storage.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 2,
+              "selected": false,
+              "applied": false
+            }
+          ]
+        },
+        "id": "podman.configuration.storage",
+        "probe_id": "podman.configuration.storage",
+        "scope": {
+          "run_id": "engine-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.configuration.storage.measurement",
+            "source": "podman.configuration.storage",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "storage_selection_unqualified",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
         "id": "podman.discovery",
         "probe_id": "podman.discovery",
         "scope": {
@@ -2137,6 +2260,72 @@
         ]
       },
       {
+        "storage_paths": {
+          "source": "configuration",
+          "source_id": "podman.configuration.storage",
+          "runtime_path": "/usr/bin/podman",
+          "writable": false,
+          "paths": []
+        },
+        "id": "podman.storage.paths.configuration.additional",
+        "probe_id": "podman.storage.paths.configuration.additional",
+        "scope": {
+          "run_id": "engine-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.storage.paths.configuration.additional.measurement",
+            "source": "podman.storage.paths.configuration.additional",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "storage_path_selection_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "storage_paths": {
+          "source": "configuration",
+          "source_id": "podman.configuration.storage",
+          "runtime_path": "/usr/bin/podman",
+          "writable": true,
+          "paths": []
+        },
+        "id": "podman.storage.paths.configuration.roots",
+        "probe_id": "podman.storage.paths.configuration.roots",
+        "scope": {
+          "run_id": "engine-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.storage.paths.configuration.roots.measurement",
+            "source": "podman.storage.paths.configuration.roots",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "storage_path_selection_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
         "id": "podman.version",
         "probe_id": "podman.version",
         "scope": {
@@ -2240,6 +2429,46 @@
         "depends_on": []
       },
       {
+        "id": "host.filesystems.runtime.podman.storage.kernel.fuse",
+        "source": "current kernel filesystem registration from host facts; this does not establish usable storage or device access",
+        "claim": "runtime.podman.storage.kernel.fuse",
+        "scope": {
+          "run_id": "engine-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "host.filesystems"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "host.filesystems.runtime.podman.storage.kernel.overlay",
+        "source": "current kernel filesystem registration from host facts; this does not establish usable storage or device access",
+        "claim": "runtime.podman.storage.kernel.overlay",
+        "scope": {
+          "run_id": "engine-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "host.filesystems"
+        ],
+        "depends_on": []
+      },
+      {
         "id": "podman.configuration.engine.runtime.podman.cgroup_manager.systemd",
         "source": "configured cgroup-manager choice; systemd/user-manager access and cgroup delegation remain separate",
         "claim": "runtime.podman.cgroup_manager.systemd",
@@ -2277,6 +2506,48 @@
         "confidence": "unknown",
         "observations": [
           "podman.configuration.engine",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.storage.runtime.podman.config.storage.parsed",
+        "source": "selected storage source phases and recognized fields; replacement and root defaults are version-specific",
+        "claim": "runtime.podman.config.storage.parsed",
+        "scope": {
+          "run_id": "engine-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.storage",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.storage.runtime.podman.storage.overlay",
+        "source": "configured storage driver; runtime-effective driver takes precedence",
+        "claim": "runtime.podman.storage.overlay",
+        "scope": {
+          "run_id": "engine-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.storage",
           "podman.version"
         ],
         "depends_on": []
@@ -2863,6 +3134,18 @@
         "message": "runtime observation is incomplete"
       },
       {
+        "code": "storage_selection_unqualified",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "storage_path_selection_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "storage_path_selection_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
         "code": "incomplete_evidence",
         "message": "evidence excluded from resolution",
         "reference": "podman.configuration.engine.runtime.podman.cgroup_manager.systemd"
@@ -2875,12 +3158,22 @@
       {
         "code": "incomplete_evidence",
         "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.storage.runtime.podman.config.storage.parsed"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
         "reference": "podman.executable.configuration.conmon.runtime.podman.conmon.executable"
       },
       {
         "code": "incomplete_evidence",
         "message": "evidence excluded from resolution",
         "reference": "podman.executable.configuration.oci_runtime.runtime.podman.oci_runtime.executable"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.storage.runtime.podman.storage.overlay"
       },
       {
         "code": "indeterminate_capability",
