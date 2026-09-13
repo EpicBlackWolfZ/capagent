@@ -37,7 +37,7 @@ Explore the comprehensive design specifications:
 
 - 📖 **[Philosophy & Core Principles](docs/philosophy.md)**: The 20 engineering principles, evidence before inference, unknown is not false, TDD requirements, and Definition of Done.
 - 🏛️ **[Architecture & Contract](docs/architecture.md)**: Conceptual pipeline, package boundaries, 3-valued requirement logic truth tables, execution context, and JSON Schema v1 specification.
-- 🗺️ **[Milestone Roadmap & Catalog](docs/roadmap.md)**: M0 through M21 milestone sequence, detailed issue specifications, exit criteria, and canonical capability catalog.
+- 🗺️ **[Milestone Roadmap & Catalog](docs/roadmap.md)**: Podman-first delivery order, milestone ownership, assessment checkpoint and planned capability catalog.
 - **[Foundation testing](docs/testing.md)**: Run the M1.1 gate, bounded fuzzing, deterministic faults, resource regressions, and nightly campaigns.
 
 ---
@@ -71,33 +71,18 @@ The CLI collects [passive host facts](docs/host-facts.md) with `--json` and repl
 
 Execution targets Linux 5.6+ with working `openat2` confinement on amd64/arm64. Historical distribution fixtures do not imply supported execution on older kernels. See the [security and support contract](docs/security.md).
 
-| Milestone | Status | Deliverable |
-|---|---|---|
-| [M0 — Architecture & Contract](https://github.com/EpicBlackWolfZ/capagent/milestone/1) | Initial skeleton delivered | Initial models, state algebra and schema skeleton; remaining semantics have explicit follow-ups. |
-| [M1 — Probe Core](https://github.com/EpicBlackWolfZ/capagent/milestone/2) | Initial foundation delivered | Static payload, OS abstractions and scheduler scaffolding; host-report CLI is not delivered. |
-| [M1.1 — Hardening, Security & Performance](https://github.com/EpicBlackWolfZ/capagent/milestone/23) | Active gate | Confinement, descriptor ownership, bounded I/O, parser fidelity, execution/build policy and regression gate. |
-| [M1.2 — Context & Evaluation Slice](https://github.com/EpicBlackWolfZ/capagent/milestone/24) | Implemented fixture slice | Typed context/evidence, minimal evaluator/requirements, reusable fixtures, application lifecycle and JSON consumer smoke. |
-| [M2 — Host Facts](https://github.com/EpicBlackWolfZ/capagent/milestone/3) | Passive host facts implemented | OS/kernel/systemd, cgroups, namespaces/security and filesystem/network prerequisites with passive JSON reports. |
-| [M3 — Execution Context](https://github.com/EpicBlackWolfZ/capagent/milestone/4) | Implemented; review pending | Target identity validation, groups, subordinate ranges, helper metadata, XDG and user systemd. |
-| [M4 — Runtime Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/5) | Local Podman slice implemented | Deterministic executable discovery; other runtimes and endpoint connectivity remain queued. |
-| [M5 — Podman Core](https://github.com/EpicBlackWolfZ/capagent/milestone/6) | Version parser and replay implemented | Live version/effective-info execution awaits an explicit opt-in boundary. |
-| [M6 — Configuration Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/7) | Queued | Effective configuration and provenance across source/user scopes. |
-| [M7 — Configuration Capabilities](https://github.com/EpicBlackWolfZ/capagent/milestone/8) | Queued | Use the M1.2 evaluator for registry/storage/network mappings. |
-| [M8 — Capability Catalog Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/9) | Queued | Expand lifecycle and dependency mappings; engine infrastructure already exists. |
-| [M9 — Requirement Language & Explanations](https://github.com/EpicBlackWolfZ/capagent/milestone/10) | Queued | Extend the minimal AST and consumer-driven language/explanation features. |
-| [M10 — Ansible Integration](https://github.com/EpicBlackWolfZ/capagent/milestone/11) | Queued | Full role and real-host gating/fallback examples; initial consumer smoke occurs in M1.2. |
-| [M11 — Diagnostics](https://github.com/EpicBlackWolfZ/capagent/milestone/12) | Queued | Doctor, runtime/config inspection and evidence explanations. |
-| [M12 — Docker](https://github.com/EpicBlackWolfZ/capagent/milestone/13) | Queued | Useful Docker baseline with real fixtures and target-scoped mappings. |
-| [M13 — containerd & CRI](https://github.com/EpicBlackWolfZ/capagent/milestone/14) | Queued | Baseline CRI support; CRI-O/nerdctl remain optional experimental scope. |
-| [M14 — Historical Knowledge](https://github.com/EpicBlackWolfZ/capagent/milestone/15) | Queued | Sourced high-impact rules that never override direct evidence. |
-| [M15 — Compatibility Corpus Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/16) | Queued | Broaden the M1.2 harness and captured regression corpus. |
-| [M16 — Real Compatibility Matrix](https://github.com/EpicBlackWolfZ/capagent/milestone/17) | Queued | Automate a wider supported OS/runtime matrix; first real tests occur earlier. |
-| [M17 — Active Validation](https://github.com/EpicBlackWolfZ/capagent/milestone/18) | Queued; experimental | Explicit opt-in, bounded disposable verification and documented cleanup limits. |
-| [M18 — Production Hardening](https://github.com/EpicBlackWolfZ/capagent/milestone/19) | Queued | Final integrated fleet checks and broader benchmark/scalability work. |
-| [M19 — API Stabilization](https://github.com/EpicBlackWolfZ/capagent/milestone/20) | Queued | Freeze validated schema, evidence, requirement and ID compatibility contracts. |
-| [M20 — Documentation](https://github.com/EpicBlackWolfZ/capagent/milestone/21) | Queued | Complete installation, operation, integration and troubleshooting guides. |
-| [M21 — v1.0](https://github.com/EpicBlackWolfZ/capagent/milestone/22) | Queued | Release verified stable scope; optional experimental features do not block it. |
+The foundation, fixture evaluation, host facts and execution-context milestones are closed. Known follow-up defects are tracked in the [baseline correctness milestone](https://github.com/EpicBlackWolfZ/capagent/milestone/25). The next delivery priorities are:
 
+| Order | Outcome |
+|---|---|
+| 1 | Baseline fixes, OCI/helper observations and target-scoped Quadlet prerequisites. |
+| 2 | Engine, storage and rootless networking configuration with mappings and provenance. |
+| 3 | Existing JSON requirements over live Podman evidence, with useful explanations. |
+| 4 | Registry/image-policy configuration and remaining Podman lifecycle metadata. |
+| 5 | [Qualified Podman assessment](https://github.com/EpicBlackWolfZ/capagent/issues/115), focused on rootless Quadlet/user systemd with rootful coverage. |
+| 6 | Ansible integration and Docker/containerd baselines, then broader qualification and stable v1.0. |
+
+Each feature includes its tests and user documentation. The first Podman checkpoint remains prerelease; the full v1.0 scope still includes Ansible and the other runtime baselines. See the [roadmap](docs/roadmap.md) for exact issue dependencies and milestone ownership.
 
 ---
 

@@ -4,11 +4,11 @@ This document defines the architectural boundaries, domain model, evaluation sem
 
 ## Implementation status and planned integration
 
-This document describes the current foundation and target architecture. The [M1.2 fixture slice](fixture-evaluation.md) implements the first complete evaluation path. [Current-user identity and static Podman discovery](podman-discovery.md) also use this pipeline; explicit `--active` enables the bounded local version/info sequence; M1.1 confinement, command authority and lifecycle contracts apply to every adapter. See [roadmap.md](roadmap.md) and [security.md](security.md) for limits.
+This document describes the current foundation and target architecture. The completed [M1.2 fixture slice](fixture-evaluation.md), [host facts](host-facts.md), [execution contexts](execution-context.md) and [static Podman discovery](podman-discovery.md) share the evaluation pipeline; explicit `--active` enables the bounded local version/info sequence; M1.1 confinement, command authority and lifecycle contracts apply to every adapter. See [roadmap.md](roadmap.md) and [security.md](security.md) for limits.
 
 The application/composition layer delivered by [#61](https://github.com/EpicBlackWolfZ/capagent/issues/61) owns context selection, dependency construction, evaluation order and resource teardown after workers join. It sits above the pure engines and probe framework. `cmd/capagent` remains flags/formatting only, and `internal/probe` remains limited to model/platform dependencies. Today environments are caller-owned; `Orchestrator.Run` does not create or close them.
 
-The current identity booleans and minimal observations are structural scaffolding. [#59](https://github.com/EpicBlackWolfZ/capagent/issues/59) and [#64](https://github.com/EpicBlackWolfZ/capagent/issues/64) add explicit scope, typed payloads and uncertainty/completeness before consumers rely on them. Never treat an unobserved zero value as measured negative evidence. The `context` capability namespace and UID/GID schema bounds remain pending contract alignment.
+The completed [#59](https://github.com/EpicBlackWolfZ/capagent/issues/59) and [#64](https://github.com/EpicBlackWolfZ/capagent/issues/64) contracts provide explicit scope, typed payloads, nullable unobserved values, completeness, the `context` capability namespace and bounded UID/GID fields. Never treat an unobserved zero value as measured negative evidence. Known projection/query defects are tracked in the [baseline follow-up milestone](https://github.com/EpicBlackWolfZ/capagent/milestone/25). The next integration work prioritizes Podman probes and configuration, with mappings and explanations delivered together; see the [delivery sequence](roadmap.md#delivery-sequence).
 
 ---
 
@@ -159,6 +159,8 @@ Capabilities are evaluated relative to an explicit context:
 
 ```go
 type EvaluationContext struct {
+    ID            string
+    Namespaces    []Namespace
     Host          HostContext
     Identity      IdentityContext
     Runtime       RuntimeContext
@@ -166,18 +168,20 @@ type EvaluationContext struct {
 }
 
 type IdentityContext struct {
-    Current        UserIdentity
-    Target         UserIdentity
-    IsRootless     bool
+    Current        *UserIdentity
+    Target         *UserIdentity
+    Execution      *UserIdentity
+    Selection      string
+    IsRootless     *bool
     SubUIDRanges   []SubIDRange
     SubGIDRanges   []SubIDRange
     XDGRuntimeDir  string
-    HasUserSystemd bool
-    InContainer    bool
+    HasUserSystemd *bool
+    InContainer    *bool
 }
 ```
 
-Capabilities such as rootless storage, rootless port forwarding, and user-level Quadlet generation evaluate against `IdentityContext` rather than system-wide root permissions.
+The type excerpt omits serialization tags. `Current` records launcher identity, `Target` the requested deployment identity, and `Execution` the verified probe credentials. Nullable booleans preserve unobserved states. Planned rootless storage, networking and Quadlet predicates must use this explicit scope; root access by the launcher does not establish target-user authority.
 
 ---
 
@@ -234,7 +238,7 @@ testdata/
 
 ### Architectural Boundaries
 1. **CLI does not contain business logic**: `cmd/capagent` only parses flags, calls the runner, and writes to stdout/stderr.
-2. **Runtime adapters do not depend on CLI**: `internal/runtime/*` only consume `platform.CommandRunner` and `platform.PlatformReader`.
+2. **Runtime adapters do not depend on CLI**: `internal/runtime/*` consume domain types and explicit platform service views; all host I/O remains in `internal/platform`.
 3. **Capability engine does not execute commands**: `internal/capability` evaluates purely over `Evidence` graphs.
 4. **Requirement engine does not execute host probes**: `internal/requirement` evaluates strictly against `Capability` outputs.
 
@@ -243,8 +247,8 @@ The probe package is the dynamic-dependency orchestrator that materializes a
 canonical execution plan from a static DAG.
 
 **Layer position.** Sits between `internal/platform` (low-level OS abstractions)
-and `internal/host` / `internal/runtime` (which are *consumers* of probe
-infrastructure in later milestones). May import `internal/model` and
+and `internal/host` / `internal/runtime` (which consume the probe
+infrastructure). May import `internal/model` and
 `internal/platform` only — never engine, configuration, knowledge, diagnostics,
 or CLI packages.
 
@@ -312,7 +316,8 @@ dependents of a cancelled, failed, or skipped probe are recorded as
 
 **Environment injection.** All probe `Run` invocations receive a
 `platform.Environment` value with read-only `Reader()`, `Procfs()`, `Sysfs()`,
-and `Runner()` accessors. Private forwarding values hide concrete setup and
+`Runner()`, scoped `Files()`/`Scope()` and dedicated host/user-manager service
+accessors. Private forwarding values hide concrete setup and
 close handles, including mutable procfs/sysfs wrapper pointers. Nil services
 remain nil. This is ordinary type/API prevention, verified by surface-contract
 and shared-reader race tests; it is not a sandbox against reflection or unsafe.
@@ -555,14 +560,14 @@ Deterministic serialization guarantees that identical inputs produce canonical b
 
 ### 7.2 Context Mapping & Intentional Renaming
 
-The domain model explicitly separates executing identity (`Current`) from target deployment identity (`Target`). The external Schema v1 contract evaluates strictly against target workload identity:
+The domain model separates launcher identity (`Current`), target deployment identity (`Target`) and verified probe credentials (`Execution`). The external Schema v1 contract evaluates strictly against target workload identity:
 
 | Schema v1 Field | Domain Expression | Semantics / Fallback |
 | :--- | :--- | :--- |
 | `context.uid` | `evalCtx.Identity.Target.UID` | Target user UID (falls back to `Current.UID` only if `Target` is nil; explicit UID/GID 0 is retained) |
 | `context.gid` | `evalCtx.Identity.Target.GID` | Target user GID (falls back to `Current.GID` only if `Target` is nil; explicit UID/GID 0 is retained) |
 | `context.target_user` | `evalCtx.Identity.Target.Username` | Target username (falls back to `Current.Username` only if `Target` is nil; explicit UID/GID 0 is retained) |
-| `context.is_rootless` | `evalCtx.Identity.IsRootless` | Whether target execution runs under rootless user namespaces |
+| `context.is_rootless` | `evalCtx.Identity.IsRootless` | Whether the selected target is unprivileged; does not prove user-namespace creation or rootless workload usability |
 | `context.in_container` | `evalCtx.Identity.InContainer` | Whether the evaluation environment runs inside a container |
 | `host.systemd` | `evalCtx.Host.SystemdActive` | Intentional external rename of model-level `SystemdActive` |
 | `capabilities.*.evidence` | `model.EvidenceRef.ID` | Flattening structured `EvidenceRef` references into `[]string` |
@@ -592,7 +597,7 @@ Schema v1 enforces strict non-null containers:
 
 ### 7.5 Additive Evolution & Versioning Rules
 
-Schema v1 remains pre-release. M1.2 corrects UID/GID bounds and missing-value representation, as documented in [fixture evaluation](fixture-evaluation.md#consumer-and-pre-release-contract). The following compatibility rules apply after the M19 freeze.
+Schema v1 remains pre-release. M1.2 corrected UID/GID bounds and missing-value representation, as documented in [fixture evaluation](fixture-evaluation.md#consumer-and-pre-release-contract). The following compatibility rules apply after the M19 freeze.
 
 Schema v1 adheres to an open additive evolution model (`additionalProperties: true`):
 - **Permitted (Non-Breaking)**:
@@ -618,69 +623,30 @@ The authoritative schema is [schema/v1/schema.json](../schema/v1/schema.json), e
 
 ## 8. Evaluation Examples
 
-### 8.1 Example: Success Case
-On a modern RHEL 9 host running Podman 5.x with cgroup v2, systemd 252, and Netavark:
+### 8.1 Requirement meaning follows capability evidence
+
+The shipped inspection requirement uses the existing JSON AST:
 
 ```json
 {
-  "schema_version": 1,
-  "context": { "uid": 1000, "is_rootless": true },
-  "host": { "os": "rhel", "os_version": "9.4", "cgroup_version": "v2", "systemd": true },
-  "capabilities": {
-    "container.lifecycle.systemd_native": {
-      "state": "supported",
-      "confidence": "verified",
-      "evidence": ["systemd=252", "quadlet_generator=present", "cgroups=v2"]
-    },
-    "container.network.custom_dns": {
-      "state": "supported",
-      "confidence": "verified",
-      "evidence": ["backend=netavark", "aardvark_dns=present"]
-    }
-  }
+  "all": [
+    {"capability": "runtime.podman"},
+    {"capability": "runtime.podman.info"}
+  ]
 }
 ```
-**Requirement:**
-```yaml
-all:
-  - container.lifecycle.systemd_native
-  - container.network.custom_dns
-```
-**Verdict:** `SATISFIED`
 
-### 8.2 Example: Actionable Failure Case
-On an older host where Podman 4.9 is installed but cgroup v1 is active:
+Its satisfaction means recognizable CLI/version and complete local effective-info collection under the selected policy. It does not establish Quadlet generation, working DNS, usable storage or successful container deployment. The [inspection fixtures](fixture-evaluation.md#fixture-document) exercise success, failure, incomplete output and skipped dependent work through the real evaluation path.
 
-```json
-{
-  "capabilities": {
-    "container.lifecycle.systemd_native": {
-      "state": "unsupported",
-      "confidence": "verified",
-      "reason": "cgroup v1 prevents required systemd-native Quadlet execution",
-      "evidence": ["systemd=250", "quadlet_generator=present", "cgroups=v1"]
-    }
-  }
-}
-```
-**Verdict:** `UNSATISFIED` (Root cause immediately obvious; avoids misleading `quadlet: false`).
+### 8.2 Negative and indeterminate results
 
-### 8.3 Example: Unknown / Indeterminate Case
-Podman binary is installed, but permissions prevent the user from accessing the podman service socket:
+For the shipped narrow `runtime.podman.netavark` predicate, a reported CNI backend produces an unsupported result, while selected Netavark with an absent or unsuitable helper produces a misconfigured result. Missing fields, denied metadata or incomplete collection preserve uncertainty. These outcomes concern the documented backend/helper prerequisite, not an attempted container-network operation. See the [capability state table](fixture-evaluation.md#first-capability).
 
-```json
-{
-  "capabilities": {
-    "runtime.podman.available": {
-      "state": "unknown",
-      "confidence": "unknown",
-      "reason": "permission denied accessing /run/user/1000/podman/podman.sock",
-      "evidence": ["binary_exists=true", "socket_connect=permission_denied"]
-    }
-  }
-}
-```
-**Verdict:** `INDETERMINATE` (Automation can fail-closed safely without falsely claiming Podman is missing).
+Local Podman inspection does not require a Podman service socket. Future endpoint-based adapters must keep socket metadata, connectivity and engine usability separate, with explicit endpoint scope.
+
+### 8.3 Planned deployment assessments
+
+The first [Podman assessment checkpoint](roadmap.md#first-podman-assessment-checkpoint) adds target-scoped Quadlet prerequisites and configuration explanations. Requirement examples will use only delivered predicates with explicit proof levels. Generator or helper presence alone cannot produce verified operational lifecycle/DNS support. General live JSON requirement input and basic explanations are tracked in [#112](https://github.com/EpicBlackWolfZ/capagent/issues/112); optional YAML and broader language conveniences follow later.
 
 ### 8.4 Current local Podman inspection
 
@@ -688,7 +654,7 @@ The shipped `--runtime podman --active` path bootstraps identity and static disc
 
 Typed info observations retain backend, driver, cgroups, rootless and graph/run roots, plus a normalized info version. Report projection selects observations deterministically by timestamp/ID, preserves CLI version details when info fails and diagnoses version conflict. New nullable fields are copied at observation/report ownership transfers and validated with the Schema v1 additions. Raw command facts and arbitrary JSON members remain internal.
 
-The active requirement uses the existing AST: `all(runtime.podman, runtime.podman.info)`. The second predicate requires recognizable complete local effective information. It uses runtime-precedence evidence with derived confidence; helper metadata uncertainty remains separate. See [inspection behavior and limits](podman-discovery.md#active-inspection) and [combined fixture replay](fixture-evaluation.md#fixture-document). Earlier deployment examples in this section describe the target architecture and do not imply those workload capabilities are already shipped.
+The active requirement uses the existing AST: `all(runtime.podman, runtime.podman.info)`. The second predicate requires recognizable complete local effective information. It uses runtime-precedence evidence with derived confidence; helper metadata uncertainty remains separate. See [inspection behavior and limits](podman-discovery.md#active-inspection) and [combined fixture replay](fixture-evaluation.md#fixture-document). Planned deployment assessments remain distinct from these shipped inspection predicates.
 
 ## Passive host collection
 
