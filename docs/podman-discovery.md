@@ -22,7 +22,7 @@ The report separates these facts:
 - `evaluation.namespaces` contains observed `user`, `pid`, `net`, `mnt`, `ipc`, `uts` and `cgroup` namespace link identifiers. Missing identifiers stay unknown.
 - `runtimes.podman.installed` is true for a selected regular file, false for a complete unsuccessful search, or null when discovery is uncertain. `path` retains the selected candidate or explicit override.
 - `file.executable_bits` describes permission bits, not successful execution. Nullable ownership distinguishes an observed root owner from unknown ownership.
-- `accessible` remains null. `version` and `cli_runnable` are unobserved in passive mode. No rootless, storage, DNS, engine-access or Quadlet capability is inferred from file presence or a UID.
+- `accessible` remains null. `version` and `cli_runnable` are unobserved in passive mode. No working deployment, storage, DNS or engine access is inferred from file presence or a UID. [Helper and Quadlet prerequisite predicates](podman-prerequisites.md) separately describe bounded metadata and session evidence.
 
 `evaluation.mode` and `provenance` are both `live`; `evaluation.collection` is `passive` or `active`. Host observations have their own completeness and do not change the runtime requirement verdict. Reports preserve observations, diagnostic codes and requirement results. `--debug` additionally prints codes on stderr.
 

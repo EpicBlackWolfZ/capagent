@@ -56,6 +56,9 @@ type Command struct {
 	OutputIncomplete bool              `json:"output_incomplete,omitempty"`
 }
 type Document struct {
+	Active        bool                    `json:"active,omitempty"`
+	PodmanPath    string                  `json:"podman_path,omitempty"`
+	Environment   map[string]string       `json:"environment,omitempty"`
 	UserQuery     bool                    `json:"user_query,omitempty"`
 	Host          *HostCalls              `json:"host,omitempty"`
 	SchemaVersion int                     `json:"schema_version"`
@@ -123,8 +126,8 @@ func validate(d *Document) error {
 	if err := d.Context.Identity.IsValid(); err != nil {
 		return err
 	}
-	if d.UserQuery && d.Probe != contextProbe {
-		return errors.New("user query requires context fixture")
+	if err := validateProbeOptions(d); err != nil {
+		return err
 	}
 	if !validFixtureRuntime(d) {
 		return errors.New("fixture runtime must be local Podman")
@@ -132,12 +135,13 @@ func validate(d *Document) error {
 	if (d.Provenance.Kind != "synthetic" && d.Provenance.Kind != "captured") || d.Provenance.Description == "" {
 		return errors.New("fixture requires explicit captured or synthetic provenance")
 	}
-	switch d.Probe {
-	case "", "info", "version", "inspection", hostProbe, contextProbe:
-	default:
-		return errors.New("unknown fixture probe")
-	}
 	commands := 1
+	if d.Probe == assessmentProbe {
+		commands = len(d.Commands)
+		if err := validateAssessment(d); err != nil {
+			return err
+		}
+	}
 	if d.Probe == hostProbe || d.Probe == contextProbe {
 		commands = len(d.Commands)
 		if err := validateHost(d); err != nil {
@@ -154,6 +158,21 @@ func validate(d *Document) error {
 		return err
 	}
 	return validateFiles(d.Files)
+}
+
+func validateProbeOptions(d *Document) error {
+	if d.UserQuery && d.Probe != contextProbe && d.Probe != assessmentProbe {
+		return errors.New("user query requires context or assessment fixture")
+	}
+	if d.Probe != assessmentProbe && (d.Active || d.PodmanPath != "" || len(d.Environment) != 0) {
+		return errors.New("assessment fields require assessment fixture")
+	}
+	switch d.Probe {
+	case "", "info", "version", "inspection", hostProbe, contextProbe, assessmentProbe:
+		return nil
+	default:
+		return errors.New("unknown fixture probe")
+	}
 }
 
 func validateFiles(files []File) error {
@@ -184,6 +203,7 @@ func validateFiles(files []File) error {
 }
 
 type Services struct {
+	Policy      platform.EnvPolicy
 	Environment platform.Environment
 	Command     platform.CommandSpec
 	InfoCommand platform.CommandSpec
@@ -219,14 +239,25 @@ func Open(d *Document) (*Services, error) {
 		return nil, err
 	}
 	files := platform.NewScopedMemReader("/", mem)
-	if d.Probe == hostProbe || d.Probe == contextProbe {
+	if d.Probe == hostProbe || d.Probe == contextProbe || d.Probe == assessmentProbe {
 		files = platform.NewScopedMemReaderWithFilesystems("/", mem, hostFilesystems(d))
 	}
 	env := platform.NewEnvironment(nil, nil, nil, runner).WithFiles(files).WithScope(d.Scope())
-	if d.Probe == hostProbe || d.Probe == contextProbe {
+	if d.Probe == hostProbe || d.Probe == contextProbe || d.Probe == assessmentProbe {
 		env = env.WithHost(hostSnapshot(d), platform.NewHostMetadata(runner)).WithUserManager(platform.NewUserManager(runner))
 	}
 	services := &Services{Environment: env, Requirement: node, files: files}
+	if d.Probe == assessmentProbe {
+		policy, err := assessmentPolicy(d)
+		if err != nil {
+			return nil, errors.Join(err, files.Close())
+		}
+		services.Policy = policy
+		if err := validateAssessmentCommands(d, specs, policy); err != nil {
+			return nil, errors.Join(err, files.Close())
+		}
+		return services, nil
+	}
 	if len(specs) > 0 {
 		services.Command = specs[0]
 	}

@@ -96,7 +96,8 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 	}
 
 	input := Input{Scope: scope, Context: current, At: at, Mode: "live", Provenance: "live", Now: services.now, Collection: "passive",
-		Requirement: &requirement.Node{Capability: capability.PodmanID}, Observations: []model.Observation{identity},
+		AssessPodman: opts.Runtime == "podman",
+		Requirement:  &requirement.Node{Capability: capability.PodmanID}, Observations: []model.Observation{identity},
 		Definitions: []capability.Definition{capability.PodmanDefinition()}}
 	if opts.Runtime == "" {
 		input.Requirement = nil
@@ -112,6 +113,7 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 	}
 	env := platform.NewEnvironment(nil, nil, nil, nil).WithFiles(services.files).WithScope(scope).
 		WithHost(services.host, services.metadata).WithUserManager(services.manager)
+	services, captured, captureErr := captureAssessmentEnvironment(opts, services, current)
 	probes := host.Probes(services.now)
 	if current.Identity.Execution != nil {
 		probes = append(probes, host.SubIDProbe{Target: *current.Identity.Target, Now: services.now},
@@ -120,6 +122,7 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 	if current.Identity.Execution == nil {
 		probes = nil
 	}
+	probes = addPrerequisites(&input, probes, current, captured, captureErr, services.now)
 	var diagnostics []output.Diagnostic
 	if opts.Runtime != "" && current.Identity.Execution != nil && ctx.Err() == nil {
 		discovery, discoveryErr := (podman.DiscoveryProbe{Path: opts.PodmanPath, Now: services.now}).Run(ctx, env)
@@ -132,7 +135,7 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 			if opts.Active {
 				var setupErr error
 				var runtimeProbes []probe.Probe
-				env, runtimeProbes, setupErr = activeProbes(ctx, services, current, env, d.Path)
+				env, runtimeProbes, setupErr = activeProbes(ctx, services, current, env, d.Path, captured, captureErr)
 				probes = append(probes, runtimeProbes...)
 				if setupErr != nil {
 					diagnostics = append(diagnostics, liveDiagnostic("inspection_environment_unavailable"))
@@ -151,14 +154,13 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 }
 
 func activeProbes(ctx context.Context, services currentServices, current model.EvaluationContext,
-	env platform.Environment, executable string,
+	env platform.Environment, executable string, captured platform.EnvPolicy, captureErr error,
 ) (platform.Environment, []probe.Probe, error) {
 	if !services.credentials.GroupsKnown || services.groupErr != nil || ctx.Err() != nil {
 		return env, nil, errors.New("current execution credentials are incomplete")
 	}
-	captured, err := services.capture()
-	if err != nil {
-		return env, nil, err
+	if captureErr != nil {
+		return env, nil, captureErr
 	}
 	commands, err := podman.PrepareInspection(ctx, services.files, *current.Identity.Execution, executable, captured)
 	if err != nil {

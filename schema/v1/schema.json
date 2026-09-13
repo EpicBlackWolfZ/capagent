@@ -296,6 +296,23 @@
             "maxLength": 4096,
             "pattern": "^(/|$)",
             "description": "Sanitized effective storage path; empty is preserved and absence/null is unknown. No write test is implied."
+          },
+          "oci_runtime": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_.+-]{0,128}$"
+              },
+              "path": {
+                "type": "string",
+                "maxLength": 4096
+              }
+            },
+            "required": [
+              "name",
+              "path"
+            ]
           }
         }
       }
@@ -597,6 +614,12 @@
         },
         "user_context": {
           "$ref": "#/$defs/userContext"
+        },
+        "executable": {
+          "$ref": "#/$defs/executable_observation"
+        },
+        "quadlet": {
+          "$ref": "#/$defs/quadlet_observation"
         }
       },
       "required": [
@@ -1729,6 +1752,172 @@
         "linger_enabled",
         "query_attempted",
         "manager_version"
+      ]
+    },
+    "executable_observation": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]{1,64}$"
+        },
+        "source": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "runtime_path": {
+          "type": "string",
+          "maxLength": 4096,
+          "pattern": "^$|^/[^\\x00-\\x1f\\x7f]*$"
+        },
+        "selected_path": {
+          "type": "string",
+          "maxLength": 4096,
+          "pattern": "^$|^/[^\\x00-\\x1f\\x7f]*$"
+        },
+        "candidates": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "maxLength": 4096,
+                "pattern": "^$|^/[^\\x00-\\x1f\\x7f]*$"
+              },
+              "present": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "file": {
+                "type": "object",
+                "properties": {
+                  "regular": {
+                    "type": "boolean"
+                  },
+                  "executable_bits": {
+                    "type": "boolean"
+                  },
+                  "mode": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 511
+                  },
+                  "uid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "gid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "regular",
+                  "executable_bits",
+                  "mode",
+                  "uid",
+                  "gid"
+                ]
+              },
+              "device": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "inode": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "executable": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "masked": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "path",
+              "present",
+              "device",
+              "inode",
+              "executable",
+              "masked"
+            ]
+          }
+        }
+      },
+      "required": [
+        "role",
+        "source",
+        "candidates"
+      ]
+    },
+    "quadlet_observation": {
+      "type": "object",
+      "properties": {
+        "rootless": {
+          "type": "boolean"
+        },
+        "reference": {
+          "type": "string"
+        },
+        "locations": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "maxLength": 4096,
+                "pattern": "^$|^/[^\\x00-\\x1f\\x7f]*$"
+              },
+              "present": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "directory": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "path",
+              "present",
+              "directory"
+            ]
+          }
+        }
+      },
+      "required": [
+        "rootless",
+        "reference",
+        "locations"
       ]
     }
   },

@@ -52,7 +52,7 @@ func netavarkState(info model.PodmanInfo, helper *bool) model.CapabilityState {
 	switch *info.NetworkBackend {
 	case "cni":
 		return model.StateUnsupported
-	case "netavark":
+	case netavarkName:
 		if helper == nil {
 			return model.StateUnknown
 		}

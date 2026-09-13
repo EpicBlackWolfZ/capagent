@@ -16,9 +16,14 @@ const executableBits = 0o111
 type infoDocument struct {
 	Version struct{ Version string }
 	Host    struct {
-		NetworkBackend     *string `json:"networkBackend"`
+		OCIRuntime         *model.SelectedOCIRuntime   `json:"ociRuntime"`
+		Conmon             struct{ Path string }       `json:"conmon"`
+		Pasta              struct{ Executable string } `json:"pasta"`
+		Slirp              struct{ Executable string } `json:"slirp4netns"`
+		NetworkBackend     *string                     `json:"networkBackend"`
 		NetworkBackendInfo struct {
-			Path string `json:"path"`
+			Path string                `json:"path"`
+			DNS  struct{ Path string } `json:"dns"`
 		} `json:"networkBackendInfo"`
 		ServiceIsRemote *bool   `json:"serviceIsRemote"`
 		CgroupVersion   *string `json:"cgroupVersion"`
@@ -43,6 +48,9 @@ func ParseInfo(data []byte) (model.PodmanInfo, error) {
 		return model.PodmanInfo{}, errors.New("invalid Podman info document")
 	}
 	return model.PodmanInfo{Version: document.Version.Version, NetworkBackend: document.Host.NetworkBackend,
+		OCIRuntime: document.Host.OCIRuntime, ConmonPath: document.Host.Conmon.Path,
+		AardvarkPath: document.Host.NetworkBackendInfo.DNS.Path, PastaPath: document.Host.Pasta.Executable,
+		SlirpPath:  document.Host.Slirp.Executable,
 		HelperPath: document.Host.NetworkBackendInfo.Path, CgroupVersion: document.Host.CgroupVersion,
 		CgroupManager: document.Host.CgroupManager, Rootless: document.Host.Security.Rootless,
 		StorageDriver: document.Store.GraphDriverName, GraphRoot: document.Store.GraphRoot, RunRoot: document.Store.RunRoot,

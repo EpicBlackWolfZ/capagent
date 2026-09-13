@@ -114,8 +114,9 @@ func TestPassiveAndInvalidContextNeverConstructRunner(t *testing.T) {
 			switch scenario {
 			case "passive":
 				services.capture = func() (platform.EnvPolicy, error) {
-					t.Fatal("passive environment capture")
-					return platform.EnvPolicy{}, nil
+					// Directory capture selects passive configuration and unit paths;
+					// it grants no command authority.
+					return platform.NewEnvPolicy(nil, map[string]string{"HOME": "/root"})
 				}
 			case "credentials":
 				services.credentials.UID = 1000
