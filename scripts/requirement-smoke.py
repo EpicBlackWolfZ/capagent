@@ -28,6 +28,20 @@ def run_suite(binary, output, target_uid=None, tracer=None):
     binary = binary.resolve(strict=True)
     output.mkdir(parents=True, exist_ok=False, mode=0o700)
     output = output.resolve()
+    try:
+        return run_cases(binary, output, target_uid, tracer)
+    finally:
+        # These are fixed generated predicates, never credential/configuration
+        # files. Keep them caller-only during execution, then export evidence
+        # for the unprivileged CI artifact uploader, including on failed runs.
+        for state in STATES:
+            document = output / (state.lower() + '.requirement.json')
+            if document.exists():
+                document.chmod(0o644)
+        output.chmod(0o755)
+
+
+def run_cases(binary, output, target_uid, tracer):
     uid = os.geteuid() if target_uid is None else target_uid
     missing = '/capagent-requirement-missing-' + uuid.uuid4().hex + '/podman'
     cases = []
