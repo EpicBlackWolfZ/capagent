@@ -15,7 +15,7 @@ func TestFixtureCLIResults(t *testing.T) {
 		name, state string
 		code        int
 	}{
-		{"supported", "SATISFIED", app.ExitSatisfied}, {"unsupported", "UNSATISFIED", app.ExitUnsatisfied},
+		{testSupported, "SATISFIED", app.ExitSatisfied}, {"unsupported", "UNSATISFIED", app.ExitUnsatisfied},
 		{"misconfigured", "UNSATISFIED", app.ExitUnsatisfied}, {"unavailable", "INDETERMINATE", app.ExitIndeterminate},
 		{"unknown", "INDETERMINATE", app.ExitIndeterminate},
 	}
@@ -38,7 +38,11 @@ func TestFixtureCLIResults(t *testing.T) {
 			if report.Evaluation.Requirement.State != tt.state || report.Capabilities["runtime.podman.netavark"].State != tt.name {
 				t.Fatalf("wrong report: %s", &stdout)
 			}
-			if len(report.Evaluation.Observations) != 1 || len(report.Evaluation.Evidence) != 1 {
+			wantObservations := 1
+			if tt.name == testSupported || tt.name == "misconfigured" {
+				wantObservations = 2
+			}
+			if len(report.Evaluation.Observations) != wantObservations || len(report.Evaluation.Evidence) != 1 {
 				t.Fatal("missing provenance")
 			}
 			for _, forbidden := range []string{"raw_data", "stdout", "stderr", "home_dir"} {
@@ -66,3 +70,5 @@ func TestFixtureCLIRejectsLiveAndMissingInput(t *testing.T) {
 		}
 	}
 }
+
+const testSupported = "supported"

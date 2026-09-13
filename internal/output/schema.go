@@ -41,6 +41,11 @@ type Host struct {
 
 // RuntimeInfo models discovered container runtime state.
 type RuntimeInfo struct {
+	Rootless       *bool           `json:"rootless,omitzero"`
+	CgroupVersion  *string         `json:"cgroup_version,omitzero"`
+	CgroupManager  *string         `json:"cgroup_manager,omitzero"`
+	GraphRoot      *string         `json:"graph_root,omitzero"`
+	RunRoot        *string         `json:"run_root,omitzero"`
 	Completeness   string          `json:"completeness,omitempty"`
 	Installed      *bool           `json:"installed"`
 	Version        string          `json:"version,omitempty"`
@@ -141,6 +146,8 @@ func NewReportFromModel(evalCtx model.EvaluationContext, runtimes map[string]Run
 
 	for k, v := range runtimes {
 		v.Installed, v.Accessible = copyValue(v.Installed), copyValue(v.Accessible)
+		v.Rootless, v.CgroupVersion, v.CgroupManager = copyValue(v.Rootless), copyValue(v.CgroupVersion), copyValue(v.CgroupManager)
+		v.GraphRoot, v.RunRoot = copyValue(v.GraphRoot), copyValue(v.RunRoot)
 		v.CLIRunnable, v.File, v.VersionDetails = copyValue(v.CLIRunnable), copyValue(v.File), copyValue(v.VersionDetails)
 		if v.File != nil {
 			v.File.UID, v.File.GID = copyValue(v.File.UID), copyValue(v.File.GID)
@@ -280,6 +287,11 @@ func (r *Report) Validate() error {
 
 	for name, c := range r.Capabilities {
 		if err := c.Validate(name); err != nil {
+			return err
+		}
+	}
+	for _, runtime := range r.Runtimes {
+		if err := runtime.Validate(); err != nil {
 			return err
 		}
 	}

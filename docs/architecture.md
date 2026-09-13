@@ -4,9 +4,9 @@ This document defines the architectural boundaries, domain model, evaluation sem
 
 ## Implementation status and planned integration
 
-This document describes the current foundation and target architecture. The [M1.2 fixture slice](fixture-evaluation.md) implements the first complete evaluation path. [Current-user identity and static Podman discovery](podman-discovery.md) also use this pipeline; live runtime execution remains deferred; M1.1 confinement, command authority and lifecycle contracts apply to every adapter. See [roadmap.md](roadmap.md) and [security.md](security.md) for limits.
+This document describes the current foundation and target architecture. The [M1.2 fixture slice](fixture-evaluation.md) implements the first complete evaluation path. [Current-user identity and static Podman discovery](podman-discovery.md) also use this pipeline; explicit `--active` enables the bounded local version/info sequence; M1.1 confinement, command authority and lifecycle contracts apply to every adapter. See [roadmap.md](roadmap.md) and [security.md](security.md) for limits.
 
-The planned application/composition layer in [#61](https://github.com/EpicBlackWolfZ/capagent/issues/61) owns context selection, dependency construction, evaluation order and resource teardown after workers join. It sits above the pure engines and probe framework. `cmd/capagent` remains flags/formatting only, and `internal/probe` remains limited to model/platform dependencies. Today environments are caller-owned; `Orchestrator.Run` does not create or close them.
+The application/composition layer delivered by [#61](https://github.com/EpicBlackWolfZ/capagent/issues/61) owns context selection, dependency construction, evaluation order and resource teardown after workers join. It sits above the pure engines and probe framework. `cmd/capagent` remains flags/formatting only, and `internal/probe` remains limited to model/platform dependencies. Today environments are caller-owned; `Orchestrator.Run` does not create or close them.
 
 The current identity booleans and minimal observations are structural scaffolding. [#59](https://github.com/EpicBlackWolfZ/capagent/issues/59) and [#64](https://github.com/EpicBlackWolfZ/capagent/issues/64) add explicit scope, typed payloads and uncertainty/completeness before consumers rely on them. Never treat an unobserved zero value as measured negative evidence. The `context` capability namespace and UID/GID schema bounds remain pending contract alignment.
 
@@ -530,7 +530,7 @@ harness exemption cannot accidentally exempt the negative examples.
 CLI code may import only `internal/app` and `internal/version` within the module.
 The reserved `internal/app` boundary allows composition of lower layers, forbids
 dependencies on `cmd`, and cannot be imported by lower layers. Its implementation
-remains #61 work. Neither the CLI nor the application owner has a host-I/O exemption.
+is owned by internal/app through the #61 pipeline. Neither the CLI nor the application owner has a host-I/O exemption.
 Ordinary `os.Args`, `os.Stdout`, `os.Stderr` and `os.Exit` use remains permitted.
 Test files may inspect ambient environment through `os` or `syscall`, but may not
 perform direct host-I/O, subprocess execution or process-global environment mutation
@@ -681,3 +681,11 @@ Podman binary is installed, but permissions prevent the user from accessing the 
 }
 ```
 **Verdict:** `INDETERMINATE` (Automation can fail-closed safely without falsely claiming Podman is missing).
+
+### 8.4 Current local Podman inspection
+
+The shipped `--runtime podman --active` path bootstraps identity and static discovery before freezing the selected executable and environment. The existing orchestrator runs version first and info as its dependent. After workers join, the application asks the Podman adapter for a separate scoped helper metadata observation where Netavark needs it, then timestamps and evaluates the complete dataset. Owned readers close after all workers and helper reads finish. The passive branch constructs no command runner.
+
+Typed info observations retain backend, driver, cgroups, rootless and graph/run roots, plus a normalized info version. Report projection selects observations deterministically by timestamp/ID, preserves CLI version details when info fails and diagnoses version conflict. New nullable fields are copied at observation/report ownership transfers and validated with the Schema v1 additions. Raw command facts and arbitrary JSON members remain internal.
+
+The active requirement uses the existing AST: `all(runtime.podman, runtime.podman.info)`. The second predicate requires recognizable complete local effective information. It uses runtime-precedence evidence with derived confidence; helper metadata uncertainty remains separate. See [inspection behavior and limits](podman-discovery.md#active-inspection) and [combined fixture replay](fixture-evaluation.md#fixture-document). Earlier deployment examples in this section describe the target architecture and do not imply those workload capabilities are already shipped.

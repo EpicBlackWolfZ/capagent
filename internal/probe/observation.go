@@ -38,13 +38,19 @@ func SnapshotObservation(obs model.Observation) model.Observation {
 	obs.Diagnostics = slices.Clone(obs.Diagnostics)
 	obs.Podman = copyValue(obs.Podman)
 	if p := obs.Podman; p != nil {
+		p.VersionParts = copyValue(p.VersionParts)
+		p.GraphRoot, p.RunRoot = copyValue(p.GraphRoot), copyValue(p.RunRoot)
+		p.ServiceIsRemote = copyValue(p.ServiceIsRemote)
 		p.NetworkBackend = copyValue(p.NetworkBackend)
 		p.StorageDriver = copyValue(p.StorageDriver)
 		p.CgroupVersion = copyValue(p.CgroupVersion)
 		p.CgroupManager = copyValue(p.CgroupManager)
 		p.Rootless = copyValue(p.Rootless)
-		p.HelperPresent = copyValue(p.HelperPresent)
 		p.Available = copyValue(p.Available)
+	}
+	obs.PodmanHelper = copyValue(obs.PodmanHelper)
+	if h := obs.PodmanHelper; h != nil {
+		h.Present = copyValue(h.Present)
 	}
 	obs.Discovery = copyValue(obs.Discovery)
 	if d := obs.Discovery; d != nil {

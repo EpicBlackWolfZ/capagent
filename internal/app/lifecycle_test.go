@@ -154,7 +154,7 @@ func TestApplicationRejectsInvalidInputAndRetainsUnobservedMetadata(t *testing.T
 			if (err != nil) != tt.wantErr {
 				t.Fatal(err)
 			}
-			if !tt.wantErr && report.Evaluation.Requirement.State != "INDETERMINATE" {
+			if !tt.wantErr && report.Evaluation.Requirement.State != testIndeterminate {
 				t.Fatal(report)
 			}
 		})

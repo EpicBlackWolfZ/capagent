@@ -13,43 +13,8 @@ import (
 
 func projectReport(input Input, observations []model.Observation, evaluation capability.Evaluation,
 	decision requirement.Result, results []probe.ProbeResult) *output.Report {
-	runtimes := make(map[string]output.RuntimeInfo)
-	runtime := output.RuntimeInfo{Completeness: string(model.Unobserved)}
-	for _, obs := range observations {
-		if obs.Scope != input.Scope {
-			continue
-		}
-		if d := obs.Discovery; d != nil {
-			runtime.Completeness = string(obs.Completeness)
-			runtime.Installed, runtime.Path = copyValue(d.Installed), d.Path
-			if f := d.File; f != nil {
-				runtime.File = &output.ExecutableInfo{Regular: f.Regular, ExecutableBits: f.ExecutableBits, Mode: f.Mode,
-					UID: copyValue(f.UID), GID: copyValue(f.GID)}
-			}
-		}
-		if v := obs.Version; v != nil {
-			runtime.Completeness = string(obs.Completeness)
-			runtime.CLIRunnable, runtime.Path = copyValue(v.Runnable), v.Path
-			if version := v.Version; version != nil {
-				runtime.Version = version.Canonical
-				runtime.VersionDetails = &output.VersionInfo{Major: version.Major, Minor: version.Minor, Patch: version.Patch,
-					Canonical: version.Canonical, Suffix: version.Suffix, Build: version.Build, Trailing: version.Trailing, Raw: version.Raw}
-			}
-		}
-		if obs.Podman == nil {
-			continue
-		}
-		runtime.Completeness = string(obs.Completeness)
-		runtime.Accessible = copyValue(obs.Podman.Available)
-		runtime.Version = obs.Podman.Version
-		if obs.Podman.NetworkBackend != nil {
-			runtime.NetworkBackend = *obs.Podman.NetworkBackend
-		}
-		if obs.Podman.StorageDriver != nil {
-			runtime.StorageDriver = *obs.Podman.StorageDriver
-		}
-	}
-	runtimes[input.Scope.Runtime] = runtime
+	runtime, runtimeDiagnostics := projectRuntime(observations, input.Scope)
+	runtimes := map[string]output.RuntimeInfo{input.Scope.Runtime: runtime}
 	report := output.NewReportFromModel(input.Context, runtimes, evaluation.Candidate.Capabilities)
 	report.Context.Completeness = string(model.Unobserved)
 	if input.Context.Identity.Current != nil || input.Context.Identity.Target != nil {
@@ -69,6 +34,7 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 	if input.Mode != "" {
 		trace.Mode = input.Mode
 	}
+	trace.Collection = input.Collection
 	trace.Current = projectIdentity(input.Context.Identity.Current)
 	trace.Target = projectIdentity(input.Context.Identity.Target)
 	for _, ns := range input.Context.Namespaces {
@@ -108,6 +74,7 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 				Message: "probe did not complete successfully", Reference: result.ProbeID})
 		}
 	}
+	trace.Diagnostics = append(trace.Diagnostics, runtimeDiagnostics...)
 	report.Evaluation = trace
 	return report
 }

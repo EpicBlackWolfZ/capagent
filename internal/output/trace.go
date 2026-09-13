@@ -67,6 +67,7 @@ type RequirementResult struct {
 	Children    []RequirementResult `json:"children"`
 }
 type EvaluationTrace struct {
+	Collection   string              `json:"collection,omitempty"`
 	Mode         string              `json:"mode"`
 	Provenance   string              `json:"provenance"`
 	Scope        Scope               `json:"scope"`
@@ -92,6 +93,9 @@ func (s Scope) Validate() error {
 	return (model.EvaluationScope{RunID: s.RunID, ContextID: s.ContextID, Runtime: s.Runtime, Endpoint: s.Endpoint}).IsValid()
 }
 func (e *EvaluationTrace) Validate() error {
+	if e.Collection != "" && (e.Mode != "live" || (e.Collection != "passive" && e.Collection != "active")) {
+		return errors.New("invalid live collection policy")
+	}
 	fixture := e.Mode == "fixture" && (e.Provenance == "synthetic" || e.Provenance == "captured")
 	live := e.Mode == "live" && e.Provenance == "live"
 	if (!fixture && !live) || e.Timestamp.IsZero() {

@@ -24,6 +24,7 @@ TARGETS = {
     'FuzzRegistryDAG': ('internal/probe', 4096),
     'FuzzOrchestrator': ('tests/contract', 4096),
     'FuzzReportJSON': ('tests/contract', 65536),
+    'FuzzPodmanInputs': ('tests/contract', 65536),
 }
 
 

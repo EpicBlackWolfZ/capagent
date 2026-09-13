@@ -9,7 +9,7 @@ go build -o bin/capagent ./cmd/capagent
 ./bin/capagent --fixture testdata/fixtures/v1/supported --json --pretty
 ```
 
-`--json` is the default format. `--pretty` adds indentation and a trailing newline. `--debug` writes diagnostic codes to stderr; stdout contains only the report. `--help` and `--version` remain available. A missing fixture, unknown command or `--active` invocation fails visibly. [Passive local discovery](podman-discovery.md) is available separately; live runtime execution remains deferred; no command from a fixture can reach an OS command runner.
+`--json` is the default format. `--pretty` adds indentation and a trailing newline. `--debug` writes diagnostic codes to stderr; stdout contains only the report. `--help` and `--version` remain available. A missing fixture, unknown command or mixed `--fixture`/`--active` invocation fails visibly. [Local discovery and opt-in inspection](podman-discovery.md) are available separately; no command from a fixture can reach an OS command runner.
 
 | Exit code | Meaning |
 |---|---|
@@ -37,14 +37,23 @@ The original five info directories under [`testdata/fixtures/v1`](../testdata/fi
 
 ## Fixture document
 
-Each scenario contains `fixture.json` and its reviewed `expected.json` report. The optional `probe` field selects `info` (the default) or `version`. A version fixture supplies exactly one literal `--version` command and executable metadata; all commands still use fake services. The document contains:
+Each scenario contains `fixture.json` and its reviewed `expected.json` report. The optional `probe` field selects `info` (the default), `version` or `inspection`. A version fixture supplies exactly one literal `--version` command and executable metadata; all commands still use fake services. The document contains:
 
 - `schema_version: 1`, a fixed `run_id` and RFC 3339 `timestamp`.
 - Explicit `provenance.kind` (`synthetic` or `captured`) and a description. Captures must be sanitized before committing; derived negative scenarios must be labeled synthetic.
 - One context ID binding current and target identities, supplementary-group presence and namespace observations. A null identity is unobserved; UID 0 explicitly means root. Fixtures currently select `runtime: podman` and `endpoint: local`.
 - Filesystem entries with relative paths, kind, Go `os.FileMode` bits, optional UID/GID together, content or symlink target. Parent directories must be listed explicitly. `error` entries require a failure category. Regular permission bits use familiar octal values, represented as decimal JSON integers (0755 is 493).
-- Exactly one command specification and result: absolute executable, literal argument list, explicit environment overrides, directory, timeout in milliseconds, stdout/stderr, exit code and truncation flags. Defaults reuse the platform policy: `PATH=/usr/bin:/bin`, `LC_ALL=C`, directory `/`, and the runner's bounded timeout. No ambient environment is captured. Failure categories are `unavailable`, `not_found`, `permission`, `timeout` and `cancelled`.
+- One command specification and result for `info`/`version`, or exactly two for `inspection`: absolute executable, literal argument list, explicit environment overrides, directory, timeout in milliseconds, stdout/stderr, exit code and truncation flags. Defaults reuse the platform policy: `PATH=/usr/bin:/bin`, `LC_ALL=C`, directory `/`, and the runner's bounded timeout. No ambient environment is captured. Failure categories are `unavailable`, `not_found`, `permission`, `timeout` and `cancelled`.
 - An embedded `requirement` document.
+
+Combined inspection documents require a known current=target UID/GID and supplementary groups, one selected path and the live command policy. They record `--version` with a 5,000 ms timeout followed by `--remote=false --trace=false info --format json` with 30,000 ms. Both commands have the same directory `/` and effective named HOME/XDG environment. Include HOME/runtime directories and runtime-directory ownership in the fake filesystem. Invalid or extra commands, mismatched environments, alternate identities and unguarded info arguments are rejected. Legacy one-command documents retain their original offline argument policy.
+
+The seven `inspection-*` scenarios cover successful collection, info failure, version failure that skips info, truncation, a missing requested field, version conflict and an absent helper. They evaluate `all(runtime.podman, runtime.podman.info)`. Helper metadata has its own observation and evidence references, so it cannot erase valid engine inspection. The info consumer key checks both predicates with evidence and a satisfied requirement:
+
+```sh
+./bin/capagent --fixture testdata/fixtures/v1/inspection-supported --json |
+  python3 examples/check-report.py runtime.podman.info
+```
 
 The loader caps the document at 2 MiB, files at 4,096 and explicit command timeouts at 30 seconds. It reads `fixture.json` through the kernel-confined scoped reader and constructs the existing memory reader and fake runner. Absolute symlink behavior and special filesystem cases retain the documented [OS/memory differences](security.md#filesystem-authority); the memory reader is not a Linux emulator. The existing platform conformance matrix remains shared, and an integration test replays all five scenarios through both filesystem providers and compares observations.
 
@@ -88,5 +97,7 @@ This is an offline consumer smoke test, not deployment authorization for the cur
 Schema v1 remains pre-release. This slice corrects UID/GID to nullable integers bounded by 0..4,294,967,295, makes unobserved booleans null, adds the `context` capability namespace and validates canonical map keys. An explicit root target is preserved. Context, host and runtime sections include completeness; empty host strings and `unknown` cgroup values carry no negative capability claim. `evaluation` adds scope, identity presence, provenance, the reference trace and the requirement result. Unknown additive report properties are accepted and discarded deterministically by the DTO decoder; fixture and requirement inputs are intentionally stricter.
 
 `Report.Validate` checks application report invariants, not every JSON Schema rule. The wire-contract test suite performs full schema validation. Domain records and output DTOs remain separate, and the final compatibility freeze stays with M19.
+
+Nullable runtime rootless/cgroup/storage-root fields preserve observed false/empty values. A `collection` marker is allowed only for live reports; fixture provenance remains separate.
 
 Version replay scenarios additionally cover successful output, a nonzero command, malformed output and timeout. Their descriptions identify captured command text and synthetic context or failure data; fixture replay never becomes live evidence. See [Podman discovery](podman-discovery.md#version-fixture-replay).

@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "context": {
+    "completeness": "partial",
+    "uid": 1000,
+    "gid": 1000,
+    "target_user": "fixture-user",
+    "is_rootless": null,
+    "in_container": null
+  },
+  "host": {
+    "completeness": "unobserved",
+    "os": "unknown",
+    "os_version": "",
+    "kernel": "",
+    "architecture": "",
+    "cgroup_version": "unknown",
+    "systemd": null
+  },
+  "runtimes": {
+    "podman": {
+      "completeness": "complete",
+      "installed": true,
+      "version": "5.8.4",
+      "accessible": false,
+      "path": "/usr/bin/podman",
+      "cli_runnable": true,
+      "file": {
+        "regular": true,
+        "executable_bits": true,
+        "mode": 493,
+        "uid": 0,
+        "gid": 0
+      },
+      "version_details": {
+        "major": 5,
+        "minor": 8,
+        "patch": 4,
+        "canonical": "5.8.4",
+        "raw": "podman version 5.8.4"
+      }
+    }
+  },
+  "capabilities": {
+    "runtime.podman": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete runtime evidence",
+      "evidence": [
+        "podman.version.cli"
+      ]
+    },
+    "runtime.podman.info": {
+      "state": "unavailable",
+      "confidence": "derived",
+      "reason": "selected complete runtime evidence",
+      "evidence": [
+        "podman.info.runtime.podman.info"
+      ]
+    },
+    "runtime.podman.netavark": {
+      "state": "unavailable",
+      "confidence": "derived",
+      "reason": "selected complete runtime evidence",
+      "evidence": [
+        "podman.info.runtime.podman.netavark"
+      ]
+    }
+  },
+  "evaluation": {
+    "mode": "fixture",
+    "provenance": "synthetic",
+    "scope": {
+      "run_id": "inspection-info-failed",
+      "context_id": "fixture-user",
+      "runtime": "podman",
+      "endpoint": "local"
+    },
+    "timestamp": "2026-09-12T00:00:00Z",
+    "current": {
+      "uid": 1000,
+      "gid": 1000,
+      "supplementary_groups": [
+        1000
+      ],
+      "groups_known": true
+    },
+    "target": {
+      "uid": 1000,
+      "gid": 1000,
+      "supplementary_groups": [
+        1000
+      ],
+      "groups_known": true
+    },
+    "namespaces": [
+      {
+        "kind": "mount",
+        "id": "fixture-mountns"
+      },
+      {
+        "kind": "user",
+        "id": "fixture-userns"
+      }
+    ],
+    "observations": [
+      {
+        "id": "podman.discovery",
+        "probe_id": "podman.discovery",
+        "scope": {
+          "run_id": "inspection-info-failed",
+          "context_id": "fixture-user",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-12T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.discovery.measurement",
+            "source": "podman.discovery",
+            "timestamp": "2026-09-12T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "podman.discovery.path0",
+            "source": "filesystem.stat",
+            "timestamp": "2026-09-12T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "id": "podman.info",
+        "probe_id": "podman.info",
+        "scope": {
+          "run_id": "inspection-info-failed",
+          "context_id": "fixture-user",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-12T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.info.measurement",
+            "source": "podman.info",
+            "timestamp": "2026-09-12T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "info_exit_failed",
+            "message": "runtime inspection did not succeed"
+          }
+        ]
+      },
+      {
+        "id": "podman.version",
+        "probe_id": "podman.version",
+        "scope": {
+          "run_id": "inspection-info-failed",
+          "context_id": "fixture-user",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-12T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.version.measurement",
+            "source": "podman.version",
+            "timestamp": "2026-09-12T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      }
+    ],
+    "evidence": [
+      {
+        "id": "podman.info.runtime.podman.info",
+        "source": "Podman effective runtime observation",
+        "claim": "runtime.podman.info",
+        "scope": {
+          "run_id": "inspection-info-failed",
+          "context_id": "fixture-user",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-12T00:00:00Z",
+        "completeness": "complete",
+        "precedence": "runtime",
+        "state": "unavailable",
+        "confidence": "derived",
+        "observations": [
+          "podman.info",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.info.runtime.podman.netavark",
+        "source": "Podman effective runtime observation",
+        "claim": "runtime.podman.netavark",
+        "scope": {
+          "run_id": "inspection-info-failed",
+          "context_id": "fixture-user",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-12T00:00:00Z",
+        "completeness": "complete",
+        "precedence": "runtime",
+        "state": "unavailable",
+        "confidence": "derived",
+        "observations": [
+          "podman.info"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.version.cli",
+        "source": "Podman CLI observation",
+        "claim": "runtime.podman",
+        "scope": {
+          "run_id": "inspection-info-failed",
+          "context_id": "fixture-user",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-12T00:00:00Z",
+        "completeness": "complete",
+        "precedence": "runtime",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.version"
+        ],
+        "depends_on": []
+      }
+    ],
+    "requirement": {
+      "state": "INDETERMINATE",
+      "reason": "any complete deployment candidate",
+      "diagnostics": [
+        {
+          "code": "indeterminate_capability",
+          "message": "runtime.podman.info: unavailable"
+        }
+      ],
+      "children": [
+        {
+          "state": "INDETERMINATE",
+          "reason": "all",
+          "scope": {
+            "run_id": "inspection-info-failed",
+            "context_id": "fixture-user",
+            "runtime": "podman",
+            "endpoint": "local"
+          },
+          "diagnostics": [
+            {
+              "code": "indeterminate_capability",
+              "message": "runtime.podman.info: unavailable"
+            }
+          ],
+          "children": [
+            {
+              "state": "SATISFIED",
+              "reason": "runtime.podman: supported",
+              "diagnostics": [],
+              "children": []
+            },
+            {
+              "state": "INDETERMINATE",
+              "reason": "runtime.podman.info: unavailable",
+              "diagnostics": [
+                {
+                  "code": "indeterminate_capability",
+                  "message": "runtime.podman.info: unavailable"
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "code": "info_exit_failed",
+        "message": "runtime inspection did not succeed"
+      },
+      {
+        "code": "indeterminate_capability",
+        "message": "runtime.podman.info: unavailable"
+      },
+      {
+        "code": "probe_failed",
+        "message": "probe did not complete successfully",
+        "reference": "podman.info"
+      }
+    ]
+  }
+}

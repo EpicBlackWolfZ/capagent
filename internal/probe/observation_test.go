@@ -20,10 +20,31 @@ func TestSnapshotRuntimePayloadOwnership(t *testing.T) {
 	*obs.Discovery.Installed = false
 	*obs.Discovery.File.UID = 1000
 	*obs.Version.Runnable = false
-	obs.Version.Version.Canonical = "changed"
+	obs.Version.Version.Canonical = changedObservation
 	if !*copy.Discovery.Installed || *copy.Discovery.File.UID != 0 || *copy.Discovery.File.GID != 0 ||
 		!*copy.Version.Runnable || copy.Version.Version.Canonical != "5.8.4" {
 		t.Fatal("runtime observation retained mutable input aliases")
+	}
+}
+
+func TestSnapshotInspectionOwnsNewFields(t *testing.T) {
+	t.Parallel()
+	flag, value := true, "/storage"
+	obs := model.Observation{Podman: &model.PodmanInfo{VersionParts: &model.PodmanVersion{Canonical: "5.8.4"},
+		GraphRoot: &value, RunRoot: &value, ServiceIsRemote: &flag, Rootless: &flag, Available: &flag,
+		NetworkBackend: &value, StorageDriver: &value, CgroupVersion: &value, CgroupManager: &value},
+		PodmanHelper: &model.PodmanHelper{Present: &flag}}
+	copy := probe.SnapshotObservation(obs)
+	flag, value, obs.Podman.VersionParts.Canonical = false, changedObservation, changedObservation
+	for _, field := range []*string{copy.Podman.GraphRoot, copy.Podman.RunRoot, copy.Podman.NetworkBackend,
+		copy.Podman.StorageDriver, copy.Podman.CgroupVersion, copy.Podman.CgroupManager} {
+		if *field != "/storage" {
+			t.Fatal("retained mutable inspection fields")
+		}
+	}
+	if !*copy.Podman.ServiceIsRemote || !*copy.Podman.Rootless || !*copy.Podman.Available || !*copy.PodmanHelper.Present ||
+		copy.Podman.VersionParts.Canonical != "5.8.4" {
+		t.Fatal("retained mutable inspection version or booleans")
 	}
 }
 
@@ -47,9 +68,9 @@ func TestObservationScopeAndOwnership(t *testing.T) {
 	}
 	env := newEnv()
 	out := engine.Run(t.Context(), env.WithScope(scope))
-	backend = "changed"
+	backend = changedObservation
 	obs.Facts[0].RawData[0] = 'X'
-	obs.Diagnostics[0].Code = "changed"
+	obs.Diagnostics[0].Code = changedObservation
 	got := out[0].Observation
 	if out[0].Status != probe.ProbeFailed || got.Scope != scope || got.Facts[0].Scope != scope || env.Scope() != (model.EvaluationScope{}) {
 		t.Fatal("lost failure/scope or mutated environment")
@@ -87,3 +108,5 @@ func TestObservationRejectsChangedScope(t *testing.T) {
 		})
 	}
 }
+
+const changedObservation = "mutated observation"

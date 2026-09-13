@@ -176,7 +176,7 @@ func TestSchemaV1_MarshalGoStruct(t *testing.T) {
 		StorageDriver:  "overlay",
 	}
 	report.Capabilities["container.lifecycle.systemd_native"] = output.CapabilityReport{
-		State:      "supported",
+		State:      fixtureSupported,
 		Confidence: "verified",
 		Reason:     "systemd native Quadlet generator verified",
 		Evidence:   []string{"quadlet_generator=present", "cgroups=v2"},
@@ -217,7 +217,7 @@ func TestSchemaV1_NonMutatingSerialization(t *testing.T) {
 	// Deliberately unsorted evidence
 	originalEvidence := []string{"zeta=3", "alpha=1", "mu=2"}
 	report.Capabilities["runtime.test"] = output.CapabilityReport{
-		State:      "supported",
+		State:      fixtureSupported,
 		Confidence: "verified",
 		Evidence:   originalEvidence,
 	}
@@ -279,12 +279,12 @@ func TestSchemaV1_DeterministicByteStability(t *testing.T) {
 		CgroupVersion: "v2",
 	}
 	report.Capabilities["b.cap"] = output.CapabilityReport{
-		State:      "supported",
+		State:      fixtureSupported,
 		Confidence: "verified",
 		Evidence:   []string{"z=9", "a=1"},
 	}
 	report.Capabilities["a.cap"] = output.CapabilityReport{
-		State:      "supported",
+		State:      fixtureSupported,
 		Confidence: "verified",
 		Evidence:   []string{"b=2", "c=3"},
 	}

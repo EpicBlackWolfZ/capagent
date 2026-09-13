@@ -34,7 +34,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	flags.BoolVar(&asJSON, "json", false, "Print JSON (the default output format)")
 	flags.BoolVar(&opts.Pretty, "pretty", false, "Indent JSON output")
 	flags.BoolVar(&opts.Debug, "debug", false, "Print diagnostic codes on stderr")
-	flags.BoolVar(&opts.Active, "active", false, "Unavailable in this release")
+	flags.BoolVar(&opts.Active, "active", false, "Permit local version/info inspection and Podman startup writes")
 	flags.Usage = func() { flags.PrintDefaults() }
 	if err := flags.Parse(args); err != nil {
 		return app.ExitUsage

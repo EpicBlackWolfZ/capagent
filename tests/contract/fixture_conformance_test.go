@@ -17,7 +17,7 @@ import (
 // integration check, not another filesystem implementation.
 func TestFixtureOSMemoryIntegration(t *testing.T) {
 	t.Parallel()
-	for _, name := range []string{fixtureSupported, "unsupported", "misconfigured", "unavailable", "unknown"} {
+	for _, name := range []string{fixtureSupported, "unsupported", "misconfigured", "unavailable", testUnknown} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			data, err := os.ReadFile(filepath.Join(findRepoRoot(t), fixtureRelativeRoot, name, "fixture.json"))
@@ -54,7 +54,7 @@ func TestFixtureOSMemoryIntegration(t *testing.T) {
 			}
 			defer reader.Close()
 			osEnv := platform.NewEnvironment(nil, nil, nil, services.Environment.Runner()).WithFiles(reader).WithScope(doc.Scope())
-			probe := podman.InfoProbe{Command: services.Command, Timestamp: doc.Timestamp}
+			probe := podman.InfoProbe{Command: services.Command, Timestamp: doc.Timestamp, LegacyInfo: true}
 			memoryObservation, memoryError := probe.Run(t.Context(), services.Environment)
 			osObservation, osError := probe.Run(t.Context(), osEnv)
 			if (memoryError == nil) != (osError == nil) || !reflect.DeepEqual(memoryObservation, osObservation) {

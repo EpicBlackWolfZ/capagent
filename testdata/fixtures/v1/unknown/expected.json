@@ -19,19 +19,23 @@
   },
   "runtimes": {
     "podman": {
-      "completeness": "partial",
+      "rootless": true,
+      "completeness": "complete",
       "installed": null,
       "version": "5.8.1",
       "accessible": true,
-      "storage_driver": "overlay"
+      "storage_driver": "overlay",
+      "path": "/usr/bin/podman"
     }
   },
   "capabilities": {
     "runtime.podman.netavark": {
       "state": "unknown",
       "confidence": "unknown",
-      "reason": "no complete evidence for this candidate",
-      "evidence": []
+      "reason": "selected complete runtime evidence",
+      "evidence": [
+        "podman.info.runtime.podman.netavark"
+      ]
     }
   },
   "evaluation": {
@@ -81,10 +85,10 @@
           "endpoint": "local"
         },
         "timestamp": "2026-09-12T00:00:00Z",
-        "completeness": "partial",
+        "completeness": "complete",
         "facts": [
           {
-            "id": "podman.info.stdout",
+            "id": "podman.info.measurement",
             "source": "podman.info",
             "timestamp": "2026-09-12T00:00:00Z",
             "completeness": "complete"
@@ -92,16 +96,32 @@
         ],
         "diagnostics": [
           {
-            "code": "missing_network_backend",
-            "message": "runtime observation is incomplete"
+            "code": "info_missing_network_backend",
+            "message": "requested runtime field is absent or empty"
+          },
+          {
+            "code": "info_missing_cgroup_version",
+            "message": "requested runtime field is absent or empty"
+          },
+          {
+            "code": "info_missing_cgroup_manager",
+            "message": "requested runtime field is absent or empty"
+          },
+          {
+            "code": "info_missing_graph_root",
+            "message": "requested runtime field is absent or empty"
+          },
+          {
+            "code": "info_missing_run_root",
+            "message": "requested runtime field is absent or empty"
           }
         ]
       }
     ],
     "evidence": [
       {
-        "id": "podman.info.netavark",
-        "source": "podman effective info and helper metadata",
+        "id": "podman.info.runtime.podman.netavark",
+        "source": "Podman effective runtime observation",
         "claim": "runtime.podman.netavark",
         "scope": {
           "run_id": "fixture-unknown",
@@ -110,7 +130,7 @@
           "endpoint": "local"
         },
         "timestamp": "2026-09-12T00:00:00Z",
-        "completeness": "partial",
+        "completeness": "complete",
         "precedence": "runtime",
         "state": "unknown",
         "confidence": "unknown",
@@ -151,13 +171,24 @@
     },
     "diagnostics": [
       {
-        "code": "missing_network_backend",
-        "message": "runtime observation is incomplete"
+        "code": "info_missing_network_backend",
+        "message": "requested runtime field is absent or empty"
       },
       {
-        "code": "incomplete_evidence",
-        "message": "evidence excluded from resolution",
-        "reference": "podman.info.netavark"
+        "code": "info_missing_cgroup_version",
+        "message": "requested runtime field is absent or empty"
+      },
+      {
+        "code": "info_missing_cgroup_manager",
+        "message": "requested runtime field is absent or empty"
+      },
+      {
+        "code": "info_missing_graph_root",
+        "message": "requested runtime field is absent or empty"
+      },
+      {
+        "code": "info_missing_run_root",
+        "message": "requested runtime field is absent or empty"
       },
       {
         "code": "indeterminate_capability",

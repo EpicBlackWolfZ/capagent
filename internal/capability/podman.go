@@ -20,19 +20,26 @@ func netavarkEvidence(scope model.EvaluationScope, observations []model.Observat
 		if obs.Scope != scope || obs.Podman == nil {
 			continue
 		}
-		state := netavarkState(*obs.Podman)
-		confidence := model.ConfidenceDerived
-		if state == model.StateUnknown {
-			confidence = model.ConfidenceUnknown
+		matched := false
+		for _, helper := range observations {
+			h := helper.PodmanHelper
+			if h == nil || helper.Scope != scope || h.InfoID != obs.ID || h.Path != obs.Podman.Path || h.HelperPath != obs.Podman.HelperPath {
+				continue
+			}
+			ev := runtimeEvidence(obs, NetavarkID, netavarkState(*obs.Podman, h.Present))
+			ev.ID += "." + helper.ID
+			includeObservation(&ev, helper)
+			evidence = append(evidence, ev)
+			matched = true
 		}
-		evidence = append(evidence, model.Evidence{ID: obs.ID + ".netavark", Source: "podman effective info and helper metadata",
-			Claim: string(NetavarkID), Scope: scope, Precedence: model.PrecedenceRuntime, State: state, Confidence: confidence,
-			Completeness: obs.Completeness, Timestamp: obs.Timestamp, Observations: []model.ObservationRef{{ID: obs.ID, ProbeID: obs.ProbeID}}})
+		if !matched {
+			evidence = append(evidence, runtimeEvidence(obs, NetavarkID, netavarkState(*obs.Podman, nil)))
+		}
 	}
 	return evidence
 }
 
-func netavarkState(info model.PodmanInfo) model.CapabilityState {
+func netavarkState(info model.PodmanInfo, helper *bool) model.CapabilityState {
 	if info.Available == nil {
 		return model.StateUnknown
 	}
@@ -46,10 +53,10 @@ func netavarkState(info model.PodmanInfo) model.CapabilityState {
 	case "cni":
 		return model.StateUnsupported
 	case "netavark":
-		if info.HelperPresent == nil {
+		if helper == nil {
 			return model.StateUnknown
 		}
-		if !*info.HelperPresent {
+		if !*helper {
 			return model.StateMisconfigured
 		}
 		return model.StateSupported

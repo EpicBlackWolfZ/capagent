@@ -15,7 +15,7 @@ func TestVersionObservation(t *testing.T) {
 	for _, scenario := range []string{"success", "malformed", "nonzero", "start", "timeout", "cancelled", "truncated", "missing service"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
-			spec := platform.CommandSpec{Path: "/usr/bin/podman", Args: []string{"--version"}, Dir: "/", Timeout: time.Second}
+			spec := platform.CommandSpec{Path: testPodmanPath, Args: []string{"--version"}, Dir: "/", Timeout: time.Second}
 			result := platform.ExecResult{Stdout: []byte("podman version 5.8.4\n")}
 			var runErr error
 			switch scenario {
@@ -50,7 +50,7 @@ func TestVersionObservation(t *testing.T) {
 				t.Fatal("lost partial observation")
 			}
 			if scenario == "success" {
-				if obs.Version.Version == nil || obs.Version.Version.Canonical != "5.8.4" || obs.Version.Runnable == nil || !*obs.Version.Runnable {
+				if obs.Version.Version == nil || obs.Version.Version.Canonical != testVersion || obs.Version.Runnable == nil || !*obs.Version.Runnable {
 					t.Fatal("lost parsed version")
 				}
 			} else if obs.Version.Version != nil || len(obs.Diagnostics) == 0 {

@@ -29,7 +29,8 @@ func TestNetavarkFiveStates(t *testing.T) {
 			d := dataset()
 			d.Evidence = nil
 			d.Observations[0].Completeness = tt.completeness
-			d.Observations[0].Podman = &model.PodmanInfo{NetworkBackend: &tt.backend, HelperPresent: &tt.helper, Available: &tt.available}
+			d.Observations[0].Podman = &model.PodmanInfo{NetworkBackend: &tt.backend, Available: &tt.available}
+			addHelperObservation(&d, tt.helper)
 			registry, err := capability.NewRegistry([]capability.Definition{capability.NetavarkDefinition()})
 			if err != nil {
 				t.Fatal(err)
@@ -73,7 +74,8 @@ func TestNetavarkDoesNotEvaluateAnotherRuntime(t *testing.T) {
 	d.Observations[0].Scope = selected
 	d.Observations[0].Facts[0].Scope = selected
 	available, helper, backend := true, true, backendNetavark
-	d.Observations[0].Podman = &model.PodmanInfo{Available: &available, HelperPresent: &helper, NetworkBackend: &backend}
+	d.Observations[0].Podman = &model.PodmanInfo{Available: &available, NetworkBackend: &backend}
+	addHelperObservation(&d, helper)
 	registry, err := capability.NewRegistry([]capability.Definition{capability.NetavarkDefinition()})
 	if err != nil {
 		t.Fatal(err)
@@ -83,3 +85,16 @@ func TestNetavarkDoesNotEvaluateAnotherRuntime(t *testing.T) {
 		t.Fatal(result, err)
 	}
 }
+
+func addHelperObservation(d *capability.Dataset, present bool) {
+	info := &d.Observations[0]
+	info.Podman.Path, info.Podman.HelperPath = "/usr/bin/podman", "/usr/libexec/podman/netavark"
+	h := *info
+	h.ID, h.ProbeID, h.Podman = testHelperID, testHelperID, nil
+	h.Facts = append([]model.Fact(nil), info.Facts...)
+	h.Facts[0].ID = "helper.fact"
+	h.PodmanHelper = &model.PodmanHelper{Path: info.Podman.Path, InfoID: info.ID, HelperPath: info.Podman.HelperPath, Present: &present}
+	d.Observations = append(d.Observations, h)
+}
+
+const testHelperID = "helper"

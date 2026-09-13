@@ -22,10 +22,10 @@ func TestDiscoveryCancellationAndMissingService(t *testing.T) {
 			}
 			mem.AddFile("/usr/local/bin/podman", nil, 0o755)
 			if scenario == "symlink" {
-				mem.AddSymlink("/usr/bin/podman", "/usr/local/bin/podman")
+				mem.AddSymlink(testPodmanPath, "/usr/local/bin/podman")
 			}
 			if scenario == "denied then found" {
-				mem.AddError("/usr/bin/podman", fs.ErrPermission)
+				mem.AddError(testPodmanPath, fs.ErrPermission)
 			}
 			files := platform.NewScopedMemReader("/", mem)
 			defer files.Close()
@@ -69,13 +69,13 @@ func TestDiscovery(t *testing.T) {
 			p := podman.DiscoveryProbe{Now: func() time.Time { return time.Unix(1, 0) }}
 			switch scenario {
 			case "present", "override", "ordered":
-				mem.AddFile("/usr/bin/podman", nil, 0o755)
+				mem.AddFile(testPodmanPath, nil, 0o755)
 			case "permission":
-				mem.AddError("/usr/bin/podman", fs.ErrPermission)
+				mem.AddError(testPodmanPath, fs.ErrPermission)
 			case "not executable":
-				mem.AddFile("/usr/bin/podman", nil, 0o644)
+				mem.AddFile(testPodmanPath, nil, 0o644)
 			case "directory":
-				mem.AddDir("/usr/bin/podman", 0o755)
+				mem.AddDir(testPodmanPath, 0o755)
 			}
 			if scenario == "override" {
 				p.Path = "/bin/podman"
@@ -100,7 +100,7 @@ func TestDiscovery(t *testing.T) {
 					t.Fatal("missing not definitive")
 				}
 			case "present", "ordered":
-				if d.Installed == nil || !*d.Installed || d.Path != "/usr/bin/podman" {
+				if d.Installed == nil || !*d.Installed || d.Path != testPodmanPath {
 					t.Fatal("wrong selection")
 				}
 			case "permission", "directory":
@@ -127,7 +127,7 @@ func TestDiscoveryPathValidation(t *testing.T) {
 			t.Errorf("accepted %q", bad)
 		}
 	}
-	for _, good := range []string{"", "/usr/bin/podman", "/opt/podman-custom"} {
+	for _, good := range []string{"", testPodmanPath, "/opt/podman-custom"} {
 		if err := podman.ValidateExecutablePath(good); err != nil {
 			t.Errorf("rejected %q: %v", good, err)
 		}
