@@ -1,0 +1,4057 @@
+{
+  "schema_version": 1,
+  "context": {
+    "completeness": "complete",
+    "uid": 1000,
+    "gid": 1000,
+    "target_user": "alice",
+    "is_rootless": null,
+    "in_container": null
+  },
+  "host": {
+    "completeness": "complete",
+    "os": "debian",
+    "os_version": "12",
+    "kernel": "6.12.0-test",
+    "architecture": "amd64",
+    "cgroup_version": "v2",
+    "systemd": true
+  },
+  "runtimes": {
+    "podman": {
+      "completeness": "complete",
+      "installed": true,
+      "version": "5.8.4",
+      "accessible": false,
+      "path": "/usr/bin/podman",
+      "cli_runnable": true,
+      "file": {
+        "regular": true,
+        "executable_bits": true,
+        "mode": 493,
+        "uid": 0,
+        "gid": 0
+      },
+      "version_details": {
+        "major": 5,
+        "minor": 8,
+        "patch": 4,
+        "canonical": "5.8.4",
+        "raw": "podman version 5.8.4"
+      }
+    }
+  },
+  "capabilities": {
+    "runtime.podman": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete runtime evidence",
+      "evidence": [
+        "podman.version.cli"
+      ]
+    },
+    "runtime.podman.aardvark_dns.executable": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.cgroup_manager.systemd": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.cgroup_v2": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "host.cgroups.runtime.podman.cgroup_v2"
+      ]
+    },
+    "runtime.podman.config.dns.parsed": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.config.engine.parsed": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.config.network.parsed": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.config.storage.parsed": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.conmon.executable": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.helper.aardvark_dns.executable": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.aardvark_dns.runtime.podman.helper.aardvark_dns.executable"
+      ]
+    },
+    "runtime.podman.helper.aardvark_dns.installed": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.aardvark_dns.runtime.podman.helper.aardvark_dns.installed"
+      ]
+    },
+    "runtime.podman.helper.conmon.executable": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.conmon.runtime.podman.helper.conmon.executable"
+      ]
+    },
+    "runtime.podman.helper.conmon.installed": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.conmon.runtime.podman.helper.conmon.installed"
+      ]
+    },
+    "runtime.podman.helper.crun.executable": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.crun.runtime.podman.helper.crun.executable"
+      ]
+    },
+    "runtime.podman.helper.crun.installed": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.crun.runtime.podman.helper.crun.installed"
+      ]
+    },
+    "runtime.podman.helper.fuse_overlayfs.executable": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.fuse_overlayfs.runtime.podman.helper.fuse_overlayfs.executable"
+      ]
+    },
+    "runtime.podman.helper.fuse_overlayfs.installed": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.fuse_overlayfs.runtime.podman.helper.fuse_overlayfs.installed"
+      ]
+    },
+    "runtime.podman.helper.netavark.executable": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.netavark.runtime.podman.helper.netavark.executable"
+      ]
+    },
+    "runtime.podman.helper.netavark.installed": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.netavark.runtime.podman.helper.netavark.installed"
+      ]
+    },
+    "runtime.podman.helper.pasta.executable": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.pasta.runtime.podman.helper.pasta.executable"
+      ]
+    },
+    "runtime.podman.helper.pasta.installed": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.pasta.runtime.podman.helper.pasta.installed"
+      ]
+    },
+    "runtime.podman.helper.runc.executable": {
+      "state": "unsupported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.runc.runtime.podman.helper.runc.executable"
+      ]
+    },
+    "runtime.podman.helper.runc.installed": {
+      "state": "unsupported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.runc.runtime.podman.helper.runc.installed"
+      ]
+    },
+    "runtime.podman.helper.slirp4netns.executable": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.slirp4netns.runtime.podman.helper.slirp4netns.executable"
+      ]
+    },
+    "runtime.podman.helper.slirp4netns.installed": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.trusted_candidates.slirp4netns.runtime.podman.helper.slirp4netns.installed"
+      ]
+    },
+    "runtime.podman.info": {
+      "state": "unavailable",
+      "confidence": "derived",
+      "reason": "selected complete runtime evidence",
+      "evidence": [
+        "podman.info.runtime.podman.info"
+      ]
+    },
+    "runtime.podman.netavark": {
+      "state": "unavailable",
+      "confidence": "derived",
+      "reason": "selected complete runtime evidence",
+      "evidence": [
+        "podman.info.runtime.podman.netavark"
+      ]
+    },
+    "runtime.podman.netavark.executable": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.network.backend.netavark": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.network.rootless.pasta": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.network.rootless.slirp4netns": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.oci_runtime.executable": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.pasta.executable": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.quadlet.generator": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "podman.executable.systemd_user_generators.quadlet.runtime.podman.quadlet.generator"
+      ]
+    },
+    "runtime.podman.quadlet.linger": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "context.user.runtime.podman.quadlet.linger"
+      ]
+    },
+    "runtime.podman.quadlet.manager": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "context.user.runtime.podman.quadlet.manager"
+      ]
+    },
+    "runtime.podman.quadlet.runtime_directory": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "context.user.runtime.podman.quadlet.runtime_directory"
+      ]
+    },
+    "runtime.podman.slirp4netns.executable": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.storage.additional_stores.accessible": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.storage.image_store.accessible": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.storage.kernel.fuse": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "host.filesystems.runtime.podman.storage.kernel.fuse"
+      ]
+    },
+    "runtime.podman.storage.kernel.overlay": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete live evidence",
+      "evidence": [
+        "host.filesystems.runtime.podman.storage.kernel.overlay"
+      ]
+    },
+    "runtime.podman.storage.mount_program.executable": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.storage.overlay": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    },
+    "runtime.podman.storage.roots.accessible": {
+      "state": "unknown",
+      "confidence": "unknown",
+      "reason": "no complete evidence for this candidate",
+      "evidence": []
+    }
+  },
+  "evaluation": {
+    "execution": {
+      "uid": 1000,
+      "gid": 1000,
+      "supplementary_groups": [
+        1000
+      ],
+      "groups_known": true
+    },
+    "selection": "user:alice",
+    "mode": "fixture",
+    "provenance": "synthetic",
+    "scope": {
+      "run_id": "network-source-denied",
+      "context_id": "user:alice",
+      "runtime": "podman",
+      "endpoint": "local"
+    },
+    "timestamp": "2026-09-13T12:00:00Z",
+    "current": {
+      "uid": 1000,
+      "gid": 1000,
+      "supplementary_groups": [
+        1000
+      ],
+      "groups_known": true
+    },
+    "target": {
+      "uid": 1000,
+      "gid": 1000,
+      "supplementary_groups": [
+        1000
+      ],
+      "groups_known": true
+    },
+    "namespaces": [],
+    "observations": [
+      {
+        "subids": {
+          "uid": {
+            "present": true,
+            "ranges": [
+              {
+                "start": 100000,
+                "length": 30
+              },
+              {
+                "start": 200000,
+                "length": 5
+              }
+            ],
+            "records": [
+              {
+                "line": 1,
+                "owner": "alice",
+                "range": {
+                  "start": 100000,
+                  "length": 30
+                }
+              },
+              {
+                "line": 2,
+                "owner": "1000",
+                "range": {
+                  "start": 200000,
+                  "length": 5
+                }
+              }
+            ],
+            "total": 35,
+            "valid": true
+          },
+          "gid": {
+            "present": true,
+            "ranges": [
+              {
+                "start": 300000,
+                "length": 12
+              }
+            ],
+            "records": [
+              {
+                "line": 1,
+                "owner": "alice",
+                "range": {
+                  "start": 300000,
+                  "length": 12
+                }
+              }
+            ],
+            "total": 12,
+            "valid": true
+          },
+          "provider": "files",
+          "helpers": [
+            {
+              "privilege_blocked": null,
+              "name": "newuidmap",
+              "path": "/usr/bin/newuidmap",
+              "present": true,
+              "regular": true,
+              "uid": 0,
+              "gid": 0,
+              "mode": 493,
+              "setuid": true,
+              "setgid": false,
+              "executable": true,
+              "capabilities": {
+                "inheritable_setuid": false,
+                "inheritable_setgid": false,
+                "present": false,
+                "revision": 0,
+                "effective": false,
+                "setuid": false,
+                "setgid": false
+              },
+              "nosuid": false,
+              "noexec": false,
+              "no_new_privileges": false,
+              "usable": null
+            },
+            {
+              "privilege_blocked": null,
+              "name": "newgidmap",
+              "path": "/usr/bin/newgidmap",
+              "present": true,
+              "regular": true,
+              "uid": 0,
+              "gid": 0,
+              "mode": 493,
+              "setuid": true,
+              "setgid": false,
+              "executable": true,
+              "capabilities": {
+                "inheritable_setuid": false,
+                "inheritable_setgid": false,
+                "present": false,
+                "revision": 0,
+                "effective": false,
+                "setuid": false,
+                "setgid": false
+              },
+              "nosuid": false,
+              "noexec": false,
+              "no_new_privileges": false,
+              "usable": null
+            }
+          ]
+        },
+        "id": "context.subids",
+        "probe_id": "context.subids",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "context.subids.0",
+            "source": "etc/subuid",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.1",
+            "source": "etc/subgid",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.10",
+            "source": "/usr/bin/newgidmap file-capabilities",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.11",
+            "source": "/usr/bin/newgidmap mount-policy",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.12",
+            "source": "process no-new-privileges",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.2",
+            "source": "etc/nsswitch.conf",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.3",
+            "source": "/usr/bin/newuidmap",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.4",
+            "source": "/usr/bin/newuidmap execute-access",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.5",
+            "source": "/usr/bin/newuidmap file-capabilities",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.6",
+            "source": "/usr/bin/newuidmap mount-policy",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.7",
+            "source": "process no-new-privileges",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.8",
+            "source": "/usr/bin/newgidmap",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.9",
+            "source": "/usr/bin/newgidmap execute-access",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "mapping_execution_unverified",
+            "message": "host measurement diagnostic",
+            "reference": "context.subids"
+          },
+          {
+            "code": "mapping_execution_unverified",
+            "message": "host measurement diagnostic",
+            "reference": "context.subids"
+          }
+        ]
+      },
+      {
+        "user_context": {
+          "runtime": {
+            "path": "/run/user/1000",
+            "source": "environment",
+            "present": true,
+            "directory": true,
+            "uid": 1000,
+            "mode": 448,
+            "private": true,
+            "valid": true
+          },
+          "socket_present": true,
+          "socket_valid": true,
+          "accessible": true,
+          "linger_enabled": true,
+          "query_attempted": true,
+          "manager_version": "258.3"
+        },
+        "id": "context.user",
+        "probe_id": "context.user",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "context.user.0",
+            "source": "linger marker",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.user.1",
+            "source": "runtime directory",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.user.2",
+            "source": "user manager private socket",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.user.3",
+            "source": "/usr/bin/systemctl",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.user.4",
+            "source": "user manager query",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "cgroups": {
+            "mode": "v2",
+            "memberships": [
+              {
+                "hierarchy": "0",
+                "controllers": [],
+                "path": "/"
+              }
+            ],
+            "mounts": [
+              {
+                "path": "/sys/fs/cgroup",
+                "root": "/",
+                "type": "cgroup2",
+                "controller_path": "/sys/fs/cgroup/",
+                "controllers": [
+                  "cpu",
+                  "memory"
+                ],
+                "subtree_control": [
+                  "cpu"
+                ]
+              }
+            ]
+          }
+        },
+        "id": "host.cgroups",
+        "probe_id": "host.cgroups",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.cgroups.0",
+            "source": "proc/self/mountinfo",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.cgroups.1",
+            "source": "proc/self/cgroup",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.cgroups.2",
+            "source": "statfs.cgroup_mount",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.cgroups.3",
+            "source": "sys/fs/cgroup/cgroup.controllers",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.cgroups.4",
+            "source": "sys/fs/cgroup/cgroup.subtree_control",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "filesystems": {
+            "registered": [
+              {
+                "name": "overlay",
+                "nodev": true
+              },
+              {
+                "name": "fuse",
+                "nodev": true
+              },
+              {
+                "name": "ext4",
+                "nodev": false
+              }
+            ],
+            "overlay_registered": true,
+            "fuse_registered": true
+          }
+        },
+        "id": "host.filesystems",
+        "probe_id": "host.filesystems",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.filesystems.0",
+            "source": "proc/filesystems",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "kernel": {
+            "release": "6.12.0-test",
+            "version": "test kernel",
+            "machine": "x86_64",
+            "architecture": "amd64",
+            "parts": {
+              "major": 6,
+              "minor": 12,
+              "patch": 0
+            }
+          }
+        },
+        "id": "host.kernel",
+        "probe_id": "host.kernel",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.kernel.0",
+            "source": "syscall.uname",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "namespaces": {
+            "namespaces": [
+              {
+                "kind": "user",
+                "id": "user:[42]"
+              },
+              {
+                "kind": "pid",
+                "id": "pid:[43]"
+              },
+              {
+                "kind": "net",
+                "id": "net:[44]"
+              },
+              {
+                "kind": "mnt",
+                "id": "mnt:[45]"
+              },
+              {
+                "kind": "ipc",
+                "id": "ipc:[46]"
+              },
+              {
+                "kind": "uts",
+                "id": "uts:[47]"
+              },
+              {
+                "kind": "cgroup",
+                "id": "cgroup:[48]"
+              }
+            ]
+          }
+        },
+        "id": "host.namespaces",
+        "probe_id": "host.namespaces",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.namespaces.0",
+            "source": "proc/self/ns/user",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.1",
+            "source": "proc/self/ns/pid",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.2",
+            "source": "proc/self/ns/net",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.3",
+            "source": "proc/self/ns/mnt",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.4",
+            "source": "proc/self/ns/ipc",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.5",
+            "source": "proc/self/ns/uts",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.6",
+            "source": "proc/self/ns/cgroup",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "network": {
+            "protocols": [
+              "TCP",
+              "UDP"
+            ],
+            "ipv4_tcp": true,
+            "ipv4_udp": true,
+            "ipv6_tcp": false,
+            "ipv6_udp": false,
+            "ipv6_all_disabled": null,
+            "ipv6_default_disabled": null
+          }
+        },
+        "id": "host.network",
+        "probe_id": "host.network",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.network.0",
+            "source": "proc/self/net/protocols",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.network.1",
+            "source": "proc/sys/net/ipv6/conf/all/disable_ipv6",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.network.2",
+            "source": "proc/sys/net/ipv6/conf/default/disable_ipv6",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "os": {
+            "id": "debian",
+            "version_id": "12",
+            "name": "",
+            "pretty_name": "",
+            "variant": "",
+            "id_like": []
+          }
+        },
+        "id": "host.os",
+        "probe_id": "host.os",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.os.0",
+            "source": "etc/os-release",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "resolver": {
+            "present": true,
+            "nameservers": [
+              "192.0.2.53"
+            ],
+            "domain": "",
+            "search": [
+              "example.test"
+            ],
+            "options": [
+              "ndots:2",
+              "rotate"
+            ]
+          }
+        },
+        "id": "host.resolver",
+        "probe_id": "host.resolver",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.resolver.0",
+            "source": "etc/resolv.conf",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "security": {
+            "selinux": "disabled",
+            "lsms": [
+              "capability",
+              "landlock"
+            ],
+            "apparmor_enabled": false,
+            "apparmor_profiles": [],
+            "seccomp_mode": 0,
+            "seccomp_actions": [
+              "kill_process",
+              "kill_thread",
+              "trap",
+              "errno",
+              "user_notif",
+              "trace",
+              "log",
+              "allow"
+            ],
+            "no_new_privileges": false,
+            "process_scope": "process-leader",
+            "unprivileged_userns_clone": null,
+            "max_user_namespaces": 0
+          }
+        },
+        "id": "host.security",
+        "probe_id": "host.security",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.security.0",
+            "source": "sys/kernel/security/lsm",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.1",
+            "source": "sys/fs/selinux/enforce",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.2",
+            "source": "sys/module/apparmor/parameters/enabled",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.3",
+            "source": "proc/self/status",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.4",
+            "source": "proc/sys/kernel/seccomp/actions_avail",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.5",
+            "source": "proc/sys/kernel/unprivileged_userns_clone",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.6",
+            "source": "proc/sys/user/max_user_namespaces",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "systemd": {
+            "installed": true,
+            "utility_installed": true,
+            "running": true,
+            "runtime_directory": true,
+            "accessible": null,
+            "version": "258",
+            "utility_path": "/usr/bin/systemctl"
+          }
+        },
+        "id": "host.systemd",
+        "probe_id": "host.systemd",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.systemd.0",
+            "source": "proc/1/comm",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.systemd.1",
+            "source": "run/systemd/system",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.systemd.2",
+            "source": "usr/lib/systemd/systemd",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.systemd.3",
+            "source": "usr/bin/systemctl",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.systemd.4",
+            "source": "command.systemctl_version",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "configuration": {
+          "family": "engine",
+          "runtime_path": "/usr/bin/podman",
+          "version_source_id": "podman.version",
+          "profile": "podman-5.8.4",
+          "references": [
+            "https://github.com/containers/podman/blob/v4.9.3/vendor/github.com/containers/common/pkg/config/new.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/pkg/config/new.go"
+          ],
+          "selection_complete": true,
+          "parse_complete": false,
+          "sources": [
+            {
+              "id": "podman.configuration.engine.source.0",
+              "path": "/usr/share/containers/containers.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 0,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.1",
+              "path": "/etc/containers/containers.conf",
+              "kind": "file",
+              "status": "denied",
+              "order": 1,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.2",
+              "path": "/etc/containers/containers.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 2,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.3",
+              "path": "/etc/containers/containers.rootless.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 3,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.4",
+              "path": "/etc/containers/containers.rootless.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 4,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.5",
+              "path": "/etc/containers/containers.rootless.conf.d/1000",
+              "kind": "directory",
+              "status": "absent",
+              "order": 5,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.6",
+              "path": "/home/alice/.config/containers/containers.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 6,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.7",
+              "path": "/home/alice/.config/containers/containers.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 7,
+              "selected": true,
+              "applied": false
+            }
+          ],
+          "engine": {
+            "runtimes": {},
+            "selection_overrides": false,
+            "unprojected_field_count": 0
+          }
+        },
+        "id": "podman.configuration.engine",
+        "probe_id": "podman.configuration.engine",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.configuration.engine.measurement",
+            "source": "podman.configuration.engine",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "config_source_denied",
+            "message": "selected configuration source is denied",
+            "reference": "podman.configuration.engine.source.1"
+          },
+          {
+            "code": "config_evidence_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "configuration": {
+          "network": {
+            "strings": {
+              "network.default_rootless_network_cmd": {
+                "value": "pasta",
+                "source_id": "podman.version"
+              }
+            },
+            "lists": {
+              "containers.dns_options": {
+                "values": [],
+                "origins": [],
+                "source_id": "podman.version",
+                "append": null,
+                "inherited_default": false
+              },
+              "containers.dns_searches": {
+                "values": [],
+                "origins": [],
+                "source_id": "podman.version",
+                "append": null,
+                "inherited_default": false
+              },
+              "containers.dns_servers": {
+                "values": [],
+                "origins": [],
+                "source_id": "podman.version",
+                "append": null,
+                "inherited_default": false
+              },
+              "engine.network_cmd_options": {
+                "values": [],
+                "origins": [],
+                "source_id": "podman.version",
+                "append": null,
+                "inherited_default": false
+              }
+            },
+            "dns_bind_port": {
+              "value": 0,
+              "source_id": "podman.version"
+            },
+            "pasta_options": {
+              "count": 0,
+              "source_id": "podman.version",
+              "append": null,
+              "inherited_default": false
+            },
+            "engine_source_id": "podman.configuration.engine",
+            "unprojected_field_count": 0
+          },
+          "family": "network",
+          "runtime_path": "/usr/bin/podman",
+          "version_source_id": "podman.version",
+          "profile": "podman-5.8.4",
+          "references": [
+            "https://github.com/containers/podman/blob/v4.9.3/vendor/github.com/containers/common/pkg/config/new.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/pkg/config/new.go",
+            "https://github.com/containers/podman/blob/v4.9.3/vendor/github.com/containers/common/pkg/config/default.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/pkg/config/default.go",
+            "https://github.com/containers/podman/blob/v4.9.3/vendor/github.com/containers/common/pkg/config/config.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/pkg/config/config.go",
+            "https://github.com/containers/podman/blob/v4.9.3/pkg/specgen/generate/container_create.go",
+            "https://github.com/containers/podman/blob/v5.8.4/pkg/specgen/generate/container_create.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/libnetwork/slirp4netns/slirp4netns.go",
+            "https://github.com/containers/podman/blob/v5.8.4/libpod/container_internal_common.go"
+          ],
+          "selection_complete": true,
+          "parse_complete": false,
+          "sources": [
+            {
+              "id": "podman.configuration.network.source.0",
+              "path": "/usr/share/containers/containers.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 0,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.1",
+              "path": "/etc/containers/containers.conf",
+              "kind": "file",
+              "status": "denied",
+              "order": 1,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.2",
+              "path": "/etc/containers/containers.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 2,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.3",
+              "path": "/etc/containers/containers.rootless.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 3,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.4",
+              "path": "/etc/containers/containers.rootless.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 4,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.5",
+              "path": "/etc/containers/containers.rootless.conf.d/1000",
+              "kind": "directory",
+              "status": "absent",
+              "order": 5,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.6",
+              "path": "/home/alice/.config/containers/containers.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 6,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.7",
+              "path": "/home/alice/.config/containers/containers.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 7,
+              "selected": true,
+              "applied": false
+            }
+          ]
+        },
+        "id": "podman.configuration.network",
+        "probe_id": "podman.configuration.network",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.configuration.network.measurement",
+            "source": "podman.configuration.network",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "config_source_denied",
+            "message": "network configuration source is denied",
+            "reference": "podman.configuration.network.source.1"
+          },
+          {
+            "code": "config_evidence_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "configuration": {
+          "family": "storage",
+          "runtime_path": "/usr/bin/podman",
+          "version_source_id": "podman.version",
+          "profile": "podman-5.8.4",
+          "references": [
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/storage/types/options.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/storage/types/utils.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/storage/pkg/config/config.go"
+          ],
+          "selection_complete": false,
+          "parse_complete": true,
+          "sources": [
+            {
+              "phase": "candidate",
+              "storage": {
+                "driver": {
+                  "value": "vfs",
+                  "source_id": "podman.configuration.storage.source.0"
+                },
+                "options": {
+                  "mount_program": {
+                    "value": "/vendor-must-not-survive",
+                    "source_id": "podman.configuration.storage.source.0"
+                  }
+                },
+                "unprojected_field_count": 0
+              },
+              "id": "podman.configuration.storage.source.0",
+              "path": "/usr/share/containers/storage.conf",
+              "kind": "file",
+              "status": "parsed",
+              "order": 0,
+              "selected": false,
+              "applied": false,
+              "sha256": "1dfe7b860f38bbd54197d426c84c28d172e74089a9b4bc76ad1956c4a3e39fc4"
+            },
+            {
+              "phase": "candidate",
+              "storage": {
+                "driver": {
+                  "value": "overlay",
+                  "source_id": "podman.configuration.storage.source.1"
+                },
+                "runroot": {
+                  "value": "/storage/run",
+                  "source_id": "podman.configuration.storage.source.1"
+                },
+                "graphroot": {
+                  "value": "/storage/graph",
+                  "source_id": "podman.configuration.storage.source.1"
+                },
+                "imagestore": {
+                  "value": "/storage/images",
+                  "source_id": "podman.configuration.storage.source.1"
+                },
+                "additionalimagestores": {
+                  "values": [
+                    "/storage/additional"
+                  ],
+                  "origins": [
+                    "podman.configuration.storage.source.1"
+                  ],
+                  "source_id": "podman.configuration.storage.source.1",
+                  "append": null,
+                  "inherited_default": false
+                },
+                "additionallayerstores": {
+                  "values": [
+                    "/storage/layers:ref"
+                  ],
+                  "origins": [
+                    "podman.configuration.storage.source.1"
+                  ],
+                  "source_id": "podman.configuration.storage.source.1",
+                  "append": null,
+                  "inherited_default": false
+                },
+                "options": {
+                  "mount_program": {
+                    "value": "/usr/bin/fuse-overlayfs",
+                    "source_id": "podman.configuration.storage.source.1"
+                  }
+                },
+                "unprojected_field_count": 0
+              },
+              "id": "podman.configuration.storage.source.1",
+              "path": "/etc/containers/storage.conf",
+              "kind": "file",
+              "status": "parsed",
+              "order": 1,
+              "selected": false,
+              "applied": false,
+              "sha256": "f5cc1d7aac7b3a9be5e77ca5e2e91d224bf6d0c174499fb59a3da4f4201b394d"
+            },
+            {
+              "phase": "candidate",
+              "storage": {
+                "driver": {
+                  "value": "overlay",
+                  "source_id": "podman.configuration.storage.source.2"
+                },
+                "runroot": {
+                  "value": "/storage/run",
+                  "source_id": "podman.configuration.storage.source.2"
+                },
+                "graphroot": {
+                  "value": "/storage/graph",
+                  "source_id": "podman.configuration.storage.source.2"
+                },
+                "imagestore": {
+                  "value": "/storage/images",
+                  "source_id": "podman.configuration.storage.source.2"
+                },
+                "additionalimagestores": {
+                  "values": [
+                    "/storage/additional"
+                  ],
+                  "origins": [
+                    "podman.configuration.storage.source.2"
+                  ],
+                  "source_id": "podman.configuration.storage.source.2",
+                  "append": null,
+                  "inherited_default": false
+                },
+                "additionallayerstores": {
+                  "values": [
+                    "/storage/layers:ref"
+                  ],
+                  "origins": [
+                    "podman.configuration.storage.source.2"
+                  ],
+                  "source_id": "podman.configuration.storage.source.2",
+                  "append": null,
+                  "inherited_default": false
+                },
+                "options": {
+                  "mount_program": {
+                    "value": "/usr/bin/fuse-overlayfs",
+                    "source_id": "podman.configuration.storage.source.2"
+                  }
+                },
+                "unprojected_field_count": 0
+              },
+              "id": "podman.configuration.storage.source.2",
+              "path": "/home/alice/.config/containers/storage.conf",
+              "kind": "file",
+              "status": "parsed",
+              "order": 2,
+              "selected": false,
+              "applied": false,
+              "sha256": "f5cc1d7aac7b3a9be5e77ca5e2e91d224bf6d0c174499fb59a3da4f4201b394d"
+            }
+          ]
+        },
+        "id": "podman.configuration.storage",
+        "probe_id": "podman.configuration.storage",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.configuration.storage.measurement",
+            "source": "podman.configuration.storage",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "storage_selection_unqualified",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "id": "podman.discovery",
+        "probe_id": "podman.discovery",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.discovery.measurement",
+            "source": "podman.discovery",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "podman.discovery.path0",
+            "source": "filesystem.stat",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "executable": {
+          "role": "aardvark_dns",
+          "source": "configuration",
+          "source_id": "podman.configuration.network",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.aardvark_dns",
+        "probe_id": "podman.executable.configuration.aardvark_dns",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.aardvark_dns.measurement",
+            "source": "podman.executable.configuration.aardvark_dns",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_selection_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "executable": {
+          "role": "conmon",
+          "source": "configuration",
+          "source_id": "podman.configuration.engine",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.conmon",
+        "probe_id": "podman.executable.configuration.conmon",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.conmon.measurement",
+            "source": "podman.executable.configuration.conmon",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_selection_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "executable": {
+          "role": "netavark",
+          "source": "configuration",
+          "source_id": "podman.configuration.network",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.netavark",
+        "probe_id": "podman.executable.configuration.netavark",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.netavark.measurement",
+            "source": "podman.executable.configuration.netavark",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_selection_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "executable": {
+          "role": "oci_runtime",
+          "source": "configuration",
+          "source_id": "podman.configuration.engine",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.oci_runtime",
+        "probe_id": "podman.executable.configuration.oci_runtime",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.oci_runtime.measurement",
+            "source": "podman.executable.configuration.oci_runtime",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_selection_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "executable": {
+          "role": "pasta",
+          "source": "configuration",
+          "source_id": "podman.configuration.network",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.pasta",
+        "probe_id": "podman.executable.configuration.pasta",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.pasta.measurement",
+            "source": "podman.executable.configuration.pasta",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_selection_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "executable": {
+          "role": "slirp4netns",
+          "source": "configuration",
+          "source_id": "podman.configuration.network",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.slirp4netns",
+        "probe_id": "podman.executable.configuration.slirp4netns",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.slirp4netns.measurement",
+            "source": "podman.executable.configuration.slirp4netns",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_selection_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "executable": {
+          "role": "quadlet",
+          "source": "systemd_user_generators",
+          "selected_path": "/usr/lib/systemd/user-generators/podman-user-generator",
+          "candidates": [
+            {
+              "path": "/run/systemd/user-generators/podman-user-generator",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/etc/systemd/user-generators/podman-user-generator",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/lib/systemd/user-generators/podman-user-generator",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/lib/systemd/user-generators/podman-user-generator",
+              "present": true,
+              "file": {
+                "regular": true,
+                "executable_bits": true,
+                "mode": 493,
+                "uid": 0,
+                "gid": 0
+              },
+              "device": null,
+              "inode": null,
+              "executable": true,
+              "masked": false
+            }
+          ]
+        },
+        "id": "podman.executable.systemd_user_generators.quadlet",
+        "probe_id": "podman.executable.systemd_user_generators.quadlet",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.executable.systemd_user_generators.quadlet.measurement",
+            "source": "podman.executable.systemd_user_generators.quadlet",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "executable": {
+          "role": "aardvark_dns",
+          "source": "trusted_candidates",
+          "candidates": [
+            {
+              "path": "/usr/local/bin/aardvark-dns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/bin/aardvark-dns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/bin/aardvark-dns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/libexec/podman/aardvark-dns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/libexec/podman/aardvark-dns",
+              "present": true,
+              "file": {
+                "regular": true,
+                "executable_bits": true,
+                "mode": 493,
+                "uid": 0,
+                "gid": 0
+              },
+              "device": null,
+              "inode": null,
+              "executable": true,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/lib/podman/aardvark-dns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/lib/podman/aardvark-dns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            }
+          ]
+        },
+        "id": "podman.executable.trusted_candidates.aardvark_dns",
+        "probe_id": "podman.executable.trusted_candidates.aardvark_dns",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.executable.trusted_candidates.aardvark_dns.measurement",
+            "source": "podman.executable.trusted_candidates.aardvark_dns",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "executable": {
+          "role": "conmon",
+          "source": "trusted_candidates",
+          "candidates": [
+            {
+              "path": "/usr/local/bin/conmon",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/bin/conmon",
+              "present": true,
+              "file": {
+                "regular": true,
+                "executable_bits": true,
+                "mode": 493,
+                "uid": 0,
+                "gid": 0
+              },
+              "device": null,
+              "inode": null,
+              "executable": true,
+              "masked": false
+            },
+            {
+              "path": "/bin/conmon",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/libexec/podman/conmon",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/libexec/podman/conmon",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/lib/podman/conmon",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/lib/podman/conmon",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            }
+          ]
+        },
+        "id": "podman.executable.trusted_candidates.conmon",
+        "probe_id": "podman.executable.trusted_candidates.conmon",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.executable.trusted_candidates.conmon.measurement",
+            "source": "podman.executable.trusted_candidates.conmon",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "executable": {
+          "role": "crun",
+          "source": "trusted_candidates",
+          "candidates": [
+            {
+              "path": "/usr/local/bin/crun",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/bin/crun",
+              "present": true,
+              "file": {
+                "regular": true,
+                "executable_bits": true,
+                "mode": 493,
+                "uid": 0,
+                "gid": 0
+              },
+              "device": null,
+              "inode": null,
+              "executable": true,
+              "masked": false
+            },
+            {
+              "path": "/bin/crun",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/libexec/podman/crun",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/libexec/podman/crun",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/lib/podman/crun",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/lib/podman/crun",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            }
+          ]
+        },
+        "id": "podman.executable.trusted_candidates.crun",
+        "probe_id": "podman.executable.trusted_candidates.crun",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.executable.trusted_candidates.crun.measurement",
+            "source": "podman.executable.trusted_candidates.crun",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "executable": {
+          "role": "fuse_overlayfs",
+          "source": "trusted_candidates",
+          "candidates": [
+            {
+              "path": "/usr/local/bin/fuse-overlayfs",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/bin/fuse-overlayfs",
+              "present": true,
+              "file": {
+                "regular": true,
+                "executable_bits": true,
+                "mode": 493,
+                "uid": null,
+                "gid": null
+              },
+              "device": null,
+              "inode": null,
+              "executable": true,
+              "masked": false
+            },
+            {
+              "path": "/bin/fuse-overlayfs",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/libexec/podman/fuse-overlayfs",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/libexec/podman/fuse-overlayfs",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/lib/podman/fuse-overlayfs",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/lib/podman/fuse-overlayfs",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            }
+          ]
+        },
+        "id": "podman.executable.trusted_candidates.fuse_overlayfs",
+        "probe_id": "podman.executable.trusted_candidates.fuse_overlayfs",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.executable.trusted_candidates.fuse_overlayfs.measurement",
+            "source": "podman.executable.trusted_candidates.fuse_overlayfs",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "executable": {
+          "role": "netavark",
+          "source": "trusted_candidates",
+          "candidates": [
+            {
+              "path": "/usr/local/bin/netavark",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/bin/netavark",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/bin/netavark",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/libexec/podman/netavark",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/libexec/podman/netavark",
+              "present": true,
+              "file": {
+                "regular": true,
+                "executable_bits": true,
+                "mode": 493,
+                "uid": 0,
+                "gid": 0
+              },
+              "device": null,
+              "inode": null,
+              "executable": true,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/lib/podman/netavark",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/lib/podman/netavark",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            }
+          ]
+        },
+        "id": "podman.executable.trusted_candidates.netavark",
+        "probe_id": "podman.executable.trusted_candidates.netavark",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.executable.trusted_candidates.netavark.measurement",
+            "source": "podman.executable.trusted_candidates.netavark",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "executable": {
+          "role": "pasta",
+          "source": "trusted_candidates",
+          "candidates": [
+            {
+              "path": "/usr/local/bin/pasta",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/bin/pasta",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/bin/pasta",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/libexec/podman/pasta",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/libexec/podman/pasta",
+              "present": true,
+              "file": {
+                "regular": true,
+                "executable_bits": true,
+                "mode": 493,
+                "uid": 0,
+                "gid": 0
+              },
+              "device": null,
+              "inode": null,
+              "executable": true,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/lib/podman/pasta",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/lib/podman/pasta",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            }
+          ]
+        },
+        "id": "podman.executable.trusted_candidates.pasta",
+        "probe_id": "podman.executable.trusted_candidates.pasta",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.executable.trusted_candidates.pasta.measurement",
+            "source": "podman.executable.trusted_candidates.pasta",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "executable": {
+          "role": "runc",
+          "source": "trusted_candidates",
+          "candidates": [
+            {
+              "path": "/usr/local/bin/runc",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/bin/runc",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/bin/runc",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/libexec/podman/runc",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/libexec/podman/runc",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/lib/podman/runc",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/lib/podman/runc",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            }
+          ]
+        },
+        "id": "podman.executable.trusted_candidates.runc",
+        "probe_id": "podman.executable.trusted_candidates.runc",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.executable.trusted_candidates.runc.measurement",
+            "source": "podman.executable.trusted_candidates.runc",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "executable": {
+          "role": "slirp4netns",
+          "source": "trusted_candidates",
+          "candidates": [
+            {
+              "path": "/usr/local/bin/slirp4netns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/bin/slirp4netns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/bin/slirp4netns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/libexec/podman/slirp4netns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/libexec/podman/slirp4netns",
+              "present": true,
+              "file": {
+                "regular": true,
+                "executable_bits": true,
+                "mode": 493,
+                "uid": 0,
+                "gid": 0
+              },
+              "device": null,
+              "inode": null,
+              "executable": true,
+              "masked": false
+            },
+            {
+              "path": "/usr/local/lib/podman/slirp4netns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            },
+            {
+              "path": "/usr/lib/podman/slirp4netns",
+              "present": false,
+              "device": null,
+              "inode": null,
+              "executable": null,
+              "masked": false
+            }
+          ]
+        },
+        "id": "podman.executable.trusted_candidates.slirp4netns",
+        "probe_id": "podman.executable.trusted_candidates.slirp4netns",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.executable.trusted_candidates.slirp4netns.measurement",
+            "source": "podman.executable.trusted_candidates.slirp4netns",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "id": "podman.info",
+        "probe_id": "podman.info",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.info.measurement",
+            "source": "podman.info",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "info_exit_failed",
+            "message": "runtime inspection did not succeed"
+          }
+        ]
+      },
+      {
+        "quadlet": {
+          "rootless": true,
+          "reference": "https://github.com/podman-container-tools/podman/blob/v5.8.4/pkg/systemd/quadlet/unitdirs.go",
+          "locations": [
+            {
+              "path": "/run/user/1000/containers/systemd",
+              "present": false,
+              "directory": null
+            },
+            {
+              "path": "/home/alice/.config/containers/systemd",
+              "present": false,
+              "directory": null
+            },
+            {
+              "path": "/etc/containers/systemd/users",
+              "present": false,
+              "directory": null
+            },
+            {
+              "path": "/etc/containers/systemd/users/1000",
+              "present": false,
+              "directory": null
+            }
+          ]
+        },
+        "id": "podman.quadlet.locations",
+        "probe_id": "podman.quadlet.locations",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.quadlet.locations.measurement",
+            "source": "podman.quadlet.locations",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "quadlet_generation_unverified",
+            "message": "documented candidate input locations only; generator execution and working deployment have not been verified",
+            "reference": "https://github.com/podman-container-tools/podman/blob/v5.8.4/pkg/systemd/quadlet/unitdirs.go"
+          }
+        ]
+      },
+      {
+        "storage_paths": {
+          "source": "configuration",
+          "source_id": "podman.configuration.storage",
+          "runtime_path": "/usr/bin/podman",
+          "writable": false,
+          "paths": []
+        },
+        "id": "podman.storage.paths.configuration.additional",
+        "probe_id": "podman.storage.paths.configuration.additional",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.storage.paths.configuration.additional.measurement",
+            "source": "podman.storage.paths.configuration.additional",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "storage_path_selection_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "storage_paths": {
+          "source": "configuration",
+          "source_id": "podman.configuration.storage",
+          "runtime_path": "/usr/bin/podman",
+          "writable": true,
+          "paths": []
+        },
+        "id": "podman.storage.paths.configuration.roots",
+        "probe_id": "podman.storage.paths.configuration.roots",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.storage.paths.configuration.roots.measurement",
+            "source": "podman.storage.paths.configuration.roots",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "storage_path_selection_incomplete",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "id": "podman.version",
+        "probe_id": "podman.version",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.version.measurement",
+            "source": "podman.version",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      }
+    ],
+    "evidence": [
+      {
+        "id": "context.user.runtime.podman.quadlet.linger",
+        "source": "linger marker supports user-manager startup without login; running services and boot persistence are unverified",
+        "claim": "runtime.podman.quadlet.linger",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "context.user"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "context.user.runtime.podman.quadlet.manager",
+        "source": "target user-manager accessibility requires the explicit active query; socket presence alone is insufficient",
+        "claim": "runtime.podman.quadlet.manager",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "context.user"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "context.user.runtime.podman.quadlet.runtime_directory",
+        "source": "rootless services require a target-owned mode 0700 runtime directory",
+        "claim": "runtime.podman.quadlet.runtime_directory",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "context.user"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "host.cgroups.runtime.podman.cgroup_v2",
+        "source": "live cgroup hierarchy; controller delegation and workload execution remain unverified",
+        "claim": "runtime.podman.cgroup_v2",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "host.cgroups"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "host.filesystems.runtime.podman.storage.kernel.fuse",
+        "source": "current kernel filesystem registration from host facts; this does not establish usable storage or device access",
+        "claim": "runtime.podman.storage.kernel.fuse",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "host.filesystems"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "host.filesystems.runtime.podman.storage.kernel.overlay",
+        "source": "current kernel filesystem registration from host facts; this does not establish usable storage or device access",
+        "claim": "runtime.podman.storage.kernel.overlay",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "host.filesystems"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.engine.runtime.podman.cgroup_manager.systemd",
+        "source": "configured cgroup-manager choice; systemd/user-manager access and cgroup delegation remain separate",
+        "claim": "runtime.podman.cgroup_manager.systemd",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.engine.runtime.podman.config.engine.parsed",
+        "source": "selected source order and recognized engine fields; absence retains unmeasured built-in defaults",
+        "claim": "runtime.podman.config.engine.parsed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.network.runtime.podman.config.dns.parsed",
+        "source": "selected network source projection; helper compatibility and workload networking remain unverified",
+        "claim": "runtime.podman.config.dns.parsed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.network.runtime.podman.config.network.parsed",
+        "source": "selected network source projection; helper compatibility and workload networking remain unverified",
+        "claim": "runtime.podman.config.network.parsed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.network.runtime.podman.netavark",
+        "source": "configured backend and selected helper file metadata; networking unverified",
+        "claim": "runtime.podman.netavark",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.network.runtime.podman.network.backend.netavark",
+        "source": "selected network source projection; helper compatibility and workload networking remain unverified",
+        "claim": "runtime.podman.network.backend.netavark",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.network.runtime.podman.network.rootless.pasta",
+        "source": "selected network source projection; helper compatibility and workload networking remain unverified",
+        "claim": "runtime.podman.network.rootless.pasta",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "knowledge",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.network.runtime.podman.network.rootless.slirp4netns",
+        "source": "selected network source projection; helper compatibility and workload networking remain unverified",
+        "claim": "runtime.podman.network.rootless.slirp4netns",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "knowledge",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.storage.runtime.podman.config.storage.parsed",
+        "source": "selected storage source phases and recognized fields; replacement and root defaults are version-specific",
+        "claim": "runtime.podman.config.storage.parsed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.storage",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.storage.runtime.podman.storage.overlay",
+        "source": "configured storage driver; runtime-effective driver takes precedence",
+        "claim": "runtime.podman.storage.overlay",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.storage",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.configuration.aardvark_dns.runtime.podman.aardvark_dns.executable",
+        "source": "configured network helper search and target executable access; execution unverified",
+        "claim": "runtime.podman.aardvark_dns.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.executable.configuration.aardvark_dns",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.configuration.conmon.runtime.podman.conmon.executable",
+        "source": "configured helper selection and target metadata; execution and built-in default selection remain unverified",
+        "claim": "runtime.podman.conmon.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.executable.configuration.conmon",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.configuration.netavark.runtime.podman.netavark.executable",
+        "source": "configured network helper search and target executable access; execution unverified",
+        "claim": "runtime.podman.netavark.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.executable.configuration.netavark",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.configuration.oci_runtime.runtime.podman.oci_runtime.executable",
+        "source": "configured helper selection and target metadata; execution and built-in default selection remain unverified",
+        "claim": "runtime.podman.oci_runtime.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.executable.configuration.oci_runtime",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.configuration.pasta.runtime.podman.pasta.executable",
+        "source": "configured network helper search and target executable access; execution unverified",
+        "claim": "runtime.podman.pasta.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.executable.configuration.pasta",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.configuration.slirp4netns.runtime.podman.slirp4netns.executable",
+        "source": "configured network helper search and target executable access; execution unverified",
+        "claim": "runtime.podman.slirp4netns.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.executable.configuration.slirp4netns",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.systemd_user_generators.quadlet.runtime.podman.quadlet.generator",
+        "source": "systemd generator precedence and masking; metadata does not verify functional unit generation",
+        "claim": "runtime.podman.quadlet.generator",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.systemd_user_generators.quadlet"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.aardvark_dns.runtime.podman.helper.aardvark_dns.executable",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.aardvark_dns.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.aardvark_dns"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.aardvark_dns.runtime.podman.helper.aardvark_dns.installed",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.aardvark_dns.installed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.aardvark_dns"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.conmon.runtime.podman.helper.conmon.executable",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.conmon.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.conmon"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.conmon.runtime.podman.helper.conmon.installed",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.conmon.installed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.conmon"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.crun.runtime.podman.helper.crun.executable",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.crun.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.crun"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.crun.runtime.podman.helper.crun.installed",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.crun.installed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.crun"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.fuse_overlayfs.runtime.podman.helper.fuse_overlayfs.executable",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.fuse_overlayfs.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.fuse_overlayfs"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.fuse_overlayfs.runtime.podman.helper.fuse_overlayfs.installed",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.fuse_overlayfs.installed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.fuse_overlayfs"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.netavark.runtime.podman.helper.netavark.executable",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.netavark.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.netavark"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.netavark.runtime.podman.helper.netavark.installed",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.netavark.installed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.netavark"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.pasta.runtime.podman.helper.pasta.executable",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.pasta.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.pasta"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.pasta.runtime.podman.helper.pasta.installed",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.pasta.installed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.pasta"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.runc.runtime.podman.helper.runc.executable",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.runc.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "unsupported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.runc"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.runc.runtime.podman.helper.runc.installed",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.runc.installed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "unsupported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.runc"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.slirp4netns.runtime.podman.helper.slirp4netns.executable",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.slirp4netns.executable",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.slirp4netns"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.trusted_candidates.slirp4netns.runtime.podman.helper.slirp4netns.installed",
+        "source": "trusted candidate metadata; custom paths require selection evidence",
+        "claim": "runtime.podman.helper.slirp4netns.installed",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "live",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.executable.trusted_candidates.slirp4netns"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.info.runtime.podman.info",
+        "source": "Podman effective runtime observation",
+        "claim": "runtime.podman.info",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "runtime",
+        "state": "unavailable",
+        "confidence": "derived",
+        "observations": [
+          "podman.info",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.info.runtime.podman.netavark",
+        "source": "Podman effective runtime observation",
+        "claim": "runtime.podman.netavark",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "runtime",
+        "state": "unavailable",
+        "confidence": "derived",
+        "observations": [
+          "podman.info"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.version.cli",
+        "source": "Podman CLI observation",
+        "claim": "runtime.podman",
+        "scope": {
+          "run_id": "network-source-denied",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "runtime",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.version"
+        ],
+        "depends_on": []
+      }
+    ],
+    "requirement": {
+      "state": "INDETERMINATE",
+      "reason": "any complete deployment candidate",
+      "diagnostics": [
+        {
+          "code": "indeterminate_capability",
+          "message": "runtime.podman.config.engine.parsed: unknown"
+        },
+        {
+          "code": "indeterminate_capability",
+          "message": "runtime.podman.config.network.parsed: unknown"
+        },
+        {
+          "code": "indeterminate_capability",
+          "message": "runtime.podman.config.dns.parsed: unknown"
+        },
+        {
+          "code": "indeterminate_capability",
+          "message": "runtime.podman.network.backend.netavark: unknown"
+        },
+        {
+          "code": "indeterminate_capability",
+          "message": "runtime.podman.netavark.executable: unknown"
+        },
+        {
+          "code": "indeterminate_capability",
+          "message": "runtime.podman.aardvark_dns.executable: unknown"
+        },
+        {
+          "code": "indeterminate_capability",
+          "message": "runtime.podman.network.rootless.pasta: unknown"
+        },
+        {
+          "code": "indeterminate_capability",
+          "message": "runtime.podman.pasta.executable: unknown"
+        }
+      ],
+      "children": [
+        {
+          "state": "INDETERMINATE",
+          "reason": "all",
+          "scope": {
+            "run_id": "network-source-denied",
+            "context_id": "user:alice",
+            "runtime": "podman",
+            "endpoint": "local"
+          },
+          "diagnostics": [
+            {
+              "code": "indeterminate_capability",
+              "message": "runtime.podman.config.engine.parsed: unknown"
+            },
+            {
+              "code": "indeterminate_capability",
+              "message": "runtime.podman.config.network.parsed: unknown"
+            },
+            {
+              "code": "indeterminate_capability",
+              "message": "runtime.podman.config.dns.parsed: unknown"
+            },
+            {
+              "code": "indeterminate_capability",
+              "message": "runtime.podman.network.backend.netavark: unknown"
+            },
+            {
+              "code": "indeterminate_capability",
+              "message": "runtime.podman.netavark.executable: unknown"
+            },
+            {
+              "code": "indeterminate_capability",
+              "message": "runtime.podman.aardvark_dns.executable: unknown"
+            },
+            {
+              "code": "indeterminate_capability",
+              "message": "runtime.podman.network.rootless.pasta: unknown"
+            },
+            {
+              "code": "indeterminate_capability",
+              "message": "runtime.podman.pasta.executable: unknown"
+            }
+          ],
+          "children": [
+            {
+              "state": "INDETERMINATE",
+              "reason": "runtime.podman.config.engine.parsed: unknown",
+              "diagnostics": [
+                {
+                  "code": "indeterminate_capability",
+                  "message": "runtime.podman.config.engine.parsed: unknown"
+                }
+              ],
+              "children": []
+            },
+            {
+              "state": "INDETERMINATE",
+              "reason": "runtime.podman.config.network.parsed: unknown",
+              "diagnostics": [
+                {
+                  "code": "indeterminate_capability",
+                  "message": "runtime.podman.config.network.parsed: unknown"
+                }
+              ],
+              "children": []
+            },
+            {
+              "state": "INDETERMINATE",
+              "reason": "runtime.podman.config.dns.parsed: unknown",
+              "diagnostics": [
+                {
+                  "code": "indeterminate_capability",
+                  "message": "runtime.podman.config.dns.parsed: unknown"
+                }
+              ],
+              "children": []
+            },
+            {
+              "state": "INDETERMINATE",
+              "reason": "runtime.podman.network.backend.netavark: unknown",
+              "diagnostics": [
+                {
+                  "code": "indeterminate_capability",
+                  "message": "runtime.podman.network.backend.netavark: unknown"
+                }
+              ],
+              "children": []
+            },
+            {
+              "state": "INDETERMINATE",
+              "reason": "runtime.podman.netavark.executable: unknown",
+              "diagnostics": [
+                {
+                  "code": "indeterminate_capability",
+                  "message": "runtime.podman.netavark.executable: unknown"
+                }
+              ],
+              "children": []
+            },
+            {
+              "state": "INDETERMINATE",
+              "reason": "runtime.podman.aardvark_dns.executable: unknown",
+              "diagnostics": [
+                {
+                  "code": "indeterminate_capability",
+                  "message": "runtime.podman.aardvark_dns.executable: unknown"
+                }
+              ],
+              "children": []
+            },
+            {
+              "state": "INDETERMINATE",
+              "reason": "runtime.podman.network.rootless.pasta: unknown",
+              "diagnostics": [
+                {
+                  "code": "indeterminate_capability",
+                  "message": "runtime.podman.network.rootless.pasta: unknown"
+                }
+              ],
+              "children": []
+            },
+            {
+              "state": "INDETERMINATE",
+              "reason": "runtime.podman.pasta.executable: unknown",
+              "diagnostics": [
+                {
+                  "code": "indeterminate_capability",
+                  "message": "runtime.podman.pasta.executable: unknown"
+                }
+              ],
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    "diagnostics": [
+      {
+        "code": "mapping_execution_unverified",
+        "message": "host measurement diagnostic",
+        "reference": "context.subids"
+      },
+      {
+        "code": "mapping_execution_unverified",
+        "message": "host measurement diagnostic",
+        "reference": "context.subids"
+      },
+      {
+        "code": "quadlet_generation_unverified",
+        "message": "documented candidate input locations only; generator execution and working deployment have not been verified",
+        "reference": "https://github.com/podman-container-tools/podman/blob/v5.8.4/pkg/systemd/quadlet/unitdirs.go"
+      },
+      {
+        "code": "info_exit_failed",
+        "message": "runtime inspection did not succeed"
+      },
+      {
+        "code": "config_source_denied",
+        "message": "selected configuration source is denied",
+        "reference": "podman.configuration.engine.source.1"
+      },
+      {
+        "code": "config_evidence_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "config_source_denied",
+        "message": "network configuration source is denied",
+        "reference": "podman.configuration.network.source.1"
+      },
+      {
+        "code": "config_evidence_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "configured_selection_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "configured_selection_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "configured_selection_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "configured_selection_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "configured_selection_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "configured_selection_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "storage_selection_unqualified",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "storage_path_selection_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "storage_path_selection_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.aardvark_dns.runtime.podman.aardvark_dns.executable"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.engine.runtime.podman.cgroup_manager.systemd"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.network.runtime.podman.config.dns.parsed"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.engine.runtime.podman.config.engine.parsed"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.network.runtime.podman.config.network.parsed"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.storage.runtime.podman.config.storage.parsed"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.conmon.runtime.podman.conmon.executable"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.network.runtime.podman.netavark"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.netavark.runtime.podman.netavark.executable"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.network.runtime.podman.network.backend.netavark"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.network.runtime.podman.network.rootless.pasta"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.network.runtime.podman.network.rootless.slirp4netns"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.oci_runtime.runtime.podman.oci_runtime.executable"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.pasta.runtime.podman.pasta.executable"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.slirp4netns.runtime.podman.slirp4netns.executable"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.configuration.storage.runtime.podman.storage.overlay"
+      },
+      {
+        "code": "indeterminate_capability",
+        "message": "runtime.podman.config.engine.parsed: unknown"
+      },
+      {
+        "code": "indeterminate_capability",
+        "message": "runtime.podman.config.network.parsed: unknown"
+      },
+      {
+        "code": "indeterminate_capability",
+        "message": "runtime.podman.config.dns.parsed: unknown"
+      },
+      {
+        "code": "indeterminate_capability",
+        "message": "runtime.podman.network.backend.netavark: unknown"
+      },
+      {
+        "code": "indeterminate_capability",
+        "message": "runtime.podman.netavark.executable: unknown"
+      },
+      {
+        "code": "indeterminate_capability",
+        "message": "runtime.podman.aardvark_dns.executable: unknown"
+      },
+      {
+        "code": "indeterminate_capability",
+        "message": "runtime.podman.network.rootless.pasta: unknown"
+      },
+      {
+        "code": "indeterminate_capability",
+        "message": "runtime.podman.pasta.executable: unknown"
+      },
+      {
+        "code": "probe_failed",
+        "message": "probe did not complete successfully",
+        "reference": "podman.info"
+      }
+    ]
+  }
+}

@@ -26,6 +26,7 @@ func addPrerequisites(input *Input, probes []probe.Probe, current model.Evaluati
 	}
 	input.Definitions = append(input.Definitions, capability.HelperDefinitions()...)
 	input.Definitions = append(input.Definitions, capability.EngineDefinitions()...)
+	input.Definitions = append(input.Definitions, capability.NetworkDefinitions(input.Context.Identity.Target.UID != 0)...)
 	input.Definitions = append(input.Definitions, capability.StorageDefinitions()...)
 	input.PodmanEnvironment, input.PodmanEnvironmentError = policy, policyErr
 	rootless := current.Identity.Target != nil && current.Identity.Target.UID != 0

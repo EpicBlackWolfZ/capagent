@@ -11,10 +11,11 @@ The CLI provides:
 - [Passive host facts](host-facts.md) and [local target identities](execution-context.md), including root delegation, subordinate allocations, helper metadata, runtime-directory and user-session observations.
 - [Passive local Podman executable discovery](podman-discovery.md) with explicit path and target selection.
 - Explicit `--runtime podman --active` version and local effective-info inspection. Podman startup may write state; successful inspection does not establish workload readiness.
+- [OCI/helper and Quadlet prerequisites](podman-prerequisites.md), plus target-scoped [engine](podman-engine-config.md), [storage](podman-storage-config.md) and [network/DNS](podman-network-config.md) configuration with source provenance.
 - An explicitly active bounded user-manager query, including host-only collection.
 - [Offline fixture evaluation](fixture-evaluation.md), the existing JSON requirement AST and an executable report consumer.
 
-Live Podman inspection currently evaluates `all(runtime.podman, runtime.podman.info)`. User-supplied live requirements and basic evidence explanations are planned in [#112](https://github.com/EpicBlackWolfZ/capagent/issues/112). Configuration-family discovery, broader helper/lifecycle mappings and workload verification remain planned. The [baseline follow-up milestone](https://github.com/EpicBlackWolfZ/capagent/milestone/25) tracks known correctness and validation defects in the shipped behavior.
+Live Podman inspection currently evaluates `all(runtime.podman, runtime.podman.info)`. User-supplied live requirements and basic evidence explanations are planned in [#112](https://github.com/EpicBlackWolfZ/capagent/issues/112). Registry/image-policy configuration, remaining lifecycle metadata and workload verification remain planned. The [baseline follow-up milestone](https://github.com/EpicBlackWolfZ/capagent/milestone/25) records correctness and validation repairs.
 
 Execution targets **Linux 5.6+ with functioning `openat2` confinement**, on amd64 and arm64. A version string does not prove that the syscall is permitted; unsupported kernels or policies receive explicit diagnostics without an insecure fallback. Historical pre-5.6 distribution data can support parser fixtures without establishing execution support. See the [security and support contract](security.md).
 
@@ -72,8 +73,8 @@ Existing milestone URLs and numbers are preserved. The table describes delivery 
 | [Baseline correctness follow-up](https://github.com/EpicBlackWolfZ/capagent/milestone/25) | Phase 0: #102–#107 repairs and #116 public alignment. |
 | [M4 — Runtime Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/5) | Local Podman discovery delivered; #23 shared discovery follows the Podman checkpoint. |
 | [M5 — Podman Core](https://github.com/EpicBlackWolfZ/capagent/milestone/6) | Active version/info delivered; #82/#108 next, #114 later. |
-| [M6 — Configuration Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/7) | #66 roll-up; #109/#110/#113 own family discovery with mappings. |
-| [M7 — Configuration Capabilities](https://github.com/EpicBlackWolfZ/capagent/milestone/8) | Narrow runtime mappings delivered; #67 roll-up and #111 network batch progress with M6. |
+| [M6 — Configuration Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/7) | Engine, storage and network sources delivered; #66 roll-up retains #113 registry/image-policy discovery. |
+| [M7 — Configuration Capabilities](https://github.com/EpicBlackWolfZ/capagent/milestone/8) | Engine, storage and network prerequisites delivered; #67 roll-up retains remaining lifecycle and registry/image-policy mappings. |
 | [M8 — Capability Catalog Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/9) | #68 definitions and dependency explanations ship with each producing batch. |
 | [M9 — Requirement Language & Explanations](https://github.com/EpicBlackWolfZ/capagent/milestone/10) | #112 live JSON first; #69 broader consumer-driven language later. |
 | [M10 — Ansible Integration](https://github.com/EpicBlackWolfZ/capagent/milestone/11) | #70 follows #115; retain the existing consumer smoke now. |
@@ -158,6 +159,11 @@ The roadmap retains intended IDs while #68 defines each shipped predicate's exac
 - `runtime.podman.generate_systemd`: Podman legacy systemd unit generation.
 - `runtime.podman.info`: Selected local engine returned complete effective inspection fields; runtime evidence with derived confidence, no workload claim.
 - `runtime.podman.netavark`: Netavark network backend configured.
+- `runtime.podman.config.network.parsed`: Qualified selected network settings interpreted within documented bounds; networking remains unverified.
+- `runtime.podman.config.dns.parsed`: Selected container DNS projection complete within documented bounds; resolution remains unverified.
+- `runtime.podman.network.backend.netavark`: Configured or runtime-effective backend choice is Netavark; selected helper prerequisites are separate.
+- `runtime.podman.network.rootless.pasta`: Selected rootless default command is pasta; execution and connectivity remain unverified.
+- `runtime.podman.network.rootless.slirp4netns`: Selected rootless default command is slirp4netns; execution and connectivity remain unverified.
 - `runtime.podman.cni`: Legacy CNI network backend configured.
 - `runtime.podman.aardvark`: Aardvark DNS support; configured helper prerequisites and verified DNS operation remain distinct.
 - `runtime.podman.rootless`: Rootless Podman operation for the selected target; prerequisites alone cannot establish usability.

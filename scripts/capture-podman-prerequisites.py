@@ -52,6 +52,7 @@ def project(report, description, configuration=False):
         'security': {'rootless': runtime['rootless']}, 'serviceIsRemote': False,
         'cgroupVersion': runtime.get('cgroup_version'), 'cgroupManager': runtime.get('cgroup_manager'),
         'networkBackend': runtime.get('network_backend'),
+        'rootlessNetworkCmd': runtime.get('rootless_network_cmd'),
         'networkBackendInfo': {'path': selected.get('netavark', ''), 'dns': {'path': selected.get('aardvark_dns', '')}},
         'conmon': {'path': selected.get('conmon', '')}, 'pasta': {'executable': selected.get('pasta', '')},
         'slirp4netns': {'executable': selected.get('slirp4netns', '')},
@@ -68,6 +69,9 @@ def project(report, description, configuration=False):
             states[key] = report['capabilities'][key]['state']
         states.update({key: value['state'] for key, value in report['capabilities'].items()
                        if key.startswith('runtime.podman.storage.') or key == 'runtime.podman.config.storage.parsed'})
+        states.update({key: value['state'] for key, value in report['capabilities'].items()
+                       if key.startswith('runtime.podman.network.') or key in
+                       ('runtime.podman.config.network.parsed', 'runtime.podman.config.dns.parsed')})
     result = redact({'schema_version': 1, 'provenance': {'kind': 'captured', 'description': description,
                      'conversion': 'Typed native measurements; info JSON reconstructed from published fields; home and user names anonymized.'},
                      'scope': trace['scope'], 'timestamp': trace['timestamp'], 'runtime_path': runtime['path'],

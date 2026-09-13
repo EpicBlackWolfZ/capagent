@@ -17,6 +17,7 @@ const executableBits = 0o111
 type infoDocument struct {
 	Version struct{ Version string }
 	Host    struct {
+		RootlessNetworkCmd *string                     `json:"rootlessNetworkCmd"`
 		OCIRuntime         *model.SelectedOCIRuntime   `json:"ociRuntime"`
 		Conmon             struct{ Path string }       `json:"conmon"`
 		Pasta              struct{ Executable string } `json:"pasta"`
@@ -55,7 +56,7 @@ func ParseInfo(data []byte) (model.PodmanInfo, error) {
 			return model.PodmanInfo{}, errors.New("invalid Podman storage helper metadata")
 		}
 	}
-	return model.PodmanInfo{StorageMountProgram: mountProgram.Executable,
+	return model.PodmanInfo{RootlessNetworkCmd: document.Host.RootlessNetworkCmd, StorageMountProgram: mountProgram.Executable,
 		Version:        document.Version.Version,
 		NetworkBackend: document.Host.NetworkBackend,
 		OCIRuntime:     document.Host.OCIRuntime, ConmonPath: document.Host.Conmon.Path,

@@ -11,10 +11,16 @@ import (
 func TestRuntimeFieldPresenceAndOwnership(t *testing.T) {
 	t.Parallel()
 	rootless, graph, run, group, manager := false, "", "/run/storage", "v2", "systemd"
+	command := "pasta"
 	r := output.NewReportFromModel(model.EvaluationContext{}, map[string]output.RuntimeInfo{"podman": {
-		Rootless: &rootless, GraphRoot: &graph, RunRoot: &run, CgroupVersion: &group, CgroupManager: &manager}}, nil)
+		RootlessNetworkCmd: &command, Rootless: &rootless, GraphRoot: &graph, RunRoot: &run,
+		CgroupVersion: &group, CgroupManager: &manager}}, nil)
 	rootless, graph, run, group, manager = true, "changed", "changed", "changed", "changed"
+	command = "replaced"
 	p := r.Runtimes["podman"]
+	if p.RootlessNetworkCmd == nil || *p.RootlessNetworkCmd != "pasta" {
+		t.Fatal("rootless network command lost pointer ownership")
+	}
 	if *p.Rootless || *p.GraphRoot != "" || *p.RunRoot != "/run/storage" || *p.CgroupVersion != "v2" || *p.CgroupManager != "systemd" {
 		t.Fatal("runtime projection retained caller pointers")
 	}

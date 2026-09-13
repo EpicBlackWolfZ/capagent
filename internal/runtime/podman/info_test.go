@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"strings"
 	"testing"
 	"time"
 
@@ -15,13 +16,51 @@ import (
 const infoJSON = `{"version":{"Version":"5.8.1"},"host":{"networkBackend":"netavark","security":{"rootless":true},` +
 	`"networkBackendInfo":{"path":"/usr/libexec/podman/netavark"}},"store":{"graphDriverName":"overlay"}}`
 
+func TestRootlessNetworkCommandInfoProjection(t *testing.T) {
+	t.Parallel()
+	for _, test := range []struct {
+		name, raw, value string
+		present, partial bool
+	}{
+		{"omitted command", `{"host":{"security":{"rootless":true}}}`, "", false, false},
+		{"empty", `{"host":{"rootlessNetworkCmd":"","security":{"rootless":true}}}`, "", true, false},
+		{networkTestPasta, `{"host":{"rootlessNetworkCmd":"pasta","security":{"rootless":true}}}`, networkTestPasta, true, false},
+		{"unsafe", `{"host":{"rootlessNetworkCmd":"raw secret","security":{"rootless":true}}}`, "", false, true},
+		{"type", `{"host":{"rootlessNetworkCmd":3,"security":{"rootless":true}}}`, "", false, true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			command := platform.CommandSpec{Path: testPodmanPath, Args: podman.LocalInfoArgs()}
+			runner := platform.NewFakeCommandRunner()
+			if err := runner.RegisterWithError(command, platform.ExecResult{Stdout: []byte(test.raw)}, nil); err != nil {
+				t.Fatal(err)
+			}
+			env := platform.NewEnvironment(nil, nil, nil, runner).WithScope(versionScope())
+			obs, _ := (podman.InfoProbe{Command: command}).Run(t.Context(), env)
+			if (obs.Completeness == model.Partial) != test.partial {
+				t.Fatal("wrong info completeness")
+			}
+			value := obs.Podman.RootlessNetworkCmd
+			if (value != nil) != test.present || value != nil && *value != test.value {
+				t.Fatal("rootless command projection differs")
+			}
+			for _, diagnostic := range obs.Diagnostics {
+				if strings.Contains(diagnostic.Message, "raw secret") {
+					t.Fatal("unrecognized command leaked")
+				}
+			}
+		})
+	}
+}
+
 func TestInfoParser(t *testing.T) {
 	t.Parallel()
 	p, err := podman.ParseInfo([]byte(infoJSON))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if p.NetworkBackend == nil || *p.NetworkBackend != "netavark" || p.Rootless == nil || !*p.Rootless || *p.StorageDriver != "overlay" {
+	if p.NetworkBackend == nil || *p.NetworkBackend != networkTestBackend || p.Rootless == nil || !*p.Rootless ||
+		*p.StorageDriver != "overlay" {
 		t.Fatalf("payload: %+v", p)
 	}
 	p, err = podman.ParseInfo([]byte(`{"host":{"security":{"rootless":false}}}`))

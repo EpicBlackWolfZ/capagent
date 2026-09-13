@@ -15,7 +15,7 @@ func netavarkEvidence(scope model.EvaluationScope, observations []model.Observat
 	if scope.Runtime != "podman" {
 		return nil
 	}
-	var evidence []model.Evidence
+	evidence := configuredNetavarkEvidence(scope, observations)
 	for _, obs := range observations {
 		if obs.Scope != scope || obs.Podman == nil {
 			continue

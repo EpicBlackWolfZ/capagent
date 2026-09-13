@@ -38,6 +38,18 @@ func (EngineProbe) ID() string             { return EngineConfigID }
 func (EngineProbe) Dependencies() []string { return nil }
 
 func (p EngineProbe) Run(ctx context.Context, env platform.Environment) (model.Observation, error) {
+	return p.run(ctx, env, nil)
+}
+
+// Collect projects both families from the same bounded file reads. Neither
+// family silently borrows the other family's field interpretation.
+func (p EngineProbe) Collect(ctx context.Context, env platform.Environment) (model.Observation, model.Observation, error) {
+	network := newNetworkCollector(p, env)
+	engine, err := p.run(ctx, env, network)
+	return engine, network.finish(engine), err
+}
+
+func (p EngineProbe) run(ctx context.Context, env platform.Environment, network *networkCollector) (model.Observation, error) {
 	obs := runtimeObservation(p.ID(), env.Scope(), measurementTime(p.Now))
 	profile := p.profile(env.Scope())
 	c := &model.ConfigurationObservation{Family: "engine", RuntimePath: p.Path, Profile: profile,
@@ -62,7 +74,8 @@ func (p EngineProbe) Run(ctx context.Context, env platform.Environment) (model.O
 	if configHome == "" {
 		configHome = values["HOME"] + "/.config"
 	}
-	collector := engineCollector{ctx: ctx, files: env.Files(), observation: &obs, complete: true, applicable: c.SelectionComplete}
+	collector := engineCollector{network: network, ctx: ctx, files: env.Files(), observation: &obs,
+		complete: true, applicable: c.SelectionComplete}
 	for _, source := range engineSourcePlan(profile, p.Target.UID, configHome) {
 		if ctx.Err() != nil || collector.limit {
 			c.SelectionComplete, c.ParseComplete = false, false
@@ -113,6 +126,7 @@ func engineSourcePlan(profile string, uid uint32, configHome string) []engineSou
 }
 
 type engineCollector struct {
+	network     *networkCollector
 	ctx         context.Context
 	files       platform.ScopedView
 	observation *model.Observation
@@ -130,9 +144,12 @@ func (c *engineCollector) source(name, kind string) model.ConfigurationSource {
 }
 
 func (c *engineCollector) retain(source model.ConfigurationSource) {
+	if c.network != nil {
+		c.network.retain(source)
+	}
 	c.observation.Configuration.Sources = append(c.observation.Configuration.Sources, source)
 	switch source.Status {
-	case "parsed", "listed", configStatusAbsent, "symlink_skipped":
+	case configStatusParsed, "listed", configStatusAbsent, "symlink_skipped":
 		return
 	default:
 		message := "selected configuration source is " + source.Status
@@ -237,6 +254,9 @@ func (c *engineCollector) file(name string, optionalStat bool) {
 	}
 	digest := sha256.Sum256(data)
 	source.SHA256 = hex.EncodeToString(digest[:])
+	if c.network != nil {
+		c.network.file(source, data)
+	}
 	layer, err := config.ParseEngine(data)
 	if err != nil {
 		source.Problem = err.Error() // All config parser errors are fixed, redacted codes.
@@ -254,7 +274,7 @@ func (c *engineCollector) file(name string, optionalStat bool) {
 			source.Status = c.readFailure(err)
 		}
 	} else {
-		source.Status = "parsed"
+		source.Status = configStatusParsed
 		projection := config.MergeEngine(model.EngineConfiguration{}, layer, source.ID)
 		source.Engine = &projection
 		if c.applicable {

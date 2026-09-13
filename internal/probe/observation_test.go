@@ -32,12 +32,12 @@ func TestSnapshotInspectionOwnsNewFields(t *testing.T) {
 	flag, value := true, "/storage"
 	obs := model.Observation{Podman: &model.PodmanInfo{VersionParts: &model.PodmanVersion{Canonical: "5.8.4"},
 		GraphRoot: &value, RunRoot: &value, ServiceIsRemote: &flag, Rootless: &flag, Available: &flag,
-		NetworkBackend: &value, StorageDriver: &value, CgroupVersion: &value, CgroupManager: &value},
+		RootlessNetworkCmd: &value, NetworkBackend: &value, StorageDriver: &value, CgroupVersion: &value, CgroupManager: &value},
 		PodmanHelper: &model.PodmanHelper{Present: &flag}}
 	copy := probe.SnapshotObservation(obs)
 	flag, value, obs.Podman.VersionParts.Canonical = false, changedObservation, changedObservation
 	for _, field := range []*string{copy.Podman.GraphRoot, copy.Podman.RunRoot, copy.Podman.NetworkBackend,
-		copy.Podman.StorageDriver, copy.Podman.CgroupVersion, copy.Podman.CgroupManager} {
+		copy.Podman.StorageDriver, copy.Podman.CgroupVersion, copy.Podman.CgroupManager, copy.Podman.RootlessNetworkCmd} {
 		if *field != "/storage" {
 			t.Fatal("retained mutable inspection fields")
 		}

@@ -101,7 +101,7 @@ func configuredExecutableEvidence(scope model.EvaluationScope, observations []mo
 	var evidence []model.Evidence
 	for _, obs := range observations {
 		x := obs.Executable
-		if obs.Scope != scope || x == nil || x.Source != "configuration" || x.Role != role {
+		if obs.Scope != scope || x == nil || x.Source != configurationSourceName || x.Role != role {
 			continue
 		}
 		for _, source := range observations {

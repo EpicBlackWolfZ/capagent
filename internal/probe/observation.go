@@ -58,6 +58,7 @@ func SnapshotObservation(obs model.Observation) model.Observation {
 		p.GraphRoot, p.RunRoot = copyValue(p.GraphRoot), copyValue(p.RunRoot)
 		p.ServiceIsRemote = copyValue(p.ServiceIsRemote)
 		p.NetworkBackend = copyValue(p.NetworkBackend)
+		p.RootlessNetworkCmd = copyValue(p.RootlessNetworkCmd)
 		p.StorageDriver = copyValue(p.StorageDriver)
 		p.CgroupVersion = copyValue(p.CgroupVersion)
 		p.CgroupManager = copyValue(p.CgroupManager)

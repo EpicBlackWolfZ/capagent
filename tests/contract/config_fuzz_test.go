@@ -16,6 +16,7 @@ func FuzzConfigTOML(f *testing.F) {
 	const adversarialNesting = 20000
 	for _, seed := range []string{"", "[engine]\nruntime='crun'", "[engine]\nconmon_path=['/a',{append=true}]",
 		"[engine]\nenv=['SECRET=redacted']", "[storage]\ndriver='overlay'", "x={a=1,}", "x=12:30", "x=2026-09-13T12:30Z",
+		"[network]\nnetwork_backend='netavark'\npasta_options=['--opaque',{append=true}]\n[containers]\ndns_servers=['invalid']",
 		"x=" + strings.Repeat("[", adversarialNesting) + strings.Repeat("]", adversarialNesting)} {
 		f.Add([]byte(seed))
 	}
@@ -24,6 +25,8 @@ func FuzzConfigTOML(f *testing.F) {
 			before := bytes.Clone(input)
 			fuzzStorageProjection(t, input, true)
 			fuzzStorageProjection(t, input, false)
+			fuzzNetworkProjection(t, input, true)
+			fuzzNetworkProjection(t, input, false)
 			a, ae := config.ParseEngine(input)
 			b, be := config.ParseEngine(input)
 			if !reflect.DeepEqual(a, b) || fmt.Sprint(ae) != fmt.Sprint(be) || !bytes.Equal(before, input) {
@@ -44,6 +47,41 @@ func FuzzConfigTOML(f *testing.F) {
 			}
 		})
 	})
+}
+
+func fuzzNetworkProjection(t *testing.T, input []byte, modern bool) {
+	t.Helper()
+	a, ae := config.ParseNetwork(input, modern)
+	b, be := config.ParseNetwork(input, modern)
+	if !reflect.DeepEqual(a, b) || fmt.Sprint(ae) != fmt.Sprint(be) {
+		t.Fatal("network parser is nondeterministic")
+	}
+	if ae != nil {
+		switch ae.Error() {
+		case "config_malformed", "config_limit", "config_field_invalid", "config_field_unsupported", "config_toml_version_unsupported":
+			return
+		default:
+			t.Fatal("unreviewed network parser diagnostic")
+		}
+	}
+	first := config.MergeNetwork(model.NetworkConfiguration{}, a, "first")
+	x := config.MergeNetwork(first, b, "second")
+	y := config.MergeNetwork(first, b, "second")
+	if !reflect.DeepEqual(x, y) {
+		t.Fatal("network merge is nondeterministic")
+	}
+	for _, list := range x.Lists {
+		if len(list.Values) != len(list.Origins) {
+			t.Fatal("network list lost provenance")
+		}
+		for _, indices := range [][]int{list.InvalidIndices, list.UnmodeledIndices} {
+			for _, index := range indices {
+				if index < 0 || index >= len(list.Values) || list.Values[index] != "" {
+					t.Fatal("network list marker failed to redact its value")
+				}
+			}
+		}
+	}
 }
 
 func fuzzStorageProjection(t *testing.T, input []byte, composefs bool) {

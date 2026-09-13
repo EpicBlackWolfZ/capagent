@@ -32,8 +32,12 @@ func collectConfiguration(ctx context.Context, env platform.Environment,
 			p.Version = obs
 		}
 	}
-	source, _ := p.Run(ctx, env) // Fixed diagnostics and completeness retain every collection failure.
-	observations = append(observations, source)
+	source, network, _ := p.Collect(ctx, env) // Fixed diagnostics and completeness retain every collection failure.
+	observations = append(observations, source, network)
+	for _, helper := range podman.NetworkHelperProbes(network, now) {
+		obs, _ := helper.Run(ctx, env) // Candidate metadata and fixed diagnostics retain incomplete access.
+		observations = append(observations, obs)
+	}
 	for _, helper := range podman.ConfiguredHelperProbes(source, now) {
 		obs, _ := helper.Run(ctx, env) // Selected-source and metadata uncertainty remain explicit in the observation.
 		observations = append(observations, obs)

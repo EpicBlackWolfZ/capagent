@@ -117,6 +117,14 @@ func (p ConfiguredHelperProbe) candidate(ctx context.Context, files platform.Sco
 	if accessErr != nil {
 		*obs, _ = failedRuntimeObservation(*obs, "configured_candidate_access_unknown", accessErr)
 	}
+
+	if fallback && !info.IsDir() && !info.Mode().IsRegular() {
+		// LookPath can select an executable special file. Our suitable-program
+		// metadata does not measure that lookup access, so a later candidate
+		// cannot be asserted as selected. Never execute or open the special file.
+		*obs, _ = failedRuntimeObservation(*obs, "configured_special_file_selection_unknown", platform.ErrIncomplete)
+		return true
+	}
 	// OCI candidate selection requires a regular file; conmon skips directories.
 	// Both configured lists select before execution access is tested. PATH
 	// fallback additionally needs executable access, matching exec.LookPath.

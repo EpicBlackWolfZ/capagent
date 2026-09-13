@@ -313,6 +313,9 @@
               "name",
               "path"
             ]
+          },
+          "rootless_network_cmd": {
+            "type": "string"
           }
         }
       }
@@ -1975,6 +1978,22 @@
         },
         "inherited_default": {
           "type": "boolean"
+        },
+        "invalid_indices": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "uniqueItems": true
+        },
+        "unmodeled_indices": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "uniqueItems": true
         }
       },
       "required": [
@@ -2147,6 +2166,9 @@
             "baseline",
             "override"
           ]
+        },
+        "network": {
+          "$ref": "#/$defs/network_configuration"
         }
       },
       "required": [
@@ -2166,7 +2188,8 @@
         "family": {
           "enum": [
             "engine",
-            "storage"
+            "storage",
+            "network"
           ]
         },
         "runtime_path": {
@@ -2207,6 +2230,9 @@
         },
         "storage": {
           "$ref": "#/$defs/storage_configuration"
+        },
+        "network": {
+          "$ref": "#/$defs/network_configuration"
         }
       },
       "required": [
@@ -2461,6 +2487,111 @@
         "paths"
       ],
       "additionalProperties": false
+    },
+    "config_uint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        },
+        "source_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "source_id"
+      ]
+    },
+    "network_configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "strings",
+        "lists",
+        "unprojected_field_count"
+      ],
+      "properties": {
+        "strings": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "network.network_backend": {
+              "$ref": "#/$defs/config_string"
+            },
+            "network.default_rootless_network_cmd": {
+              "$ref": "#/$defs/config_string"
+            },
+            "network.network_config_dir": {
+              "$ref": "#/$defs/config_string"
+            },
+            "engine.network_cmd_path": {
+              "$ref": "#/$defs/config_string"
+            },
+            "network.firewall_driver": {
+              "$ref": "#/$defs/config_string"
+            }
+          }
+        },
+        "lists": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "containers.dns_servers": {
+              "$ref": "#/$defs/config_list"
+            },
+            "containers.dns_options": {
+              "$ref": "#/$defs/config_list"
+            },
+            "containers.dns_searches": {
+              "$ref": "#/$defs/config_list"
+            },
+            "engine.network_cmd_options": {
+              "$ref": "#/$defs/config_list"
+            },
+            "network.cni_plugin_dirs": {
+              "$ref": "#/$defs/config_list"
+            },
+            "network.netavark_plugin_dirs": {
+              "$ref": "#/$defs/config_list"
+            }
+          }
+        },
+        "dns_bind_port": {
+          "$ref": "#/$defs/config_uint"
+        },
+        "pasta_options": {
+          "$ref": "#/$defs/config_redacted_list"
+        },
+        "helper_paths": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "netavark": {
+              "$ref": "#/$defs/config_list"
+            },
+            "aardvark_dns": {
+              "$ref": "#/$defs/config_list"
+            },
+            "pasta": {
+              "$ref": "#/$defs/config_list"
+            },
+            "slirp4netns": {
+              "$ref": "#/$defs/config_list"
+            }
+          }
+        },
+        "engine_source_id": {
+          "type": "string"
+        },
+        "unprojected_field_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
     }
   },
   "allOf": [

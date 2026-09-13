@@ -168,7 +168,7 @@ func (c *storageCollector) read(name, phase string, selected bool) *model.Storag
 				source.Status = c.failure(parseErr)
 			}
 		} else {
-			source.Status = "parsed"
+			source.Status = configStatusParsed
 			value := config.ProjectStorage(layer, source.ID)
 			source.Storage = &value
 			// Reproject to keep the observed bytes distinct from subsequent root defaults.
@@ -178,7 +178,7 @@ func (c *storageCollector) read(name, phase string, selected bool) *model.Storag
 		}
 	}
 	c.obs.Configuration.Sources = append(c.obs.Configuration.Sources, source)
-	if source.Status != "parsed" && source.Status != configStatusAbsent {
+	if source.Status != configStatusParsed && source.Status != configStatusAbsent {
 		c.obs.Diagnostics = append(c.obs.Diagnostics, model.Diagnostic{Code: "config_source_" + source.Status,
 			Message: "storage configuration source is " + source.Status, Reference: source.ID})
 	}

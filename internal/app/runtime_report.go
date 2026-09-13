@@ -52,6 +52,7 @@ func projectRuntime(observations []model.Observation, scope model.EvaluationScop
 		runtime.Accessible, runtime.Version, runtime.Path = copyValue(info.Available), info.Version, info.Path
 		runtime.Rootless, runtime.CgroupVersion = copyValue(info.Rootless), copyValue(info.CgroupVersion)
 		runtime.CgroupManager = copyValue(info.CgroupManager)
+		runtime.RootlessNetworkCmd = copyValue(info.RootlessNetworkCmd)
 		runtime.GraphRoot, runtime.RunRoot = copyValue(info.GraphRoot), copyValue(info.RunRoot)
 		if info.NetworkBackend != nil {
 			runtime.NetworkBackend = *info.NetworkBackend

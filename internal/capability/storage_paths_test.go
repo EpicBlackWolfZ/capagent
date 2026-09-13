@@ -104,7 +104,7 @@ func TestStoragePathEvidenceDoesNotCrossSelectionOrProofLevels(t *testing.T) {
 	t.Parallel()
 	for _, scenario := range []string{"optional unselected", "additional selected", "image selected", "missing additional", "ancestor only",
 		"unknown presence", "unknown type", "wrong type", "unknown access", "unknown mount policy", "denied followed by unknown",
-		"wrong path source", "wrong runtime binding", "incomplete configuration", "wrong version", "nonlocal"} {
+		"wrong path source", "wrong runtime binding", "incomplete configuration", networkTestWrongVersion, "nonlocal"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
 			yes, no := true, false
@@ -114,7 +114,8 @@ func TestStoragePathEvidenceDoesNotCrossSelectionOrProofLevels(t *testing.T) {
 				Runtime:   storageTestRuntime,
 				Endpoint:  storageTestEndpoint}
 			version := model.Observation{ID: storageVersionID, ProbeID: storageVersionID, Scope: scope, Timestamp: at, Completeness: model.Complete,
-				Version: &model.PodmanVersionObservation{Path: configuredPodmanPath, Runnable: &yes, Version: &model.PodmanVersion{Canonical: "5.8.4"}}}
+				Version: &model.PodmanVersionObservation{Path: configuredPodmanPath, Runnable: &yes,
+					Version: &model.PodmanVersion{Canonical: networkTestVersion}}}
 			c := &model.ConfigurationObservation{Family: "storage", Profile: "podman-5.8.4", RuntimePath: configuredPodmanPath,
 				VersionSourceID: version.ID, SelectionComplete: true, ParseComplete: true, Storage: &model.StorageConfiguration{
 					AdditionalImageStores: &model.ConfigList{Values: []string{"/images"}},
@@ -125,7 +126,7 @@ func TestStoragePathEvidenceDoesNotCrossSelectionOrProofLevels(t *testing.T) {
 				Timestamp:     at,
 				Completeness:  model.Complete,
 				Configuration: c}
-			paths := &model.StoragePathObservation{Source: "configuration", SourceID: source.ID, RuntimePath: configuredPodmanPath,
+			paths := &model.StoragePathObservation{Source: configurationSourceName, SourceID: source.ID, RuntimePath: configuredPodmanPath,
 				Paths: []model.StoragePathMetadata{
 					{Role: "additionalimagestore", Path: "/images", CheckedPath: "/images", Present: &yes, Directory: &yes, Accessible: &yes},
 					{Role: "additionallayerstore", Path: "/layers", CheckedPath: "/layers", Present: &yes, Directory: &yes, Accessible: &yes}}}
@@ -178,7 +179,7 @@ func TestStoragePathEvidenceDoesNotCrossSelectionOrProofLevels(t *testing.T) {
 			case "incomplete configuration":
 				c.ParseComplete = false
 				source.Completeness = model.Partial
-			case "wrong version":
+			case networkTestWrongVersion:
 				version.Version.Path = storageOtherPath
 			case "nonlocal":
 				scope.Endpoint = "remote"

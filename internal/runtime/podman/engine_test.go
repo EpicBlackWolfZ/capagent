@@ -76,7 +76,7 @@ func TestEngineSourceProfiles(t *testing.T) {
 
 func TestEngineSourceFailures(t *testing.T) {
 	t.Parallel()
-	for _, scenario := range []string{"all sources absent", "denied source", "malformed source", "limit",
+	for _, scenario := range []string{"all sources absent", "denied source", "malformed source", networkTestLimit,
 		"directory denied", "cancelled configuration", "unbound version"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
@@ -88,7 +88,7 @@ func TestEngineSourceFailures(t *testing.T) {
 				mem.AddError(engineSystemPath, fs.ErrPermission)
 			case "malformed source":
 				addEngineFile(mem, engineSystemPath, "password = 'secret")
-			case "limit":
+			case networkTestLimit:
 				addEngineFile(mem, engineSystemPath, strings.Repeat(" ", 65537))
 			case "directory denied":
 				addEngineFile(mem, engineSystemPath+".d/one.conf", "")

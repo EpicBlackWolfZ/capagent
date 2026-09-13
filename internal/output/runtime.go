@@ -26,7 +26,7 @@ func (r RuntimeInfo) Validate() error {
 			return errors.New("invalid runtime storage path")
 		}
 	}
-	for _, value := range []*string{r.CgroupVersion, r.CgroupManager} {
+	for _, value := range []*string{r.CgroupVersion, r.CgroupManager, r.RootlessNetworkCmd} {
 		if value != nil && !runtimeName.MatchString(*value) {
 			return errors.New("invalid runtime cgroup metadata")
 		}

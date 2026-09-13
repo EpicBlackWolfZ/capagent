@@ -13,7 +13,7 @@ import (
 
 func TestDiscoveryCancellationAndMissingService(t *testing.T) {
 	t.Parallel()
-	for _, scenario := range []string{"cancelled", "invalid path", "missing service", "symlink", "denied then found"} {
+	for _, scenario := range []string{storageCancelledCase, "invalid path", "missing service", "symlink", "denied then found"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
 			mem := platform.NewMemPlatformReader()
@@ -35,7 +35,7 @@ func TestDiscoveryCancellationAndMissingService(t *testing.T) {
 			}
 			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
-			if scenario == "cancelled" {
+			if scenario == storageCancelledCase {
 				cancel()
 			}
 			p := podman.DiscoveryProbe{}

@@ -19,23 +19,27 @@ func TestEngineConfigurationEvidence(t *testing.T) {
 	t.Parallel()
 	yes := true
 	at := time.Unix(1, 0)
-	scope := model.EvaluationScope{RunID: "engine", ContextID: storageTestTarget, Runtime: storageTestRuntime, Endpoint: storageTestEndpoint}
+	scope := model.EvaluationScope{RunID: networkTestEngineID, ContextID: storageTestTarget, Runtime: storageTestRuntime,
+		Endpoint: storageTestEndpoint}
 	for _, scenario := range []string{"configured", "invalid selected value", "malformed source", "denied source",
 		"unqualified profile", "wrong version target",
 		"wrong runtime path", "runtime overrides configuration", "helper missing", "helper wrong source"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
-			version := model.Observation{ID: "version", ProbeID: "version", Scope: scope, Timestamp: at, Completeness: model.Complete,
-				Version: &model.PodmanVersionObservation{Path: configuredPodmanPath, Runnable: &yes, Version: &model.PodmanVersion{Canonical: "5.8.4"}}}
-			configuration := &model.ConfigurationObservation{Family: "engine", RuntimePath: configuredPodmanPath, Profile: "podman-5.8.4",
+			version := model.Observation{ID: storageVersionID, ProbeID: storageVersionID, Scope: scope, Timestamp: at, Completeness: model.Complete,
+				Version: &model.PodmanVersionObservation{Path: configuredPodmanPath, Runnable: &yes,
+					Version: &model.PodmanVersion{Canonical: networkTestVersion}}}
+			configuration := &model.ConfigurationObservation{Family: networkTestEngineID, RuntimePath: configuredPodmanPath, Profile: "podman-5.8.4",
 				VersionSourceID: version.ID, SelectionComplete: true, ParseComplete: true,
 				Sources: []model.ConfigurationSource{{ID: "source", Selected: true, Applied: true, Status: "parsed"}},
 				Engine: &model.EngineConfiguration{Runtime: &model.ConfigString{Value: configuredRuntimePath, SourceID: "source"},
 					CgroupManager: &model.ConfigString{Value: "systemd", SourceID: "source"}}}
-			source := model.Observation{ID: "engine", ProbeID: "engine", Scope: scope, Timestamp: at, Completeness: model.Complete,
+			source := model.Observation{ID: networkTestEngineID, ProbeID: networkTestEngineID, Scope: scope, Timestamp: at,
+				Completeness:  model.Complete,
 				Configuration: configuration}
-			helper := model.Observation{ID: "helper", ProbeID: "helper", Scope: scope, Timestamp: at, Completeness: model.Complete,
-				Executable: &model.ExecutableObservation{Source: "configuration", Role: configuredOCIRole, SourceID: source.ID,
+			helper := model.Observation{ID: networkTestHelperID, ProbeID: networkTestHelperID, Scope: scope, Timestamp: at,
+				Completeness: model.Complete,
+				Executable: &model.ExecutableObservation{Source: configurationSourceName, Role: configuredOCIRole, SourceID: source.ID,
 					RuntimePath: configuredPodmanPath, SelectedPath: configuredRuntimePath, Candidates: []model.ExecutableCandidate{
 						{Path: configuredRuntimePath, Present: &yes, Executable: &yes,
 							File: &model.ExecutableMetadata{Regular: true, ExecutableBits: true}}}}}
@@ -48,14 +52,14 @@ func TestEngineConfigurationEvidence(t *testing.T) {
 				configuration.Sources[0].Status, configuration.ParseComplete = "malformed", false
 				wantParsed, wantMode, wantHelper = model.StateMisconfigured, model.StateUnknown, model.StateUnknown
 			case "denied source":
-				configuration.Sources[0].Status, configuration.ParseComplete = "denied", false
+				configuration.Sources[0].Status, configuration.ParseComplete = networkTestDenied, false
 				source.Completeness = model.Partial
 				wantParsed, wantMode, wantHelper = model.StateUnknown, model.StateUnknown, model.StateUnknown
 			case "unqualified profile":
 				configuration.SelectionComplete, configuration.Profile = false, "unqualified"
 				wantParsed, wantMode, wantHelper = model.StateUnknown, model.StateUnknown, model.StateUnknown
 			case "wrong version target":
-				version.Scope.ContextID = "other"
+				version.Scope.ContextID = storageOtherContext
 				wantParsed, wantMode, wantHelper = model.StateUnknown, model.StateUnknown, model.StateUnknown
 			case "wrong runtime path":
 				version.Version.Path = "/other"
@@ -66,7 +70,7 @@ func TestEngineConfigurationEvidence(t *testing.T) {
 					{Path: configuredRuntimePath, Present: new(bool)}, {Path: configuredRuntimePath, Present: new(bool)}}
 				wantHelper = model.StateMisconfigured
 			case "helper wrong source":
-				helper.Executable.SourceID = "other"
+				helper.Executable.SourceID = storageOtherContext
 				wantHelper = model.StateUnknown
 			}
 			observations := []model.Observation{version, source, helper}

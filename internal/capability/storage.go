@@ -124,7 +124,7 @@ func storageMountProgramEvidence(scope model.EvaluationScope, observations []mod
 				ev := runtimeEvidence(obs, StorageMountProgramID, state)
 				includeObservation(&ev, source)
 				result = append(result, ev)
-			} else if x.Source == "configuration" {
+			} else if x.Source == configurationSourceName {
 				c := source.Configuration
 				if c == nil || c.Family != "storage" || c.RuntimePath != x.RuntimePath {
 					continue
