@@ -50,6 +50,9 @@ func engineParsedState(c *model.ConfigurationObservation) model.CapabilityState 
 	if !c.ParseComplete || c.Engine == nil {
 		return model.StateUnknown
 	}
+	if c.Engine.CgroupManager != nil && c.Engine.CgroupManager.Invalid {
+		return model.StateMisconfigured
+	}
 	return model.StateSupported
 }
 

@@ -13,6 +13,7 @@ import (
 // StorageLayer is a bounded projection. Attributed append arrays are not part of
 // storage.conf. Unknown fields are counted, never retained as raw diagnostics.
 type StorageLayer struct {
+	invalidOptions                                               map[string]bool
 	Driver, RunRoot, GraphRoot, RootlessStoragePath, ImageStore  *string
 	DriverPriority, AdditionalImageStores, AdditionalLayerStores *ListLayer
 	TransientStore                                               *bool
@@ -211,12 +212,12 @@ func parseStorageOptions(layer *StorageLayer, value any, prefix string) error {
 			case "force_mask":
 				if text != "shared" && text != "private" {
 					if _, err := strconv.ParseUint(text, 8, 32); err != nil {
-						return ErrConfigFieldInvalid
+						text = layer.invalidOption(prefix + key)
 					}
 				}
 			default:
 				if _, err := strconv.ParseBool(text); err != nil {
-					return ErrConfigFieldInvalid
+					text = layer.invalidOption(prefix + key)
 				}
 			}
 		}
@@ -252,7 +253,15 @@ func ProjectStorage(layer StorageLayer, source string) model.StorageConfiguratio
 		out.TransientStore = &model.ConfigBool{Value: *layer.TransientStore, SourceID: source}
 	}
 	for key, value := range layer.Options {
-		out.Options[key] = model.ConfigString{Value: value, SourceID: source}
+		out.Options[key] = model.ConfigString{Value: value, SourceID: source, Invalid: layer.invalidOptions[key]}
 	}
 	return out
+}
+
+func (layer *StorageLayer) invalidOption(key string) string {
+	if layer.invalidOptions == nil {
+		layer.invalidOptions = map[string]bool{}
+	}
+	layer.invalidOptions[key] = true
+	return "" // Preserve shape/provenance without retaining an unrecognized raw value.
 }

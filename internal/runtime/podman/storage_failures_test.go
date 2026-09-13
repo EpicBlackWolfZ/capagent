@@ -130,7 +130,7 @@ func TestRootlessStorageInheritsOnlyQualifiedSubset(t *testing.T) {
 				if s.MountProgram != nil || s.Options["overlay.ignore_chown_errors"].Value != test.ignore {
 					t.Fatal("inherited wrong option subset")
 				}
-				if test.driver == "" && (s.DriverPriority == nil || s.DriverPriority.Values[0] != "vfs") {
+				if test.driver == "" && (s.DriverPriority == nil || s.DriverPriority.Values[0] != testStorageVFS) {
 					t.Fatal("lost configured auto-selection priority")
 				}
 			})

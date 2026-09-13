@@ -57,6 +57,13 @@ their names and values are omitted. Network, storage, registry, and image-policy
 assessment have separate delivery owners. Successful engine projection is not
 validation of every setting accepted by Podman.
 
+TOML syntax and field types are checked per source. Recognized string values
+are interpreted after merging: a later valid `cgroup_manager` replaces an
+earlier invalid string. Invalid strings retain `invalid: true`, an empty
+`value`, and their source ID; raw unrecognized text is redacted. A remaining
+invalid selected value makes the parsing capability `misconfigured`. A wrong
+TOML type remains a source error even if a later file assigns a valid string.
+
 Scalars replace earlier values. Entries in `engine.runtimes` merge by runtime
 name, with each ordinary path array replacing that entry. Attributed arrays,
 such as `conmon_path`, normally replace earlier arrays. An `{append=true}` item

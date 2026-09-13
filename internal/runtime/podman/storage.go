@@ -17,10 +17,12 @@ import (
 )
 
 const (
-	configStatusAbsent = "absent"
-	StorageConfigID    = "podman.configuration.storage"
-	storageVendorPath  = "/usr/share/containers/storage.conf"
-	storageSystemPath  = "/etc/containers/storage.conf"
+	configStatusAbsent    = "absent"
+	storageDriverOverlay  = "overlay"
+	storageDriverOverlay2 = "overlay2"
+	StorageConfigID       = "podman.configuration.storage"
+	storageVendorPath     = "/usr/share/containers/storage.conf"
+	storageSystemPath     = "/etc/containers/storage.conf"
 )
 
 type StorageProbe struct {
@@ -75,6 +77,7 @@ func (p StorageProbe) engineBound(scope model.EvaluationScope) bool {
 		c.ParseComplete && c.SelectionComplete &&
 		c.Family == "engine" && c.Profile == p.Selection.profile(scope) &&
 		c.RuntimePath == p.Selection.Path && c.VersionSourceID == p.Selection.Version.ID &&
+		(c.Engine.CgroupManager == nil || !c.Engine.CgroupManager.Invalid) &&
 		(c.Engine.Environment == nil || c.Engine.Environment.Count == 0 && !c.Engine.Environment.InheritedDefault)
 }
 
@@ -207,16 +210,16 @@ func rootlessStorage(system model.StorageConfiguration, values map[string]string
 	}
 	if nonemptyConfig(system.Driver) {
 		switch system.Driver.Value {
-		case "overlay", "overlay2", "vfs", "btrfs":
+		case storageDriverOverlay, storageDriverOverlay2, "vfs", "btrfs":
 			result.Driver = system.Driver
 		}
 	}
 	if !nonemptyConfig(result.Driver) {
 		result.DriverPriority = system.DriverPriority
 	}
-	if result.Driver != nil && (result.Driver.Value == "overlay" || result.Driver.Value == "overlay2") {
+	if result.Driver != nil && (result.Driver.Value == storageDriverOverlay || result.Driver.Value == storageDriverOverlay2) {
 		for _, key := range []string{"ignore_chown_errors", "overlay.ignore_chown_errors"} {
-			if value, ok := system.Options[key]; ok && value.Value != "" {
+			if value, ok := system.Options[key]; ok && (value.Value != "" || value.Invalid) {
 				result.Options["overlay.ignore_chown_errors"] = value
 				break
 			}
@@ -225,7 +228,7 @@ func rootlessStorage(system model.StorageConfiguration, values map[string]string
 	return result
 }
 func storageMountProgram(storage model.StorageConfiguration) *model.ConfigString {
-	if storage.Driver == nil || storage.Driver.Value != "overlay" && storage.Driver.Value != "overlay2" {
+	if storage.Driver == nil || storage.Driver.Value != storageDriverOverlay && storage.Driver.Value != storageDriverOverlay2 {
 		return nil
 	}
 	for _, key := range []string{"overlay.mount_program", "mount_program"} {
@@ -285,9 +288,37 @@ func (c *storageCollector) selectStorage(uid uint32, values map[string]string, u
 					Message: "storage roots require an unsupported path expansion"})
 			} else {
 				selected.MountProgram = storageMountProgram(selected)
+				if storageOptionsInvalid(selected) {
+					selected.Problems = append(selected.Problems, "storage_option_invalid")
+				}
 				observation.Storage = &selected
 			}
 		}
 	}
 
+}
+
+// Each emitted graph option is interpreted by the selected driver. A later
+// option cannot repair an earlier invalid option, but source replacement or
+// rootless conversion may discard that option before interpretation.
+func storageOptionsInvalid(storage model.StorageConfiguration) bool {
+	if storage.Driver == nil {
+		return false
+	}
+	for key, value := range storage.Options {
+		if !value.Invalid {
+			continue
+		}
+		switch storage.Driver.Value {
+		case storageDriverOverlay, storageDriverOverlay2:
+			if !strings.HasPrefix(key, "vfs.") {
+				return true
+			}
+		case "vfs":
+			if key == "ignore_chown_errors" || key == "vfs.ignore_chown_errors" {
+				return true
+			}
+		}
+	}
+	return false
 }

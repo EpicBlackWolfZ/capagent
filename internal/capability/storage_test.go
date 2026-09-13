@@ -27,6 +27,7 @@ func TestStorageConfigurationMappingAndEffectivePrecedence(t *testing.T) {
 		"invalid selected file",
 		"denied selected file",
 		"legacy root required",
+		"invalid selected option",
 		"wrong version binding",
 		"missing selected helper"} {
 		t.Run(scenario, func(t *testing.T) {
@@ -87,8 +88,11 @@ func TestStorageConfigurationMappingAndEffectivePrecedence(t *testing.T) {
 					wanted[StorageMountProgramID] = model.StateUnknown,
 					model.StateUnknown,
 					model.StateUnknown
-			case "legacy root required":
+			case "legacy root required", "invalid selected option":
 				c.Storage.Problems = []string{"runroot_required"}
+				if scenario == "invalid selected option" {
+					c.Storage.Problems = []string{"storage_option_invalid"}
+				}
 				wanted[StorageParsedID],
 					wanted[StorageOverlayID],
 					wanted[StorageMountProgramID] = model.StateMisconfigured,

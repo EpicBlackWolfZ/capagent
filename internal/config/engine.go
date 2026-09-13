@@ -23,6 +23,7 @@ var (
 // EngineLayer is a projection of one parsed document, before family-specific
 // merge. Unknown fields are counted without retaining their names or values.
 type EngineLayer struct {
+	CgroupManagerInvalid                       bool
 	Runtime, CgroupManager                     *string
 	ConmonPath, HelperBinariesDir, RuntimePath *ListLayer
 	Environment                                *ListLayer
@@ -82,7 +83,8 @@ func parseEngineField(layer *EngineLayer, key string, value any) error {
 			layer.Runtime = &text
 		} else {
 			if text != "" && text != "systemd" && text != "cgroupfs" {
-				return ErrConfigFieldInvalid
+				layer.CgroupManagerInvalid = true
+				text = "" // Retain the invalid marker, never the unrecognized value.
 			}
 			layer.CgroupManager = &text
 		}
@@ -190,6 +192,9 @@ func MergeEngine(previous model.EngineConfiguration, layer EngineLayer, source s
 	out := previous
 	out.Runtime, out.CgroupManager = mergeString(previous.Runtime, layer.Runtime, source),
 		mergeString(previous.CgroupManager, layer.CgroupManager, source)
+	if layer.CgroupManager != nil {
+		out.CgroupManager.Invalid = layer.CgroupManagerInvalid
+	}
 	out.ConmonPath = mergeList(previous.ConmonPath, layer.ConmonPath, source)
 	out.HelperBinariesDir = mergeList(previous.HelperBinariesDir, layer.HelperBinariesDir, source)
 	out.RuntimePath = mergeList(previous.RuntimePath, layer.RuntimePath, source)

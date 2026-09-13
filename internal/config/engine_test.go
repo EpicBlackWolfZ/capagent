@@ -79,7 +79,7 @@ func TestEngineFieldSemantics(t *testing.T) {
 		{"bindir", "[engine]\nhelper_binaries_dir=['$BINDIR/../libexec']", ""},
 		{"other expansion", "[engine]\nhelper_binaries_dir=['$HOME/bin']", ErrConfigFieldUnsupported.Error()},
 		{"control", "[engine]\nruntime='''\u0001'''", ErrConfigMalformed.Error()},
-		{"unknown manager", "[engine]\ncgroup_manager='other'", ErrConfigFieldInvalid.Error()},
+		{"unknown manager retained for merge", "[engine]\ncgroup_manager='other'", ""},
 		{"array limit", "[engine]\nconmon_path=[" + strings.Repeat("'/x',", MaxConfigList+1) + "]", ErrConfigLimit.Error()},
 	}
 	for _, tt := range tests {
@@ -90,6 +90,26 @@ func TestEngineFieldSemantics(t *testing.T) {
 				t.Fatalf("error=%v; want %q", err, tt.code)
 			}
 		})
+	}
+}
+
+func TestEngineInvalidValueIsRedactedUntilMerge(t *testing.T) {
+	t.Parallel()
+	bad, err := ParseEngine([]byte("[engine]\ncgroup_manager='synthetic-secret'"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	one := MergeEngine(model.EngineConfiguration{}, bad, "first")
+	if one.CgroupManager.Value != "" || !one.CgroupManager.Invalid || one.CgroupManager.SourceID != "first" {
+		t.Fatal("invalid value or provenance was lost or exposed")
+	}
+	good, err := ParseEngine([]byte("[engine]\ncgroup_manager='systemd'"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	two := MergeEngine(one, good, "second")
+	if two.CgroupManager.Invalid || two.CgroupManager.Value != "systemd" || !one.CgroupManager.Invalid {
+		t.Fatal("later value did not replace the invalid marker independently")
 	}
 }
 

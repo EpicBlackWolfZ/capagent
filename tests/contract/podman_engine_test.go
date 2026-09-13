@@ -17,6 +17,7 @@ func TestPodmanEngineAssessment(t *testing.T) {
 		name string
 		exit int
 	}{
+		{"superseded-value", 0}, {"invalid-value", 1},
 		{"rootless", 0}, {"rootful", 0}, {"malformed", 1}, {"denied", 2}, {"unqualified", 2}, {"runtime-override", 1},
 	} {
 		t.Run(test.name, func(t *testing.T) {
