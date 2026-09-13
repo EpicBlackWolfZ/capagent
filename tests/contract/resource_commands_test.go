@@ -51,7 +51,13 @@ func runCommandPayload(t *testing.T, args []string) {
 	if mode == "flood" || mode == "slow" {
 		writePayload(t, os.Stdout, commandChunk)
 		writePayload(t, os.Stderr, commandChunk)
-		if err := os.WriteFile(filepath.Join(root, "ready"), []byte(strconv.Itoa(os.Getpid())), 0o600); err != nil {
+		// Publish only after WriteFile closes: the parent must never observe the
+		// empty file between O_CREAT and the PID write and cancel too early.
+		staged := filepath.Join(root, "ready.tmp")
+		if err := os.WriteFile(staged, []byte(strconv.Itoa(os.Getpid())), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Rename(staged, filepath.Join(root, "ready")); err != nil {
 			t.Fatal(err)
 		}
 		for sent := commandChunk; sent < commandFloodBytes; sent += commandChunk {
