@@ -16,14 +16,22 @@ import time
 TRACE_CALLS = "%file,%process,%network,fchmod,fchown,ftruncate,mount,umount2,setns,unshare"
 
 
-def verify_connections(text, rejected):
+def verify_connections(text, rejected, uid=None, runtime_directory=None):
+    local_services = {"/run/dbus/system_bus_socket", "/var/run/dbus/system_bus_socket",
+                      "/run/nscd/socket", "/var/run/nscd/socket", "/dev/log"}
+    if uid is not None:
+        local_services.add(f"/run/user/{uid}/bus")
+    if runtime_directory is not None:
+        local_services.add(str(Path(runtime_directory) / "bus"))
     for line in text.splitlines():
         if not re.search(r"\bconnect\(", line):
             continue
         if rejected or "AF_INET" in line:
             raise RuntimeError("unexpected transport connection attempt")
-        if "AF_UNIX" in line and not re.search(r'/run/(?:dbus/system_bus_socket|user/\d+/bus)"', line):
-            raise RuntimeError("unexpected local socket connection")
+        if "AF_UNIX" in line:
+            address = re.search(r'sun_path="([^"\n]+)"', line)
+            if not address or address[1] not in local_services:
+                raise RuntimeError("unexpected local socket connection")
 
 
 def main_exit(text, binary):
@@ -117,7 +125,7 @@ def trace_case(binary, executable, tracer, destination, account, environment, sc
         raise RuntimeError(f"{scenario}: capagent exit {actual_exit}, expected {expected_exit}; see {stdout}")
     report = json.loads(stdout.read_bytes())
     verify_report(report, account.pw_uid, expected_exit)
-    verify_connections(captured, rejected)
+    verify_connections(captured, rejected, account.pw_uid, environment["XDG_RUNTIME_DIR"])
     codes = [item["code"] for item in report["evaluation"]["diagnostics"]]
     if cancelled and "version_timeout" not in codes:
         raise RuntimeError("cancellation did not exercise the version deadline")

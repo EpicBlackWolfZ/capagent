@@ -31,7 +31,9 @@ class InspectionEvidenceTests(unittest.TestCase):
             self.assertEqual(config.read_bytes(), b'original bytes')
 
     def test_local_bus_is_distinct_from_remote_transport(self):
-        MODULE.verify_connections('connect(3, {sa_family=AF_UNIX, sun_path="/run/dbus/system_bus_socket"}, 30) = -1 ENOENT', False)
+        for endpoint in ('/run/dbus/system_bus_socket', '/var/run/dbus/system_bus_socket',
+                         '/var/run/nscd/socket', '/dev/log'):
+            MODULE.verify_connections('connect(3, {sa_family=AF_UNIX, sun_path="' + endpoint + '"}, 30) = -1 ENOENT', False)
         for text in ('connect(3, {sa_family=AF_INET}, 16) = -1 ECONNREFUSED',
                      'connect(3, {sa_family=AF_UNIX, sun_path="/run/podman/podman.sock"}, 20) = -1 ENOENT'):
             with self.subTest(text=text), self.assertRaises(RuntimeError):
@@ -41,6 +43,13 @@ class InspectionEvidenceTests(unittest.TestCase):
         MODULE.verify_connections('exit_group(125) = ?', True)
         with self.assertRaises(RuntimeError):
             MODULE.verify_connections('connect(3, {sa_family=AF_UNIX}, 20) = -1 ENOENT', True)
+
+    def test_declared_runtime_bus_is_allowed_only_for_local_inspection(self):
+        line = 'connect(3, {sa_family=AF_UNIX, sun_path="/tmp/owned/runtime/bus"}, 30) = 0'
+        MODULE.verify_connections(line, False, 1000, '/tmp/owned/runtime')
+        for remote in (False, True):
+            with self.assertRaises(RuntimeError):
+                MODULE.verify_connections(line, remote, 1000, '/other/runtime')
 
     def test_main_exit_must_belong_to_capagent(self):
         trace = '17 execve("/capagent", [], 0x1) = 0\n18 +++ exited with 0 +++\n'
