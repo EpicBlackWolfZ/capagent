@@ -104,6 +104,9 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 	}
 	env := platform.NewEnvironment(nil, nil, nil, nil).WithFiles(services.files).WithScope(scope).WithHost(services.host, services.metadata)
 	probes := host.Probes(services.now)
+	if current.Identity.Execution != nil {
+		probes = append(probes, host.SubIDProbe{Target: *current.Identity.Target, Now: services.now})
+	}
 	if current.Identity.Execution == nil {
 		probes = nil
 	}

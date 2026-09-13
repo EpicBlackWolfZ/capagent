@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "probe": "context",
+  "run_id": "context-rootless",
+  "timestamp": "2026-09-13T12:00:00Z",
+  "provenance": {
+    "kind": "synthetic",
+    "description": "Local rootless allocations and mapping-helper metadata; no mapping command executed."
+  },
+  "context": {
+    "id": "user:alice",
+    "identity": {
+      "current": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "alice",
+        "home_dir": "/home/alice",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      },
+      "target": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "alice",
+        "home_dir": "/home/alice",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      },
+      "execution": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "alice",
+        "home_dir": "/home/alice",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      },
+      "selection": "user:alice"
+    }
+  },
+  "runtime": "",
+  "endpoint": "",
+  "host": {
+    "no_new_privileges": false,
+    "filesystems": {
+      "/": 61267
+    },
+    "mount_policies": {
+      "/": {
+        "nosuid": false,
+        "noexec": false
+      }
+    }
+  },
+  "files": [
+    {
+      "path": "etc",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/bin",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/local",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/local/bin",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "bin",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "etc/subuid",
+      "kind": "file",
+      "mode": 420,
+      "content": "alice:100000:30\n1000:200000:5\n"
+    },
+    {
+      "path": "etc/subgid",
+      "kind": "file",
+      "mode": 420,
+      "content": "alice:300000:12\n"
+    },
+    {
+      "path": "etc/nsswitch.conf",
+      "kind": "file",
+      "mode": 420,
+      "content": "subid: files\n"
+    },
+    {
+      "path": "usr/bin/newuidmap",
+      "kind": "file",
+      "mode": 8389101,
+      "uid": 0,
+      "gid": 0,
+      "executable_access": true
+    },
+    {
+      "path": "usr/bin/newgidmap",
+      "kind": "file",
+      "mode": 8389101,
+      "uid": 0,
+      "gid": 0,
+      "executable_access": true
+    }
+  ],
+  "commands": []
+}

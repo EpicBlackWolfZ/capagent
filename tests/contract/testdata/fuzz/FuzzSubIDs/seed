@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("alice:100000:20\n1000:200000:30\n")

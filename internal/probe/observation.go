@@ -35,6 +35,7 @@ func retainObservation(obs model.Observation, scope model.EvaluationScope) (mode
 // The caller must not mutate inputs concurrently with the copy.
 func SnapshotObservation(obs model.Observation) model.Observation {
 	obs.Identity = copyValue(obs.Identity)
+	obs.SubIDs = snapshotSubIDs(obs.SubIDs)
 	obs.Host = snapshotHost(obs.Host)
 	obs.Facts = slices.Clone(obs.Facts)
 	obs.Diagnostics = slices.Clone(obs.Diagnostics)
@@ -147,6 +148,45 @@ func snapshotHost(input *model.HostObservation) *model.HostObservation {
 	if s := out.Systemd; s != nil {
 		s.Installed, s.UtilityInstalled = copyValue(s.Installed), copyValue(s.UtilityInstalled)
 		s.Running, s.RuntimeDirectory, s.Accessible = copyValue(s.Running), copyValue(s.RuntimeDirectory), copyValue(s.Accessible)
+	}
+	return out
+}
+
+func snapshotSubIDs(input *model.SubIDObservation) *model.SubIDObservation {
+	out := copyValue(input)
+	if out == nil {
+		return nil
+	}
+	for _, a := range []*model.SubIDAllocation{&out.UID, &out.GID} {
+		a.Present = copyValue(a.Present)
+		a.Total = copyValue(a.Total)
+		a.Valid = copyValue(a.Valid)
+		a.Ranges = slices.Clone(a.Ranges)
+		a.Records = slices.Clone(a.Records)
+		for i := range a.Records {
+			a.Records[i].Range = copyValue(a.Records[i].Range)
+		}
+	}
+	out.Helpers = slices.Clone(out.Helpers)
+	for i := range out.Helpers {
+		h := &out.Helpers[i]
+		h.PrivilegeBlocked = copyValue(h.PrivilegeBlocked)
+		h.Present = copyValue(h.Present)
+		h.Regular = copyValue(h.Regular)
+		h.UID = copyValue(h.UID)
+		h.GID = copyValue(h.GID)
+		h.Mode = copyValue(h.Mode)
+		h.SetUID = copyValue(h.SetUID)
+		h.SetGID = copyValue(h.SetGID)
+		h.Executable = copyValue(h.Executable)
+		h.NoSUID = copyValue(h.NoSUID)
+		h.NoExec = copyValue(h.NoExec)
+		h.NoNewPrivileges = copyValue(h.NoNewPrivileges)
+		h.Usable = copyValue(h.Usable)
+		h.Capabilities = copyValue(h.Capabilities)
+		if h.Capabilities != nil {
+			h.Capabilities.RootID = copyValue(h.Capabilities.RootID)
+		}
 	}
 	return out
 }

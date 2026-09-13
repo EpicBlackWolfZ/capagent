@@ -18,6 +18,16 @@ class ContextSmokeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             SMOKE.verify_trace('', Path('/capagent'))
 
+    def test_interrupted_exit_requires_known_thread_and_matching_exit_group(self):
+        trace = '10 clone(flags=CLONE_THREAD) = 11\n10 exit_group(2) = ?\n11 ???( <unfinished ...>\n11 +++ exited with 2 +++\n'
+        self.assertIn('exit_group(2)', SMOKE.joined_context_trace(trace))
+        for changed in (trace.replace('exited with 2', 'exited with 0'),
+                        trace.replace('10 exit_group(2) = ?\n', ''),
+                        trace.replace('10 clone(flags=CLONE_THREAD) = 11\n', ''),
+                        trace.replace('???(', 'openat(')):
+            with self.assertRaises((ValueError, RuntimeError)):
+                SMOKE.joined_context_trace(changed)
+
 
 if __name__ == '__main__':
     unittest.main()

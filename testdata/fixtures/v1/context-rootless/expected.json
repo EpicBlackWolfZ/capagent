@@ -1,0 +1,285 @@
+{
+  "schema_version": 1,
+  "context": {
+    "completeness": "complete",
+    "uid": 1000,
+    "gid": 1000,
+    "target_user": "alice",
+    "is_rootless": null,
+    "in_container": null
+  },
+  "host": {
+    "completeness": "unobserved",
+    "os": "unknown",
+    "os_version": "",
+    "kernel": "",
+    "architecture": "",
+    "cgroup_version": "unknown",
+    "systemd": null
+  },
+  "runtimes": {},
+  "capabilities": {},
+  "evaluation": {
+    "execution": {
+      "uid": 1000,
+      "gid": 1000,
+      "supplementary_groups": [
+        1000
+      ],
+      "groups_known": true
+    },
+    "selection": "user:alice",
+    "mode": "fixture",
+    "provenance": "synthetic",
+    "scope": {
+      "run_id": "context-rootless",
+      "context_id": "user:alice",
+      "runtime": "",
+      "endpoint": ""
+    },
+    "timestamp": "2026-09-13T12:00:00Z",
+    "current": {
+      "uid": 1000,
+      "gid": 1000,
+      "supplementary_groups": [
+        1000
+      ],
+      "groups_known": true
+    },
+    "target": {
+      "uid": 1000,
+      "gid": 1000,
+      "supplementary_groups": [
+        1000
+      ],
+      "groups_known": true
+    },
+    "namespaces": [],
+    "observations": [
+      {
+        "subids": {
+          "uid": {
+            "present": true,
+            "ranges": [
+              {
+                "start": 100000,
+                "length": 30
+              },
+              {
+                "start": 200000,
+                "length": 5
+              }
+            ],
+            "records": [
+              {
+                "line": 1,
+                "owner": "alice",
+                "range": {
+                  "start": 100000,
+                  "length": 30
+                }
+              },
+              {
+                "line": 2,
+                "owner": "1000",
+                "range": {
+                  "start": 200000,
+                  "length": 5
+                }
+              }
+            ],
+            "total": 35,
+            "valid": true
+          },
+          "gid": {
+            "present": true,
+            "ranges": [
+              {
+                "start": 300000,
+                "length": 12
+              }
+            ],
+            "records": [
+              {
+                "line": 1,
+                "owner": "alice",
+                "range": {
+                  "start": 300000,
+                  "length": 12
+                }
+              }
+            ],
+            "total": 12,
+            "valid": true
+          },
+          "provider": "files",
+          "helpers": [
+            {
+              "privilege_blocked": null,
+              "name": "newuidmap",
+              "path": "/usr/bin/newuidmap",
+              "present": true,
+              "regular": true,
+              "uid": 0,
+              "gid": 0,
+              "mode": 493,
+              "setuid": true,
+              "setgid": false,
+              "executable": true,
+              "capabilities": {
+                "present": false,
+                "revision": 0,
+                "effective": false,
+                "setuid": false,
+                "setgid": false
+              },
+              "nosuid": false,
+              "noexec": false,
+              "no_new_privileges": false,
+              "usable": null
+            },
+            {
+              "privilege_blocked": null,
+              "name": "newgidmap",
+              "path": "/usr/bin/newgidmap",
+              "present": true,
+              "regular": true,
+              "uid": 0,
+              "gid": 0,
+              "mode": 493,
+              "setuid": true,
+              "setgid": false,
+              "executable": true,
+              "capabilities": {
+                "present": false,
+                "revision": 0,
+                "effective": false,
+                "setuid": false,
+                "setgid": false
+              },
+              "nosuid": false,
+              "noexec": false,
+              "no_new_privileges": false,
+              "usable": null
+            }
+          ]
+        },
+        "id": "context.subids",
+        "probe_id": "context.subids",
+        "scope": {
+          "run_id": "context-rootless",
+          "context_id": "user:alice",
+          "runtime": "",
+          "endpoint": ""
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "context.subids.0",
+            "source": "etc/subuid",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.1",
+            "source": "etc/subgid",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.10",
+            "source": "/usr/bin/newgidmap file-capabilities",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.11",
+            "source": "/usr/bin/newgidmap mount-policy",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.12",
+            "source": "process no-new-privileges",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.2",
+            "source": "etc/nsswitch.conf",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.3",
+            "source": "/usr/bin/newuidmap",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.4",
+            "source": "/usr/bin/newuidmap execute-access",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.5",
+            "source": "/usr/bin/newuidmap file-capabilities",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.6",
+            "source": "/usr/bin/newuidmap mount-policy",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.7",
+            "source": "process no-new-privileges",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.8",
+            "source": "/usr/bin/newgidmap",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "context.subids.9",
+            "source": "/usr/bin/newgidmap execute-access",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "mapping_execution_unverified",
+            "message": "host measurement diagnostic",
+            "reference": "context.subids"
+          },
+          {
+            "code": "mapping_execution_unverified",
+            "message": "host measurement diagnostic",
+            "reference": "context.subids"
+          }
+        ]
+      }
+    ],
+    "evidence": [],
+    "diagnostics": [
+      {
+        "code": "mapping_execution_unverified",
+        "message": "host measurement diagnostic",
+        "reference": "context.subids"
+      },
+      {
+        "code": "mapping_execution_unverified",
+        "message": "host measurement diagnostic",
+        "reference": "context.subids"
+      }
+    ]
+  }
+}

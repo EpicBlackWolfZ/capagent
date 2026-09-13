@@ -73,6 +73,7 @@ const sentinelClosedRootFD = int64(-1)
 //   - Root() remains valid after Close.
 //   - Close is idempotent: subsequent calls return nil.
 type ScopedReader interface {
+	ExecutableAccess(context.Context, string) (bool, error)
 	StatFS(context.Context, string) (FilesystemInfo, error)
 	ReadFile(ctx context.Context, subpath string) ([]byte, error)
 	Stat(subpath string) (os.FileInfo, error)

@@ -40,6 +40,7 @@ type FactRecord struct {
 type HostObservation model.HostObservation
 
 type ObservationRecord struct {
+	SubIDs       *model.SubIDObservation    `json:"subids,omitempty"`
 	Authority    string                     `json:"authority,omitempty"`
 	Identity     *model.IdentityObservation `json:"identity,omitempty"`
 	Host         *HostObservation           `json:"host,omitempty"`

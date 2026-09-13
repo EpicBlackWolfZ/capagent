@@ -10,14 +10,21 @@ import (
 )
 
 const hostProbe = "host"
+const contextProbe = "context"
 const hostVersionMillis = 2000
 
+type MountPolicy struct {
+	NoSUID bool `json:"nosuid"`
+	NoExec bool `json:"noexec"`
+}
+
 type HostCalls struct {
-	Uname           *platform.UnameInfo `json:"uname,omitempty"`
-	UnameFailure    string              `json:"uname_failure,omitempty"`
-	NoNewPrivileges *bool               `json:"no_new_privileges,omitempty"`
-	SecurityFailure string              `json:"security_failure,omitempty"`
-	Filesystems     map[string]int64    `json:"filesystems,omitempty"`
+	MountPolicies   map[string]MountPolicy `json:"mount_policies,omitempty"`
+	Uname           *platform.UnameInfo    `json:"uname,omitempty"`
+	UnameFailure    string                 `json:"uname_failure,omitempty"`
+	NoNewPrivileges *bool                  `json:"no_new_privileges,omitempty"`
+	SecurityFailure string                 `json:"security_failure,omitempty"`
+	Filesystems     map[string]int64       `json:"filesystems,omitempty"`
 }
 
 func validateHost(d *Document) error {
@@ -27,13 +34,11 @@ func validateHost(d *Document) error {
 	if len(d.Requirement) > 0 && string(d.Requirement) != "null" {
 		return errors.New("host fixture cannot evaluate a requirement")
 	}
-	if len(d.Host.Filesystems) > maxFiles {
-		return errors.New("too many fixture filesystems")
+	if d.Probe == contextProbe && (d.Context.Identity.Execution == nil || len(d.Commands) != 0) {
+		return errors.New("context fixture requires execution authority and no commands")
 	}
-	for mount := range d.Host.Filesystems {
-		if !strings.HasPrefix(mount, "/") || platform.ValidateSubpath(strings.TrimPrefix(mount, "/")) != nil {
-			return errors.New("invalid fixture mount")
-		}
+	if err := validateMounts(d.Host); err != nil {
+		return err
 	}
 	for _, code := range []string{d.Host.UnameFailure, d.Host.SecurityFailure} {
 		if _, err := failure(code); err != nil {
@@ -49,7 +54,7 @@ func validateHost(d *Document) error {
 	return nil
 }
 func parseRequirement(d *Document) (*requirement.Node, error) {
-	if d.Probe == hostProbe {
+	if d.Probe == hostProbe || d.Probe == contextProbe {
 		return nil, nil
 	}
 	return config.ParseRequirement(d.Requirement)
@@ -76,6 +81,26 @@ func hostFilesystems(d *Document) map[string]platform.FilesystemInfo {
 	out := make(map[string]platform.FilesystemInfo, len(d.Host.Filesystems))
 	for mount, kind := range d.Host.Filesystems {
 		out[mount] = platform.FilesystemInfo{Type: kind}
+		if policy, ok := d.Host.MountPolicies[mount]; ok {
+			out[mount] = platform.FilesystemInfo{Type: kind, FlagsKnown: true, NoExec: policy.NoExec, NoSUID: policy.NoSUID}
+		}
 	}
 	return out
+}
+
+func validateMounts(host *HostCalls) error {
+	if len(host.Filesystems) > maxFiles {
+		return errors.New("too many fixture filesystems")
+	}
+	for mount := range host.MountPolicies {
+		if _, ok := host.Filesystems[mount]; !ok {
+			return errors.New("mount policy lacks filesystem")
+		}
+	}
+	for mount := range host.Filesystems {
+		if !strings.HasPrefix(mount, "/") || mount != "/" && platform.ValidateSubpath(strings.TrimPrefix(mount, "/")) != nil {
+			return errors.New("invalid fixture mount")
+		}
+	}
+	return nil
 }

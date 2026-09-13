@@ -28,6 +28,7 @@ type Environment struct {
 // ScopedView retains the kernel/memory containment boundary without exposing
 // the owner's Close method to probes.
 type ScopedView interface {
+	ExecutableAccess(context.Context, string) (bool, error)
 	StatFS(context.Context, string) (FilesystemInfo, error)
 	ReadFile(context.Context, string) ([]byte, error)
 	Stat(string) (os.FileInfo, error)
