@@ -13,6 +13,8 @@ import (
 	"github.com/EpicBlackWolfZ/capagent/internal/platform"
 )
 
+const conmonName = "conmon"
+
 const maxExecutableCandidates = 16
 
 // ExecutableProbe never searches ambient PATH or executes a candidate. A source
@@ -89,7 +91,13 @@ func observeExecutable(ctx context.Context, files platform.ScopedView, name stri
 	if err != nil {
 		return c, err
 	}
-	c.Present = boolPointer(true)
+	return executableFromInfo(ctx, files, name, info, generator)
+}
+
+func executableFromInfo(ctx context.Context, files platform.ScopedView, name string,
+	info fs.FileInfo, generator bool,
+) (model.ExecutableCandidate, error) {
+	c := model.ExecutableCandidate{Path: name, Present: boolPointer(true)}
 	c.File = &model.ExecutableMetadata{Regular: info.Mode().IsRegular(),
 		ExecutableBits: info.Mode().Perm()&executableBits != 0, Mode: uint32(info.Mode().Perm())}
 	if owner, known := platform.OwnershipOf(info); known {
@@ -106,7 +114,7 @@ func observeExecutable(ctx context.Context, files platform.ScopedView, name stri
 		c.Executable = boolPointer(false)
 		return c, nil
 	}
-	allowed, err := files.ExecutableAccess(ctx, subpath)
+	allowed, err := files.ExecutableAccess(ctx, strings.TrimPrefix(name, "/"))
 	if err == nil {
 		c.Executable = &allowed
 	}
@@ -119,7 +127,7 @@ func boolPointer(value bool) *bool { return &value }
 // selection algorithm. Unlisted custom locations require info or configuration.
 func HelperProbes(now func() time.Time) []ExecutableProbe {
 	var probes []ExecutableProbe
-	for _, role := range []string{"crun", "runc", "conmon", "netavark", "aardvark-dns", "pasta", "slirp4netns", "fuse-overlayfs"} {
+	for _, role := range []string{"crun", "runc", conmonName, "netavark", "aardvark-dns", "pasta", "slirp4netns", "fuse-overlayfs"} {
 		p := ExecutableProbe{Role: strings.ReplaceAll(role, "-", "_"), Source: "trusted_candidates", Now: now}
 		for _, dir := range []string{"/usr/local/bin", "/usr/bin", "/bin", "/usr/local/libexec/podman",
 			"/usr/libexec/podman", "/usr/local/lib/podman", "/usr/lib/podman"} {
@@ -140,7 +148,7 @@ func SelectedHelperProbes(info model.Observation, now func() time.Time) []Execut
 		ociPath = p.OCIRuntime.Path
 	}
 	var probes []ExecutableProbe
-	for _, helper := range []struct{ role, name string }{{"oci_runtime", ociPath}, {"conmon", p.ConmonPath},
+	for _, helper := range []struct{ role, name string }{{"oci_runtime", ociPath}, {conmonName, p.ConmonPath},
 		{"netavark", p.HelperPath}, {"aardvark_dns", p.AardvarkPath}, {"pasta", p.PastaPath}, {"slirp4netns", p.SlirpPath}} {
 		if helper.name != "" {
 			probes = append(probes, ExecutableProbe{Role: helper.role, Paths: []string{helper.name}, Source: "runtime",

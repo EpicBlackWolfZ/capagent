@@ -54,6 +54,23 @@ type Rule struct {
 // ArchitectureRules defines the canonical package boundary rules from AGENTS.md and docs/architecture.md.
 var ArchitectureRules = []Rule{
 	{
+		SourcePrefix:      pkgInternalConfig,
+		AllowedInternal:   []string{pkgInternalModel, pkgInternalRequirement},
+		AllowedThirdParty: []string{"github.com/pelletier/go-toml/v2", "github.com/pelletier/go-toml/v2/unstable"},
+		Rationale:         "configuration parsers consume bounded bytes; only the pinned TOML parser is permitted as a compile-time dependency",
+	},
+	{
+		SourcePrefix:    pkgInternalKnowledge,
+		AllowedInternal: []string{pkgInternalModel},
+		Rationale:       "primary-source knowledge rules are pure and depend only on domain data",
+	},
+	{
+		SourcePrefix:           "internal",
+		ExcludedSourcePrefixes: []string{pkgInternalConfig},
+		DisallowedPrefixes:     []string{"github.com/pelletier/go-toml/v2"},
+		Rationale:              "TOML parsing stays inside internal/config",
+	},
+	{
 		SourcePrefix:        pkgInternalModel,
 		StandardLibraryOnly: true,
 		Rationale:           "internal/model must consist of pure domain primitives with zero dependencies on other packages",
@@ -382,6 +399,30 @@ func TestArchitecture_RuleEnforcement(t *testing.T) {
 		imports       PackageImports
 		wantViolation bool
 	}{
+		{
+			name:    "configuration permits exact TOML parser imports",
+			imports: PackageImports{pkgInternalConfig: {"github.com/pelletier/go-toml/v2", "github.com/pelletier/go-toml/v2/unstable"}},
+		},
+		{
+			name:          "configuration rejects TOML sibling packages",
+			imports:       PackageImports{pkgInternalConfig: {"github.com/pelletier/go-toml/v2/unstable/other"}},
+			wantViolation: true,
+		},
+		{
+			name:          "configuration cannot obtain platform services",
+			imports:       PackageImports{pkgInternalConfig: {modulePrefix + pkgInternalPlatform}},
+			wantViolation: true,
+		},
+		{
+			name:          "runtime cannot import TOML directly",
+			imports:       PackageImports{pkgInternalRuntime: {"github.com/pelletier/go-toml/v2"}},
+			wantViolation: true,
+		},
+		{
+			name:          "knowledge cannot obtain platform services",
+			imports:       PackageImports{pkgInternalKnowledge: {modulePrefix + pkgInternalPlatform}},
+			wantViolation: true,
+		},
 		{
 			name: "internal/model importing internal/requirement is rejected",
 			imports: PackageImports{

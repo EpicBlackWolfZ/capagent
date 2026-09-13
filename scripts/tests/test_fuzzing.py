@@ -13,7 +13,7 @@ import fuzzing
 class FuzzingTests(unittest.TestCase):
     def test_inventory_is_exact_and_has_permanent_seeds(self):
         inventory = fuzzing.inventory(SCRIPTS.parent)
-        self.assertEqual(len(inventory), 19)
+        self.assertEqual(len(inventory), 20)
         self.assertTrue(all(row['corpus'] for row in inventory))
         self.assertTrue(all(row['input_bytes'] > 0 for row in inventory))
 

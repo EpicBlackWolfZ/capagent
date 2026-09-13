@@ -63,6 +63,7 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 			Completeness: string(obs.Completeness), Facts: []output.FactRecord{}, Diagnostics: projectDiagnostics(obs.Diagnostics)}
 		projectIdentityObservation(&record, obs, input.Mode, report)
 		record.SubIDs = obs.SubIDs
+		record.Configuration = obs.Configuration
 		record.UserContext = obs.UserContext
 		record.Executable, record.Quadlet = obs.Executable, obs.Quadlet
 		if obs.Host != nil {

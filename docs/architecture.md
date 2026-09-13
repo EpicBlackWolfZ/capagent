@@ -8,7 +8,7 @@ This document describes the current foundation and target architecture. The comp
 
 The application/composition layer delivered by [#61](https://github.com/EpicBlackWolfZ/capagent/issues/61) owns context selection, dependency construction, evaluation order and resource teardown after workers join. It sits above the pure engines and probe framework. `cmd/capagent` remains flags/formatting only, and `internal/probe` remains limited to model/platform dependencies. Today environments are caller-owned; `Orchestrator.Run` does not create or close them.
 
-The completed [#59](https://github.com/EpicBlackWolfZ/capagent/issues/59) and [#64](https://github.com/EpicBlackWolfZ/capagent/issues/64) contracts provide explicit scope, typed payloads, nullable unobserved values, completeness, the `context` capability namespace and bounded UID/GID fields. Never treat an unobserved zero value as measured negative evidence. Known projection/query defects are tracked in the [baseline follow-up milestone](https://github.com/EpicBlackWolfZ/capagent/milestone/25). The next integration work prioritizes Podman probes and configuration, with mappings and explanations delivered together; see the [delivery sequence](roadmap.md#delivery-sequence).
+The completed [#59](https://github.com/EpicBlackWolfZ/capagent/issues/59) and [#64](https://github.com/EpicBlackWolfZ/capagent/issues/64) contracts provide explicit scope, typed payloads, nullable unobserved values, completeness, the `context` capability namespace and bounded UID/GID fields. Never treat an unobserved zero value as measured negative evidence. The baseline projection/query corrections and initial Podman prerequisites are delivered. Podman configuration work delivers mappings and explanations with each family; see the [delivery sequence](roadmap.md#delivery-sequence).
 
 ---
 
@@ -241,6 +241,7 @@ testdata/
 2. **Runtime adapters do not depend on CLI**: `internal/runtime/*` consume domain types and explicit platform service views; all host I/O remains in `internal/platform`.
 3. **Capability engine does not execute commands**: `internal/capability` evaluates purely over `Evidence` graphs.
 4. **Requirement engine does not execute host probes**: `internal/requirement` evaluates strictly against `Capability` outputs.
+5. **Configuration parsing receives bounded bytes**: only `internal/config` may import the pinned compile-time `github.com/pelletier/go-toml/v2` parser and its AST package. It reads no files or ambient environment. Runtime adapters select and collect sources through platform services. `internal/knowledge` contains pure, primary-source-backed profile rules; it performs no I/O. AST contracts enforce both boundaries. See [engine configuration](podman-engine-config.md) for qualified source profiles and bounds.
 
 ### `internal/probe` Contract
 The probe package is the dynamic-dependency orchestrator that materializes a
@@ -650,7 +651,7 @@ The first [Podman assessment checkpoint](roadmap.md#first-podman-assessment-chec
 
 ### 8.4 Current local Podman inspection
 
-The shipped `--runtime podman --active` path bootstraps identity and static discovery before freezing the selected executable and environment. The existing orchestrator runs version first and info as its dependent. After workers join, the application asks the Podman adapter for a separate scoped helper metadata observation where Netavark needs it, then timestamps and evaluates the complete dataset. Owned readers close after all workers and helper reads finish. The passive runtime branch receives no command runner. Host probes share the scheduler and use a separate metadata service allowing only bounded `systemctl --version`; host-only scope has paired empty runtime/endpoint strings and produces no requirement verdict.
+The shipped `--runtime podman --active` path bootstraps identity and static discovery before freezing the selected executable and environment. The existing orchestrator runs version first and info as its dependent. After workers join, the application collects scoped helper metadata and engine configuration under the same target and environment policy, then timestamps and evaluates the dataset. Runtime-reported selection outranks configuration; incomplete source selection stays unknown. Owned readers close after all workers and helper reads finish. The passive runtime branch receives no command runner. Host probes share the scheduler and use a separate metadata service allowing only bounded `systemctl --version`; host-only scope has paired empty runtime/endpoint strings and produces no requirement verdict.
 
 Typed info observations retain backend, driver, cgroups, rootless and graph/run roots, plus a normalized info version. Report projection selects observations deterministically by timestamp/ID, preserves CLI version details when info fails and diagnoses version conflict. New nullable fields are copied at observation/report ownership transfers and validated with the Schema v1 additions. Raw command facts and arbitrary JSON members remain internal.
 

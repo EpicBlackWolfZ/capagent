@@ -18,9 +18,11 @@ func evaluateAssessmentFixture(ctx context.Context, doc *fixture.Document, input
 	now := func() time.Time { return doc.Timestamp }
 	target := *doc.Context.Identity.Target
 	input.AssessPodman = true
+	input.PodmanEnvironment = services.Policy
 	input.Definitions = []capability.Definition{capability.PodmanDefinition(),
 		capability.PodmanInfoDefinition(), capability.NetavarkDefinition()}
 	input.Definitions = append(input.Definitions, capability.HelperDefinitions()...)
+	input.Definitions = append(input.Definitions, capability.EngineDefinitions()...)
 	input.Definitions = append(input.Definitions, capability.QuadletDefinitions(target.UID != 0)...)
 	probes := host.Probes(now)
 	user := host.UserContextProbe{Target: target, Active: doc.UserQuery, Now: now}

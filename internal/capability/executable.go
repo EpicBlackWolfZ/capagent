@@ -2,13 +2,15 @@ package capability
 
 import "github.com/EpicBlackWolfZ/capagent/internal/model"
 
+const conmonName = "conmon"
+
 const netavarkName = "netavark"
 
 // HelperDefinitions expose installed inventory and target metadata separately
 // from runtime-selected prerequisites. None establish successful execution.
 func HelperDefinitions() []Definition {
 	var definitions []Definition
-	for _, role := range []string{"crun", "runc", "conmon", netavarkName, "aardvark_dns", "pasta", "slirp4netns", "fuse_overlayfs"} {
+	for _, role := range []string{"crun", "runc", conmonName, netavarkName, "aardvark_dns", "pasta", "slirp4netns", "fuse_overlayfs"} {
 		for _, access := range []bool{false, true} {
 			suffix := "installed"
 			if access {
@@ -22,7 +24,7 @@ func HelperDefinitions() []Definition {
 				}})
 		}
 	}
-	for _, role := range []string{"oci_runtime", "conmon", netavarkName, "aardvark_dns", "pasta", "slirp4netns"} {
+	for _, role := range []string{"oci_runtime", conmonName, netavarkName, "aardvark_dns", "pasta", "slirp4netns"} {
 		definitions = append(definitions, selectedExecutableDefinition(role))
 	}
 	return definitions
@@ -90,12 +92,13 @@ func executableState(c model.ExecutableCandidate, access bool) model.CapabilityS
 func selectedExecutableDefinition(role string) Definition {
 	id := model.CapabilityID("runtime.podman." + role + ".executable")
 	return Definition{ID: id,
-		Description: "Runtime-reported helper path has regular executable metadata and target access; execution unverified",
+		Description: "Runtime-effective or configured helper selection has executable metadata and target access; execution unverified",
 		Evaluate: func(scope model.EvaluationScope, observations []model.Observation) []model.Evidence {
 			var evidence []model.Evidence
 			if !localPodman(scope) {
 				return nil
 			}
+			evidence = append(evidence, configuredExecutableEvidence(scope, observations, role, id)...)
 			for _, obs := range observations {
 				x := obs.Executable
 				if obs.Scope != scope || x == nil || x.Role != role || x.Source != "runtime" ||
@@ -129,7 +132,7 @@ func selectedHelperPath(p *model.PodmanInfo, role string) string {
 		if p.OCIRuntime != nil {
 			return p.OCIRuntime.Path
 		}
-	case "conmon":
+	case conmonName:
 		return p.ConmonPath
 	case netavarkName:
 		if p.NetworkBackend != nil && *p.NetworkBackend == netavarkName {

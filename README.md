@@ -67,20 +67,21 @@ Deployment Decision
 
 ## Current Status and Roadmap
 
-The CLI collects [passive host facts](docs/host-facts.md) with `--json` and replays offline fixtures with `--fixture DIR --json --pretty`, evaluates one Podman Netavark configuration capability and emits a scoped evidence/requirement report. See [fixture evaluation](docs/fixture-evaluation.md) for commands, exit codes and the executable consumer. M1.1 hardening is implemented; this M1.2 slice provides the shared evaluation path. Local target identity and passive Podman executable discovery are available through `--runtime podman`; see [Podman discovery](docs/podman-discovery.md). Explicit `--runtime podman --active` collects the selected CLI version and local effective runtime information. It permits Podman startup writes; exit 0 establishes successful inspection, not workload readiness. Root can delegate to a local account with `--context=user:NAME` or `--context=uid:ID`. Reports include subordinate allocations and user-session metadata; `--active` permits the bounded user-manager query. See [execution contexts](docs/execution-context.md). Schema v1 is still pre-release. The [roadmap](docs/roadmap.md) tracks broader delivery.
+The CLI collects [passive host facts](docs/host-facts.md) with `--json` and evaluates offline evidence with `--fixture DIR --json --pretty`. Local `--runtime podman` assessment adds target identity, executable discovery, [OCI/helper and Quadlet prerequisites](docs/podman-prerequisites.md), and [engine configuration provenance](docs/podman-engine-config.md). Explicit `--runtime podman --active` collects the selected CLI version and local effective runtime information, enabling qualified configuration source selection. It permits Podman startup writes; exit 0 establishes successful inspection, not workload readiness. See [Podman discovery](docs/podman-discovery.md) for command authority and [fixture evaluation](docs/fixture-evaluation.md) for requirement outcomes and exits.
+
+Root can delegate to a local account with `--context=user:NAME` or `--context=uid:ID`. Reports include subordinate allocations and user-session metadata; `--active` permits the bounded user-manager query. See [execution contexts](docs/execution-context.md). Schema v1 remains pre-release. The [roadmap](docs/roadmap.md) tracks broader delivery.
 
 Execution targets Linux 5.6+ with working `openat2` confinement on amd64/arm64. Historical distribution fixtures do not imply supported execution on older kernels. See the [security and support contract](docs/security.md).
 
-The foundation, fixture evaluation, host facts and execution-context milestones are closed. Known follow-up defects are tracked in the [baseline correctness milestone](https://github.com/EpicBlackWolfZ/capagent/milestone/25). The next delivery priorities are:
+The foundation, fixture evaluation, host facts and execution-context milestones are closed. Baseline correctness fixes, OCI/helper observations, Quadlet prerequisites and engine configuration are delivered. The remaining delivery priorities are:
 
 | Order | Outcome |
 |---|---|
-| 1 | Baseline fixes, OCI/helper observations and target-scoped Quadlet prerequisites. |
-| 2 | Engine, storage and rootless networking configuration with mappings and provenance. |
-| 3 | Existing JSON requirements over live Podman evidence, with useful explanations. |
-| 4 | Registry/image-policy configuration and remaining Podman lifecycle metadata. |
-| 5 | [Qualified Podman assessment](https://github.com/EpicBlackWolfZ/capagent/issues/115), focused on rootless Quadlet/user systemd with rootful coverage. |
-| 6 | Ansible integration and Docker/containerd baselines, then broader qualification and stable v1.0. |
+| 1 | Storage and rootless networking configuration with mappings and provenance. |
+| 2 | Existing JSON requirements over live Podman evidence, with useful explanations. |
+| 3 | Registry/image-policy configuration and remaining Podman lifecycle metadata. |
+| 4 | [Qualified Podman assessment](https://github.com/EpicBlackWolfZ/capagent/issues/115), focused on rootless Quadlet/user systemd with rootful coverage. |
+| 5 | Ansible integration and Docker/containerd baselines, then broader qualification and stable v1.0. |
 
 Each feature includes its tests and user documentation. The first Podman checkpoint remains prerelease; the full v1.0 scope still includes Ansible and the other runtime baselines. See the [roadmap](docs/roadmap.md) for exact issue dependencies and milestone ownership.
 

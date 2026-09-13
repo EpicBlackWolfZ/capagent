@@ -13,11 +13,14 @@ import (
 
 func TestCapturedPodmanPrerequisiteReplay(t *testing.T) {
 	t.Parallel()
-	for _, name := range []string{"nobara-5.8.4-rootless.json", "ubuntu-4.9.3-rootful.json", "ubuntu-4.9.3-rootless.json"} {
-		t.Run(name, func(t *testing.T) {
+	for _, source := range []struct{ directory, name string }{
+		{"prerequisites", "nobara-5.8.4-rootless.json"}, {"prerequisites", "ubuntu-4.9.3-rootful.json"},
+		{"prerequisites", "ubuntu-4.9.3-rootless.json"}, {"engine", "nobara-5.8.4-rootless.json"},
+	} {
+		t.Run(source.directory+"/"+source.name, func(t *testing.T) {
 			t.Parallel()
 			const maxCaptureBytes = 2 << 20
-			data, err := platform.ReadDocument(t.Context(), "../../testdata/podman/prerequisites", name, maxCaptureBytes)
+			data, err := platform.ReadDocument(t.Context(), "../../testdata/podman/"+source.directory, source.name, maxCaptureBytes)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -44,6 +47,9 @@ func TestCapturedPodmanPrerequisiteReplay(t *testing.T) {
 				t.Fatal(err)
 			}
 			definitions := append(capability.HelperDefinitions(), capability.QuadletDefinitions(capture.Context.Identity.Target.UID != 0)...)
+			if _, ok := capture.States[string(capability.EngineParsedID)]; ok {
+				definitions = append(definitions, capability.EngineDefinitions()...)
+			}
 			registry, err := capability.NewRegistry(definitions)
 			if err != nil {
 				t.Fatal(err)

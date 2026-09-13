@@ -42,17 +42,19 @@ type Options struct {
 // Input is a single explicit deployment candidate. All data is borrowed during
 // the call; Evaluate snapshots context metadata before starting workers.
 type Input struct {
-	AssessPodman bool
-	Scope        model.EvaluationScope
-	Context      model.EvaluationContext
-	At           time.Time
-	Provenance   string
-	Requirement  *requirement.Node
-	Collection   string
-	Mode         string
-	Now          func() time.Time
-	Observations []model.Observation
-	Definitions  []capability.Definition
+	PodmanEnvironment      platform.EnvPolicy
+	PodmanEnvironmentError error
+	AssessPodman           bool
+	Scope                  model.EvaluationScope
+	Context                model.EvaluationContext
+	At                     time.Time
+	Provenance             string
+	Requirement            *requirement.Node
+	Collection             string
+	Mode                   string
+	Now                    func() time.Time
+	Observations           []model.Observation
+	Definitions            []capability.Definition
 }
 
 // Evaluate joins every worker before returning and never closes borrowed
@@ -88,7 +90,11 @@ func Evaluate(ctx context.Context, input Input, env platform.Environment, probes
 			dataset.Observations = append(dataset.Observations, result.Observation)
 		}
 	}
+	if err := validateRuntimeSelection(input.Scope, dataset.Observations); err != nil {
+		return nil, err
+	}
 	dataset.Observations = collectHelpers(ctx, env, dataset.Observations, input)
+	dataset.Observations = collectConfiguration(ctx, env, dataset.Observations, input)
 	if err := validateRuntimeSelection(input.Scope, dataset.Observations); err != nil {
 		return nil, err
 	}
@@ -150,6 +156,9 @@ func validateRuntimeSelection(scope model.EvaluationScope, observations []model.
 		}
 		if obs.Executable != nil {
 			paths = append(paths, obs.Executable.RuntimePath)
+		}
+		if obs.Configuration != nil {
+			paths = append(paths, obs.Configuration.RuntimePath)
 		}
 		for _, path := range paths {
 			if path == "" {
