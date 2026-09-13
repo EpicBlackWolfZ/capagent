@@ -6,7 +6,6 @@ import importlib.util
 import os
 from pathlib import Path
 import pwd
-import re
 import signal
 import stat
 import subprocess
@@ -75,39 +74,19 @@ def joined_context_trace(text):
     return PASSIVE.joined_trace(text)
 
 
-def verify_trace(text, binary):
-    text = joined_context_trace(text)
-    # No container/namespace creation, host mutation, user-manager connection, or arbitrary executable.
-    if re.search(r'\b(?:connect|bind|listen|unshare|setns|mount|mkdir(?:at)?|unlink(?:at)?|rename(?:at2?)?|chmod|chown)\(', text):
-        raise ValueError('passive delegation changed host state or connected to a service')
-    if re.search(r'\bO_(?:WRONLY|RDWR|CREAT|TRUNC|APPEND)\b', text):
-        raise ValueError('passive delegation opened writable files')
-    executions = re.findall(r'execve\("([^"\n]+)"', text)
-    if not executions or executions[0] != str(binary) or executions.count('/proc/self/fd/3') != 1:
-        raise ValueError('worker did not re-execute its pinned payload')
-    if any(path not in (str(binary), '/proc/self/fd/3', '/usr/bin/systemctl', '/bin/systemctl') for path in executions):
-        raise ValueError('unexpected worker executable')
-    launcher = re.search(r'^(\d+)\s+execve\(', text, re.M)
-    if launcher is None:
-        raise ValueError('missing launching process')
-    threads = {launcher[1]}
-    edges = re.findall(r'^(\d+)\s+clone3?\(.*CLONE_THREAD.*\)\s+= (\d+)$', text, re.M)
-    while True:
-        expanded = threads | {child for parent, child in edges if parent in threads}
-        if expanded == threads:
-            break
-        threads = expanded
-    for line in text.splitlines():
-        match = re.match(r'(\d+)\s+(?:setgroups|setresgid|setresuid)\(', line)
-        if match and match[1] in threads:
-            raise ValueError('launcher credentials changed')
+TRACE_SPEC = importlib.util.spec_from_file_location("context_trace", Path(__file__).with_name("context_trace.py"))
+TRACE = importlib.util.module_from_spec(TRACE_SPEC)
+TRACE_SPEC.loader.exec_module(TRACE)
+
+
+def verify_trace(text, binary, target=None, query=None):
+    TRACE.verify(joined_context_trace(text), binary, target, query)
 
 
 def run_case(binary, selector, environment, trace=None):
     command = [str(binary), '--context=' + selector, '--json']
     if trace:
-        command = ['/usr/bin/strace', '-f', '-q', '-I', '2', '-s', '320', '-o', str(trace),
-                   '-e', 'trace=%process,%file,%network,prctl,setgroups,setresgid,setresuid', *command]
+        command = ['/usr/bin/strace', *TRACE.TRACE_OPTIONS, '-o', str(trace), *command]
     result = subprocess.run(command, env=environment, capture_output=True, timeout=55, check=False)
     if result.returncode not in (0, 2):
         raise ValueError('context collection failed: ' + result.stderr.decode(errors='replace'))
@@ -180,7 +159,7 @@ def main():
                     verify_subids(report, account)
                 (output / (execution + '-' + kind + '.json')).write_text(json.dumps(report, indent=2) + '\n')
                 if trace:
-                    verify_trace(trace.read_text(), binary)
+                    verify_trace(trace.read_text(), binary, {'uid': account.pw_uid, 'gid': account.pw_gid, 'groups': local_groups(account)})
     if not args.packaged:
         # Runtime directory setup belongs to the test harness, never the probe.
         runtime = Path('/run/user/' + str(account.pw_uid))

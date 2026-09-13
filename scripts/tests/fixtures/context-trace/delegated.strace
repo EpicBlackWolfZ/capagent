@@ -1,0 +1,458 @@
+11082 execve("/capagent", ["/capagent", "--context=user:runner", "--json"], 0x7ffea5cbdb50 /* 5 vars */) = 0
+11082 openat(AT_FDCWD, "/sys/kernel/mm/transparent_hugepage/hpage_pmd_size", O_RDONLY) = 3
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb57b1000, 262144, " Go: immortal metadata") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb5791000, 131072, " Go: page summary") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb5691000, 1048576, " Go: page summary") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb4e00000, 8388608, " Go: page summary") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb0e00000, 67108864, " Go: page summary") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fab90e00000, 536870912, " Go: page summary") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fab70e00000, 536870912, " Go: scavenge index") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x2577a8000000, 67108864, " Go: heap reservation") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fab6ee00000, 33554432, " Go: heap index") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb567f000, 69648, " Go: immortal metadata") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x2577aa000000, 4194304, " Go: heap") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb5791000, 131072, " Go: page alloc") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb5736000, 4096, " Go: page alloc") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb532b000, 4096, " Go: page alloc") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb375d000, 4096, " Go: page alloc") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7faba58ef000, 4096, " Go: page alloc") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fab858ef000, 4096, " Go: scavenge index") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fab6ed00000, 1048576, " Go: page alloc index") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb566f000, 65536, " Go: allspans array") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb565f000, 65536, " Go: gc bits") = 0
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fab6eba0000, 1439992, " Go: profiler hash buckets") = 0
+11082 openat(AT_FDCWD, "/proc/self/cgroup", O_RDONLY|O_CLOEXEC) = 3
+11082 openat(AT_FDCWD, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 3
+11082 openat(AT_FDCWD, "/sys/fs/cgroup/system.slice/hosted-compute-agent.service/cpu.max", O_RDONLY|O_CLOEXEC) = 3
+11082 clone(child_stack=0x2577aa396000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x2577aa3b4090) = 11083
+11082 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb561f000, 262144, " Go: immortal metadata") = 0
+11082 clone(child_stack=0x2577aa3d0000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x2577aa3b4890) = 11084
+11082 clone(child_stack=0x2577aa3cc000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x2577aa3b5090) = 11085
+11084 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x2577aa400000, 4194304, " Go: heap") = 0
+11084 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fab6eb60000, 262144, " Go: immortal metadata") = 0
+11082 clone(child_stack=0x2577aa3f6000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS <unfinished ...>
+11084 clone(child_stack=0x2577aa3f2000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS <unfinished ...>
+11082 <... clone resumed>, tls=0x2577aa3b5890) = 11086
+11084 <... clone resumed>, tls=0x2577aa400090) = 11087
+11082 clone(child_stack=0x2577aa466000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x2577aa400890) = 11088
+11085 openat2(AT_FDCWD, "/", {flags=O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY, resolve=RESOLVE_NO_MAGICLINKS}, 24) = 4
+11086 clone(child_stack=0x2577aa462000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x2577aa3f6090) = 11089
+11085 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fab6eb20000, 262144, " Go: immortal metadata") = 0
+11085 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fabb561e000, 4096, " Go: getrandom states") = 0
+11085 openat2(4, "etc/passwd", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11085 openat2(4, "etc/passwd", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8
+11085 openat2(4, "proc/self/ns/user", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11085 readlinkat(7, "", "user:[4026531837]", 4096) = 17
+11085 openat2(4, "proc/self/ns/pid", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11085 readlinkat(7, "", "pid:[4026531836]", 4096) = 16
+11085 openat2(4, "proc/self/ns/net", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11085 readlinkat(7, "", "net:[4026531833]", 4096) = 16
+11085 openat2(4, "proc/self/ns/mnt", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11085 readlinkat(7, "", "mnt:[4026531832]", 4096) = 16
+11085 openat2(4, "proc/self/ns/ipc", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11085 readlinkat(7, "", "ipc:[4026531839]", 4096) = 16
+11085 openat2(4, "proc/self/ns/uts", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11085 readlinkat(7, "", "uts:[4026531838]", 4096) = 16
+11085 openat2(4, "proc/self/ns/cgroup", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11085 readlinkat(7, "", "cgroup:[4026531835]", 4096) = 19
+11085 openat2(4, "etc/passwd", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11085 openat2(4, "etc/passwd", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8
+11085 openat2(4, "etc/group", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11085 openat2(4, "etc/group", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8
+11085 openat(AT_FDCWD, "/proc/self/exe", O_RDONLY|O_CLOEXEC) = 7
+11086 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fab6eae0000, 262144, " Go: immortal metadata") = 0
+11085 waitid(P_PIDFD, 14, 0x2577aa5fd9b0, WEXITED, NULL) = -1 ECHILD (No child processes)
+11085 pidfd_send_signal(14, 0, NULL, 0) = 0
+11085 clone(child_stack=NULL, flags=CLONE_VM|CLONE_PIDFD|CLONE_VFORK <unfinished ...>
+11090 exit_group(0)                     = ?
+11090 +++ exited with 0 +++
+11085 <... clone resumed>, parent_tid=[15]) = 11090
+11085 waitid(P_PIDFD, 15, {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11090, si_uid=0, si_status=0, si_utime=0, si_stime=0}, WEXITED|__WCLONE, NULL) = 0
+11085 clone(child_stack=NULL, flags=CLONE_VM|CLONE_PIDFD|CLONE_VFORK|SIGCHLD <unfinished ...>
+11091 chdir("/")                        = 0
+11091 execve("/proc/self/fd/3", ["/proc/self/fd/3", "--internal-target-worker"], 0x2577aa61a2b8 /* 2 vars */ <unfinished ...>
+11085 <... clone resumed>, parent_tid=[16]) = 11091
+11091 <... execve resumed>)             = 0
+11091 openat(AT_FDCWD, "/sys/kernel/mm/transparent_hugepage/hpage_pmd_size", O_RDONLY) = 4
+11084 clone(child_stack=0x2577aa696000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS <unfinished ...>
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28e57b000, 262144, " Go: immortal metadata") = 0
+11084 <... clone resumed>, tls=0x2577aa3f6890) = 11092
+11085 waitid(P_PIDFD, 16,  <unfinished ...>
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28e55b000, 131072, " Go: page summary") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28e45b000, 1048576, " Go: page summary") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28dc00000, 8388608, " Go: page summary") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa289c00000, 67108864, " Go: page summary") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa269c00000, 536870912, " Go: page summary") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa249c00000, 536870912, " Go: scavenge index") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0xd9100000000, 67108864, " Go: heap reservation") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa247c00000, 33554432, " Go: heap index") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28e449000, 69648, " Go: immortal metadata") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0xd9100400000, 4194304, " Go: heap") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28e55b000, 131072, " Go: page alloc") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28e4e8000, 4096, " Go: page alloc") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28e06c000, 4096, " Go: page alloc") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28bf64000, 4096, " Go: page alloc") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa27b722000, 4096, " Go: page alloc") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa25b722000, 4096, " Go: scavenge index") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa247b00000, 1048576, " Go: page alloc index") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28e439000, 65536, " Go: allspans array") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28e429000, 65536, " Go: gc bits") = 0
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa2479a0000, 1439992, " Go: profiler hash buckets") = 0
+11091 openat(AT_FDCWD, "/proc/self/cgroup", O_RDONLY|O_CLOEXEC) = 4
+11091 openat(AT_FDCWD, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 4
+11091 openat(AT_FDCWD, "/sys/fs/cgroup/system.slice/hosted-compute-agent.service/cpu.max", O_RDONLY|O_CLOEXEC) = 4
+11091 clone(child_stack=0xd91004e6000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0xd91004fa090) = 11093
+11091 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa247960000, 262144, " Go: immortal metadata") = 0
+11091 clone(child_stack=0xd9100520000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0xd91004fa890) = 11094
+11091 clone(child_stack=0xd910051c000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0xd91004fb090) = 11095
+11094 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa247920000, 262144, " Go: immortal metadata") = 0
+11094 clone(child_stack=0xd9100598000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0xd9100580090) = 11096
+11091 clone(child_stack=0xd9100594000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0xd91004fb890) = 11097
+11095 clone(child_stack=0xd91005a8000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0xd9100580890) = 11098
+11098 newfstatat(AT_FDCWD, "/proc/self/exe", {st_mode=S_IFREG|0755, st_size=6436619, ...}, 0) = 0
+11095 clone(child_stack=0xd91005a4000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0xd9100581090) = 11099
+11098 setgroups(5, [4, 100, 118, 999, 1001]) = 0
+11098 tgkill(11091, 11099, SIGRT_1)     = 0
+11099 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11099 setgroups(5, [4, 100, 118, 999, 1001]) = 0
+11098 tgkill(11091, 11097, SIGRT_1)     = 0
+11097 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11097 setgroups(5, [4, 100, 118, 999, 1001] <unfinished ...>
+11098 tgkill(11091, 11096, SIGRT_1 <unfinished ...>
+11097 <... setgroups resumed>)          = 0
+11098 <... tgkill resumed>)             = 0
+11096 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11098 tgkill(11091, 11095, SIGRT_1 <unfinished ...>
+11096 setgroups(5, [4, 100, 118, 999, 1001] <unfinished ...>
+11098 <... tgkill resumed>)             = 0
+11096 <... setgroups resumed>)          = 0
+11095 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11098 tgkill(11091, 11094, SIGRT_1 <unfinished ...>
+11095 setgroups(5, [4, 100, 118, 999, 1001] <unfinished ...>
+11098 <... tgkill resumed>)             = 0
+11095 <... setgroups resumed>)          = 0
+11094 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11094 setgroups(5, [4, 100, 118, 999, 1001] <unfinished ...>
+11098 tgkill(11091, 11093, SIGRT_1 <unfinished ...>
+11094 <... setgroups resumed>)          = 0
+11098 <... tgkill resumed>)             = 0
+11093 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11098 tgkill(11091, 11091, SIGRT_1 <unfinished ...>
+11093 setgroups(5, [4, 100, 118, 999, 1001] <unfinished ...>
+11098 <... tgkill resumed>)             = 0
+11093 <... setgroups resumed>)          = 0
+11091 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11091 setgroups(5, [4, 100, 118, 999, 1001]) = 0
+11098 setresgid(1001, 1001, 1001)       = 0
+11098 tgkill(11091, 11099, SIGRT_1)     = 0
+11099 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11099 setresgid(1001, 1001, 1001)       = 0
+11098 tgkill(11091, 11097, SIGRT_1)     = 0
+11097 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11097 setresgid(1001, 1001, 1001 <unfinished ...>
+11098 tgkill(11091, 11096, SIGRT_1 <unfinished ...>
+11097 <... setresgid resumed>)          = 0
+11098 <... tgkill resumed>)             = 0
+11096 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11096 setresgid(1001, 1001, 1001 <unfinished ...>
+11098 tgkill(11091, 11095, SIGRT_1 <unfinished ...>
+11096 <... setresgid resumed>)          = 0
+11098 <... tgkill resumed>)             = 0
+11095 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11098 tgkill(11091, 11094, SIGRT_1)     = 0
+11095 setresgid(1001, 1001, 1001)       = 0
+11094 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11094 setresgid(1001, 1001, 1001 <unfinished ...>
+11098 tgkill(11091, 11093, SIGRT_1 <unfinished ...>
+11094 <... setresgid resumed>)          = 0
+11098 <... tgkill resumed>)             = 0
+11093 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11098 tgkill(11091, 11091, SIGRT_1 <unfinished ...>
+11093 setresgid(1001, 1001, 1001 <unfinished ...>
+11098 <... tgkill resumed>)             = 0
+11093 <... setresgid resumed>)          = 0
+11091 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=0} ---
+11091 setresgid(1001, 1001, 1001)       = 0
+11098 setresuid(1001, 1001, 1001)       = 0
+11098 tgkill(11091, 11099, SIGRT_1)     = 0
+11099 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=1001} ---
+11099 setresuid(1001, 1001, 1001)       = 0
+11098 tgkill(11091, 11097, SIGRT_1)     = 0
+11097 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=1001} ---
+11097 setresuid(1001, 1001, 1001 <unfinished ...>
+11098 tgkill(11091, 11096, SIGRT_1 <unfinished ...>
+11097 <... setresuid resumed>)          = 0
+11098 <... tgkill resumed>)             = 0
+11096 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=1001} ---
+11098 tgkill(11091, 11095, SIGRT_1 <unfinished ...>
+11096 setresuid(1001, 1001, 1001 <unfinished ...>
+11098 <... tgkill resumed>)             = 0
+11096 <... setresuid resumed>)          = 0
+11095 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=1001} ---
+11095 setresuid(1001, 1001, 1001 <unfinished ...>
+11098 tgkill(11091, 11094, SIGRT_1 <unfinished ...>
+11095 <... setresuid resumed>)          = 0
+11098 <... tgkill resumed>)             = 0
+11094 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=1001} ---
+11094 setresuid(1001, 1001, 1001 <unfinished ...>
+11098 tgkill(11091, 11093, SIGRT_1)     = 0
+11094 <... setresuid resumed>)          = 0
+11093 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=1001} ---
+11093 setresuid(1001, 1001, 1001 <unfinished ...>
+11098 tgkill(11091, 11091, SIGRT_1 <unfinished ...>
+11093 <... setresuid resumed>)          = 0
+11098 <... tgkill resumed>)             = 0
+11091 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11091, si_uid=1001} ---
+11091 setresuid(1001, 1001, 1001)       = 0
+11098 openat2(AT_FDCWD, "/", {flags=O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY, resolve=RESOLVE_NO_MAGICLINKS}, 24) = 3
+11098 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa2478e0000, 262144, " Go: immortal metadata") = 0
+11098 openat2(3, "proc/self/ns/user", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5
+11098 readlinkat(5, "", "user:[4026531837]", 4096) = 17
+11098 openat2(3, "proc/self/ns/pid", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5
+11098 readlinkat(5, "", "pid:[4026531836]", 4096) = 16
+11098 openat2(3, "proc/self/ns/net", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5
+11098 readlinkat(5, "", "net:[4026531833]", 4096) = 16
+11098 openat2(3, "proc/self/ns/mnt", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5
+11098 readlinkat(5, "", "mnt:[4026531832]", 4096) = 16
+11098 openat2(3, "proc/self/ns/ipc", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5
+11098 readlinkat(5, "", "ipc:[4026531839]", 4096) = 16
+11098 openat2(3, "proc/self/ns/uts", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5
+11098 readlinkat(5, "", "uts:[4026531838]", 4096) = 16
+11098 openat2(3, "proc/self/ns/cgroup", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5
+11098 readlinkat(5, "", "cgroup:[4026531835]", 4096) = 19
+11098 openat2(3, "proc/self/status", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5
+11098 openat2(3, "proc/self/status", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 6
+11098 openat2(AT_FDCWD, "/", {flags=O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY, resolve=RESOLVE_NO_MAGICLINKS}, 24) = 3
+11098 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa28e428000, 4096, " Go: getrandom states") = 0
+11098 openat2(3, "etc/passwd", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11098 openat2(3, "etc/passwd", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8
+11098 openat2(3, "proc/self/ns/user", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11098 readlinkat(7, "", "user:[4026531837]", 4096) = 17
+11098 openat2(3, "proc/self/ns/pid", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11098 readlinkat(7, "", "pid:[4026531836]", 4096) = 16
+11098 openat2(3, "proc/self/ns/net", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11098 readlinkat(7, "", "net:[4026531833]", 4096) = 16
+11098 openat2(3, "proc/self/ns/mnt", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11098 readlinkat(7, "", "mnt:[4026531832]", 4096) = 16
+11098 openat2(3, "proc/self/ns/ipc", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11098 readlinkat(7, "", "ipc:[4026531839]", 4096) = 16
+11098 openat2(3, "proc/self/ns/uts", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11098 readlinkat(7, "", "uts:[4026531838]", 4096) = 16
+11098 openat2(3, "proc/self/ns/cgroup", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11098 readlinkat(7, "", "cgroup:[4026531835]", 4096) = 19
+11098 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0xd9100800000, 4194304, " Go: heap") = 0
+11098 openat2(3, "etc/os-release", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11098 openat2(3, "etc/os-release", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11095 openat2(3, "proc/1/comm", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11098 <... openat2 resumed>)            = 8
+11094 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fa2478a0000, 262144, " Go: immortal metadata" <unfinished ...>
+11095 <... openat2 resumed>)            = 9
+11094 <... prctl resumed>)              = 0
+11093 clone(child_stack=0xd91005ec000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS <unfinished ...>
+11094 clone(child_stack=0xd91005e8000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS <unfinished ...>
+11093 <... clone resumed>, tls=0xd9100581890) = 11100
+11094 <... clone resumed>, tls=0xd9100880090) = 11101
+11098 openat2(3, "proc/self/mountinfo", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11094 openat2(3, "proc/self/ns/user", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11098 <... openat2 resumed>)            = 7
+11094 <... openat2 resumed>)            = 8
+11098 openat2(3, "proc/self/mountinfo", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11094 readlinkat(8, "",  <unfinished ...>
+11098 <... openat2 resumed>)            = 10
+11094 <... readlinkat resumed>"user:[4026531837]", 4096) = 17
+11101 openat2(3, "proc/1/comm", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 11
+11100 openat2(3, "sys/kernel/security/lsm", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11094 openat2(3, "proc/self/ns/pid", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11100 <... openat2 resumed>)            = 8
+11094 <... openat2 resumed>)            = 12
+11100 openat2(3, "sys/kernel/security/lsm", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11094 readlinkat(12, "",  <unfinished ...>
+11100 <... openat2 resumed>)            = 13
+11094 <... readlinkat resumed>"pid:[4026531836]", 4096) = 16
+11094 openat2(3, "proc/self/ns/net", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11101 openat2(3, "run/systemd/system", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10
+11094 <... openat2 resumed>)            = 9
+11101 openat2(3, "usr/lib/systemd/systemd", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11100 openat2(3, "sys/fs/selinux/enforce", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11098 openat2(3, "proc/self/cgroup", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11094 readlinkat(9, "",  <unfinished ...>
+11100 <... openat2 resumed>)            = -1 ENOENT (No such file or directory)
+11098 <... openat2 resumed>)            = 8
+11094 <... readlinkat resumed>"net:[4026531833]", 4096) = 16
+11100 openat2(3, "sys/module/apparmor/parameters/enabled", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11101 openat2(3, "usr/bin/systemctl", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11100 <... openat2 resumed>)            = 9
+11098 openat2(3, "proc/self/cgroup", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11094 openat2(3, "proc/self/ns/mnt", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11098 <... openat2 resumed>)            = 10
+11094 <... openat2 resumed>)            = 11
+11100 openat2(3, "sys/module/apparmor/parameters/enabled", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7
+11094 readlinkat(11, "",  <unfinished ...>
+11101 openat(AT_FDCWD, "/dev/null", O_RDONLY|O_CLOEXEC <unfinished ...>
+11094 <... readlinkat resumed>"mnt:[4026531832]", 4096) = 16
+11101 <... openat resumed>)             = 12
+11094 openat2(3, "proc/self/ns/ipc", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10
+11098 openat2(3, "sys/fs/cgroup", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8
+11100 openat2(3, "sys/kernel/security/apparmor/profiles", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11094 readlinkat(10, "",  <unfinished ...>
+11100 openat2(3, "sys/kernel/security/apparmor/profiles", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11098 openat2(3, "sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.controllers", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11094 <... readlinkat resumed>"ipc:[4026531839]", 4096) = 16
+11100 <... openat2 resumed>)            = -1 EACCES (Permission denied)
+11098 <... openat2 resumed>)            = 8
+11100 openat2(3, "proc/self/status", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11094 openat2(3, "proc/self/ns/uts", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11098 openat2(3, "sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.controllers", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11100 openat2(3, "proc/self/status", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11094 <... openat2 resumed>)            = 10
+11100 <... openat2 resumed>)            = 16
+11098 <... openat2 resumed>)            = 15
+11094 readlinkat(10, "", "uts:[4026531838]", 4096) = 16
+11100 openat2(3, "proc/sys/kernel/seccomp/actions_avail", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11094 openat2(3, "proc/self/ns/cgroup", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11100 openat2(3, "proc/sys/kernel/seccomp/actions_avail", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11094 <... openat2 resumed>)            = 10
+11101 waitid(P_PIDFD, 16, 0xd91005c2a58, WEXITED, NULL) = -1 ECHILD (No child processes)
+11101 pidfd_send_signal(16, 0, NULL, 0 <unfinished ...>
+11094 readlinkat(10, "",  <unfinished ...>
+11101 <... pidfd_send_signal resumed>)  = 0
+11098 openat2(3, "sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.subtree_control", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11101 clone(child_stack=NULL, flags=CLONE_VM|CLONE_PIDFD|CLONE_VFORK <unfinished ...>
+11094 <... readlinkat resumed>"cgroup:[4026531835]", 4096) = 19
+11098 <... openat2 resumed>)            = 8
+11102 exit_group(0 <unfinished ...>
+11100 <... openat2 resumed>)            = 10
+11098 openat2(3, "sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.subtree_control", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11094 openat2(3, "proc/filesystems", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11102 <... exit_group resumed>)         = ?
+11098 <... openat2 resumed>)            = 17
+11094 <... openat2 resumed>)            = 18
+11102 +++ exited with 0 +++
+11101 <... clone resumed>, parent_tid=[15]) = 11102
+11101 waitid(P_PIDFD, 15, {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11102, si_uid=1001, si_status=0, si_utime=0, si_stime=0}, WEXITED|__WCLONE, NULL) = 0
+11094 openat2(3, "proc/filesystems", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10
+11100 openat2(3, "proc/sys/kernel/unprivileged_userns_clone", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11100 openat2(3, "proc/sys/kernel/unprivileged_userns_clone", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8
+11099 openat2(3, "proc/self/net/protocols", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 17
+11101 clone(child_stack=NULL, flags=CLONE_VM|CLONE_PIDFD|CLONE_VFORK|SIGCHLD <unfinished ...>
+11099 openat2(3, "proc/self/net/protocols", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11100 openat2(3, "proc/sys/user/max_user_namespaces", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10
+11099 <... openat2 resumed>)            = 9
+11100 openat2(3, "proc/sys/user/max_user_namespaces", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 18
+11094 openat2(3, "etc/resolv.conf", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 19
+11094 openat2(3, "etc/resolv.conf", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 18
+11100 openat2(3, "etc/subuid", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11100 openat2(3, "etc/subuid", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10
+11099 openat2(3, "proc/sys/net/ipv6/conf/all/disable_ipv6", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 17
+11099 openat2(3, "proc/sys/net/ipv6/conf/all/disable_ipv6", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 18
+11094 openat2(3, "var/lib/systemd/linger/runner", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 19
+11094 openat2(3, "run/user/1001", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 17
+11099 openat2(3, "proc/sys/net/ipv6/conf/default/disable_ipv6", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 18
+11099 openat2(3, "proc/sys/net/ipv6/conf/default/disable_ipv6", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11094 openat2(3, "run/user/1001/systemd/private", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11099 <... openat2 resumed>)            = 17
+11094 <... openat2 resumed>)            = 19
+11100 openat2(3, "etc/subgid", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11100 openat2(3, "etc/subgid", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10
+11100 openat2(3, "etc/nsswitch.conf", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11100 openat2(3, "etc/nsswitch.conf", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10
+11103 chdir("/")                        = 0
+11100 openat2(3, "usr/bin/newuidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11103 execve("/usr/bin/systemctl", ["/usr/bin/systemctl", "--version"], 0xd91004d80d8 /* 2 vars */ <unfinished ...>
+11100 openat2(3, "usr/bin/newuidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11100 faccessat2(9, "", X_OK, AT_EACCESS|AT_EMPTY_PATH) = 0
+11100 openat2(3, "usr/bin/newuidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11100 openat2(3, "usr/bin/newuidmap", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10
+11101 <... clone resumed>, parent_tid=[8]) = 11103
+11103 <... execve resumed>)             = 0
+11100 openat2(3, "usr/bin/newuidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11103 access("/etc/ld.so.preload", R_OK) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v4/libcap.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 newfstatat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v4/", 0x7ffc4aeed180, 0) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v3/libcap.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 newfstatat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v3/", 0x7ffc4aeed180, 0) = -1 ENOENT (No such file or directory)
+11101 waitid(P_PIDFD, 8,  <unfinished ...>
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v2/libcap.so.2", O_RDONLY|O_CLOEXEC <unfinished ...>
+11100 prctl(PR_GET_NO_NEW_PRIVS, 0, 0, 0, 0 <unfinished ...>
+11103 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11100 <... prctl resumed>)              = 0
+11103 newfstatat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v2/",  <unfinished ...>
+11100 openat2(3, "usr/bin/newgidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11103 <... newfstatat resumed>0x7ffc4aeed180, 0) = -1 ENOENT (No such file or directory)
+11100 <... openat2 resumed>)            = 9
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/libcap.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 newfstatat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+11103 openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC <unfinished ...>
+11100 openat2(3, "usr/bin/newgidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11103 <... openat resumed>)             = 3
+11100 <... openat2 resumed>)            = 9
+11100 faccessat2(9, "", X_OK, AT_EACCESS|AT_EMPTY_PATH) = 0
+11100 openat2(3, "usr/bin/newgidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libcap.so.2", O_RDONLY|O_CLOEXEC) = 3
+11100 openat2(3, "usr/bin/newgidmap", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10
+11100 openat2(3, "usr/bin/newgidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9
+11100 prctl(PR_GET_NO_NEW_PRIVS, 0, 0, 0, 0 <unfinished ...>
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/liblz4.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11100 <... prctl resumed>)              = 0
+11103 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/liblz4.so.1", O_RDONLY|O_CLOEXEC) = 3
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/libselinux.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libselinux.so.1", O_RDONLY|O_CLOEXEC) = 3
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/liblzma.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/liblzma.so.5", O_RDONLY|O_CLOEXEC) = 3
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/libzstd.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libzstd.so.1", O_RDONLY|O_CLOEXEC) = 3
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/libm.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libm.so.6", O_RDONLY|O_CLOEXEC) = 3
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/libblkid.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libblkid.so.1", O_RDONLY|O_CLOEXEC) = 3
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/libgcrypt.so.20", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libgcrypt.so.20", O_RDONLY|O_CLOEXEC) = 3
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/libmount.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libmount.so.1", O_RDONLY|O_CLOEXEC) = 3
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/libcrypto.so.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libcrypto.so.3", O_RDONLY|O_CLOEXEC) = 3
+11103 openat(AT_FDCWD, "/usr/lib/x86_64-linux-gnu/systemd/libc.so.6", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libpcre2-8.so.0", O_RDONLY|O_CLOEXEC) = 3
+11103 openat(AT_FDCWD, "/lib/x86_64-linux-gnu/libgpg-error.so.0", O_RDONLY|O_CLOEXEC) = 3
+11103 statfs("/sys/fs/selinux", 0x7ffc4aeedf30) = -1 ENOENT (No such file or directory)
+11103 statfs("/selinux", 0x7ffc4aeedf30) = -1 ENOENT (No such file or directory)
+11103 openat(AT_FDCWD, "/proc/filesystems", O_RDONLY|O_CLOEXEC) = 3
+11103 access("/etc/selinux/config", F_OK) = -1 ENOENT (No such file or directory)
+11103 prctl(PR_CAPBSET_READ, CAP_MAC_OVERRIDE) = 1
+11103 prctl(PR_CAPBSET_READ, 0x30 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11103 prctl(PR_CAPBSET_READ, CAP_CHECKPOINT_RESTORE) = 1
+11103 prctl(PR_CAPBSET_READ, 0x2c /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11103 prctl(PR_CAPBSET_READ, 0x2a /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11103 prctl(PR_CAPBSET_READ, 0x29 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11103 newfstatat(AT_FDCWD, "/dev/null", {st_mode=S_IFCHR|0666, st_rdev=makedev(0x1, 0x3), ...}, 0) = 0
+11103 exit_group(0)                     = ?
+11103 +++ exited with 0 +++
+11101 <... waitid resumed>{si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11103, si_uid=1001, si_status=0, si_utime=0, si_stime=0}, WEXITED, {ru_utime={tv_sec=0, tv_usec=2113}, ru_stime={tv_sec=0, tv_usec=2818}, ...}) = 0
+11098 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11103, si_uid=1001, si_status=0, si_utime=0, si_stime=0} ---
+11098 openat(AT_FDCWD, "/etc/localtime", O_RDONLY) = 3
+11100 exit_group(0)                     = ?
+11101 +++ exited with 0 +++
+11099 +++ exited with 0 +++
+11098 +++ exited with 0 +++
+11096 +++ exited with 0 +++
+11097 +++ exited with 0 +++
+11094 +++ exited with 0 +++
+11100 +++ exited with 0 +++
+11095 +++ exited with 0 +++
+11093 +++ exited with 0 +++
+11091 +++ exited with 0 +++
+11089 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11091, si_uid=1001, si_status=0, si_utime=0, si_stime=1 /* 0.01 s */} ---
+11085 <... waitid resumed>{si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11091, si_uid=1001, si_status=0, si_utime=0, si_stime=0}, WEXITED, {ru_utime={tv_sec=0, tv_usec=3373}, ru_stime={tv_sec=0, tv_usec=17518}, ...}) = 0
+11084 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x2577aa800000, 4194304, " Go: heap") = 0
+11089 exit_group(2)                     = ?
+11089 +++ exited with 2 +++
+11092 +++ exited with 2 +++
+11087 +++ exited with 2 +++
+11086 +++ exited with 2 +++
+11088 +++ exited with 2 +++
+11085 +++ exited with 2 +++
+11084 +++ exited with 2 +++
+11083 +++ exited with 2 +++
+11082 +++ exited with 2 +++

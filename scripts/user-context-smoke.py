@@ -20,8 +20,9 @@ def checked(command, **kwargs):
     return subprocess.run(command, check=True, capture_output=True, timeout=30, **kwargs)
 
 
-def verify_active_trace(text, binary, uid):
-    text = CONTEXTS.joined_context_trace(text)
+def verify_active_trace(text, binary, uid, target=None):
+    raw_text = CONTEXTS.joined_context_trace(text)
+    text = CONTEXTS.TRACE.plain_fds(raw_text)
     socket = '/run/user/' + str(uid) + '/systemd/private'
     connections = re.findall(r'^\d+ connect\([^\n]*', text, re.M)
     if not connections:
@@ -56,7 +57,10 @@ def verify_active_trace(text, binary, uid):
                             + fd + r'$', text, re.M)
         if created is None or not any(connection.startswith(query_pid + ' connect(' + fd + ',') for connection in connections):
             raise ValueError('client binding is not the observed manager socket')
-    CONTEXTS.verify_trace(re.sub(r'^\d+ (?:connect|bind)\([^\n]*\n?', '', text, flags=re.M), binary)
+    fds = {re.match(r'^\d+ connect\((\d+),', line)[1] for line in connections}
+    if len(fds) != 1:
+        raise ValueError('query used more than one connected socket')
+    CONTEXTS.verify_trace(raw_text, binary, target, (query_pid, next(iter(fds))))
 
 
 def verify_user_report(report, active, uid):
@@ -106,8 +110,7 @@ def main():
         for active in (False, True):
             name = 'active' if active else 'passive'
             trace = output / (name + '.strace')
-            command = ['/usr/bin/strace', '-f', '-q', '-I', '2', '-s', '320', '-o', str(trace), '-e',
-                       'trace=%process,%file,%network,prctl,setgroups,setresgid,setresuid', str(binary),
+            command = ['/usr/bin/strace', *CONTEXTS.TRACE.TRACE_OPTIONS, '-o', str(trace), str(binary),
                        '--context=uid:' + str(account.pw_uid), '--json', *(['--active'] if active else [])]
             result = subprocess.run(command, env=environment, capture_output=True, timeout=55, check=False)
             if result.returncode not in (0, 2):
@@ -116,7 +119,8 @@ def main():
             CONTEXTS.verify_report(report, 0, account.pw_uid, CONTEXTS.local_groups(account))
             state = verify_user_report(report, active, account.pw_uid)
             if active:
-                verify_active_trace(trace.read_text(), binary, account.pw_uid)
+                verify_active_trace(trace.read_text(), binary, account.pw_uid,
+                                    {'uid': account.pw_uid, 'gid': account.pw_gid, 'groups': CONTEXTS.local_groups(account)})
                 reference = checked(['/usr/sbin/runuser', '-u', account.pw_name, '--', '/usr/bin/env', '-i',
                                      'PATH=/usr/bin:/bin', 'LC_ALL=C', 'XDG_RUNTIME_DIR=' + runtime,
                                      'DBUS_SESSION_BUS_ADDRESS=unix:path=' + runtime + '/systemd/private',
@@ -124,7 +128,8 @@ def main():
                 if state['manager_version'] != reference.stdout.decode().strip():
                     raise ValueError('manager version differs from independent query')
             else:
-                CONTEXTS.verify_trace(trace.read_text(), binary)
+                CONTEXTS.verify_trace(trace.read_text(), binary,
+                                      {'uid': account.pw_uid, 'gid': account.pw_gid, 'groups': CONTEXTS.local_groups(account)})
             (output / (name + '.json')).write_bytes(result.stdout)
         (output / 'summary.json').write_text(json.dumps({'status': 'pass', 'uid': account.pw_uid,
                                                         'passive_connections': 0, 'active_query': True}) + '\n')
