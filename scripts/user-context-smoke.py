@@ -29,15 +29,34 @@ def verify_active_trace(text, binary, uid):
     if any('sa_family=AF_UNIX' not in line or 'sun_path="' + socket + '"' not in line for line in connections):
         raise ValueError('user query connected outside its declared local manager')
     queries = []
-    for executable, argv in re.findall(r'execve\("(/(?:usr/)?bin/systemctl)", (\[[^\n]*?\]),', text):
+    for pid, executable, argv in re.findall(r'^(\d+) execve\("(/(?:usr/)?bin/systemctl)", (\[[^\n]*?\]),', text, re.M):
         args = json.loads(argv)
         if args == [executable, *ARGS]:
-            queries.append(args)
+            queries.append(pid)
         elif args != [executable, '--version']:
             raise ValueError('unexpected systemctl operation')
     if len(queries) != 1:
         raise ValueError('missing or repeated manager query')
-    CONTEXTS.verify_trace(re.sub(r'^\d+ connect\([^\n]*\n?', '', text, flags=re.M), binary)
+    query_pid = queries[0]
+    if any(not line.startswith(query_pid + ' connect(') for line in connections):
+        raise ValueError('connection outside the manager query process')
+    bindings = re.findall(r'^\d+ bind\([^\n]*', text, re.M)
+    if len(bindings) > 1:
+        raise ValueError('repeated client socket binding')
+    for line in bindings:
+        # sd-bus may bind its stream client to a temporary abstract Unix name.
+        # This creates no filesystem entry or listener; allow only the query's
+        # own socket, subsequently connected to the declared manager.
+        binding = re.fullmatch(query_pid + r' bind\((\d+), \{sa_family=AF_UNIX, '
+                               r'sun_path=@"[0-9a-f]{16}/bus/systemctl/"\}, \d+\)\s+= 0', line)
+        if binding is None:
+            raise ValueError('unexpected user-query socket binding')
+        fd = binding[1]
+        created = re.search(r'^' + query_pid + r' socket\(AF_UNIX, SOCK_STREAM\|SOCK_CLOEXEC\|SOCK_NONBLOCK, 0\)\s+= '
+                            + fd + r'$', text, re.M)
+        if created is None or not any(connection.startswith(query_pid + ' connect(' + fd + ',') for connection in connections):
+            raise ValueError('client binding is not the observed manager socket')
+    CONTEXTS.verify_trace(re.sub(r'^\d+ (?:connect|bind)\([^\n]*\n?', '', text, flags=re.M), binary)
 
 
 def verify_user_report(report, active, uid):
