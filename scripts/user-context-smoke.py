@@ -48,10 +48,14 @@ def verify_active_trace(text, binary, uid, target=None):
         # sd-bus may bind its stream client to a temporary abstract Unix name.
         # This creates no filesystem entry or listener; allow only the query's
         # own socket, subsequently connected to the declared manager.
+        # systemd prints a random uint64 with PRIx64, without zero padding.
         binding = re.fullmatch(query_pid + r' bind\((\d+), \{sa_family=AF_UNIX, '
-                               r'sun_path=@"[0-9a-f]{16}/bus/systemctl/"\}, \d+\)\s+= 0', line)
+                               r'sun_path=@"([0-9a-f]{1,16})/bus/systemctl/"\}, (\d+)\)\s+= 0', line)
         if binding is None:
             raise ValueError('unexpected user-query socket binding')
+        # sockaddr_un: two-byte family, abstract-name NUL, then ASCII name.
+        if int(binding[3]) != 3 + len(binding[2]) + len('/bus/systemctl/'):
+            raise ValueError('unexpected user-query socket address length')
         fd = binding[1]
         created = re.search(r'^' + query_pid + r' socket\(AF_UNIX, SOCK_STREAM\|SOCK_CLOEXEC\|SOCK_NONBLOCK, 0\)\s+= '
                             + fd + r'$', text, re.M)

@@ -1,4 +1,6 @@
 import importlib.util
+import json
+import re
 from pathlib import Path
 import unittest
 
@@ -36,6 +38,26 @@ class UserContextSmokeTests(unittest.TestCase):
                         trace.replace('/run/user/1000/', '/run/user/0/')):
             with self.assertRaises(ValueError):
                 SMOKE.verify_active_trace(changed, Path('/capagent'), 1000)
+
+
+class UserQueryNonceTests(unittest.TestCase):
+    def test_native_short_nonce_and_bounded_widths(self):
+        fixture = Path(__file__).parent / 'fixtures/context-trace'
+        trace = (fixture / 'active-short-nonce.strace').read_text()
+        target = json.loads((fixture / 'active-short-nonce-provenance.json').read_text())
+        for nonce in ('0', 'a', '64b6565d8dfaa4a', 'ffffffffffffffff', '', 'f' * 17, 'nothex'):
+            changed = trace.replace('64b6565d8dfaa4a/bus/systemctl/', nonce + '/bus/systemctl/')
+            changed = re.sub(r'(bind\(.*sun_path=@"[^"\n]+"\}, )\d+',
+                             lambda match: match[1] + str(18 + len(nonce)), changed)
+            with self.subTest(nonce=nonce):
+                if nonce and len(nonce) <= 16 and all(char in '0123456789abcdef' for char in nonce):
+                    SMOKE.verify_active_trace(changed, Path('/capagent'), target['uid'], target)
+                else:
+                    with self.assertRaises(ValueError):
+                        SMOKE.verify_active_trace(changed, Path('/capagent'), target['uid'], target)
+        changed = re.sub(r'(bind\(.*sun_path=@"[^"\n]+"\}, )\d+', r'\g<1>34', trace)
+        with self.assertRaises(ValueError):
+            SMOKE.verify_active_trace(changed, Path('/capagent'), target['uid'], target)
 
 
 if __name__ == '__main__':
