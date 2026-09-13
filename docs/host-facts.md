@@ -5,10 +5,10 @@ PID, user and network namespaces. Bare invocation uses the same JSON mode.
 `--runtime podman` includes these facts in its existing runtime report.
 Alternate target identities remain outside this mode.
 
-The initial host slice reports OS identity, kernel release and architecture,
+The M2 host report includes OS identity, kernel release and architecture,
 systemd installation, PID-1 state, utility presence and version, cgroup topology,
-namespace identities and Linux security state. Network/filesystem prerequisites
-follow in the final M2 slice.
+namespace identities, Linux security state, registered filesystems, network
+protocol registrations and resolver configuration.
 
 Host-only reports have empty runtime/capability maps and no
 `evaluation.requirement`. Exit 0 means collection completed; exit 2 means required
@@ -68,4 +68,26 @@ SELinux enforcement, active LSMs, AppArmor enablement/profiles, seccomp actions,
 process-leader seccomp/NoNewPrivs state and user-namespace sysctl constraints.
 Missing optional vendor sysctls remain unobserved. Unmounted or restricted
 securityfs remains unknown unless another complete live source establishes a
-negative state. No unshare, setns, namespace creation or mutating prctl is used.
+negative state. Host probes perform no unshare, setns, namespace creation or security-policy setters.
+
+## Filesystem and network prerequisites
+
+`/proc/filesystems` records registered filesystem types, including overlay and
+FUSE. This is not a mount-permission or storage-readiness test. Protocol registration
+comes from the current network namespace's procfs protocol table. The collector
+creates no sockets and sends no traffic. IPv6 all/default disable controls are
+reported as individual settings, not as proof that every interface is enabled.
+Incomplete tables retain positive registrations but cannot establish absence.
+
+Resolver observations include configured nameservers, domain/search values and
+recognized options from scoped `resolv.conf`. Domain and search assignments use
+the last valid directive. Malformed or unsupported directives mark the observation
+partial without echoing arbitrary input. Missing configuration is recorded as
+absence; unreadable files and symlink errors remain unknown. These values establish
+neither host DNS reachability nor container DNS usability.
+
+Native checks compare the emitted kernel/UID against independent measurements and
+inspect the complete passive trace. Go's anonymous-memory mapping labels are an
+allowed private-process operation; security-policy setters and network operations
+are rejected. The supported-host checks run as actual user and root processes in
+CI. Captures and trace reports are development evidence, not a complete OS matrix.

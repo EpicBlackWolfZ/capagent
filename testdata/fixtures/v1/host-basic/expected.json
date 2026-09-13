@@ -107,6 +107,47 @@
       },
       {
         "host": {
+          "filesystems": {
+            "registered": [
+              {
+                "name": "overlay",
+                "nodev": true
+              },
+              {
+                "name": "fuse",
+                "nodev": true
+              },
+              {
+                "name": "ext4",
+                "nodev": false
+              }
+            ],
+            "overlay_registered": true,
+            "fuse_registered": true
+          }
+        },
+        "id": "host.filesystems",
+        "probe_id": "host.filesystems",
+        "scope": {
+          "run_id": "host-basic",
+          "context_id": "current",
+          "runtime": "",
+          "endpoint": ""
+        },
+        "timestamp": "2026-09-13T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.filesystems.0",
+            "source": "proc/filesystems",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
           "kernel": {
             "release": "6.12.0-test",
             "version": "test kernel",
@@ -232,6 +273,53 @@
       },
       {
         "host": {
+          "network": {
+            "protocols": [
+              "TCP",
+              "UDP"
+            ],
+            "ipv4_tcp": true,
+            "ipv4_udp": true,
+            "ipv6_tcp": false,
+            "ipv6_udp": false,
+            "ipv6_all_disabled": null,
+            "ipv6_default_disabled": null
+          }
+        },
+        "id": "host.network",
+        "probe_id": "host.network",
+        "scope": {
+          "run_id": "host-basic",
+          "context_id": "current",
+          "runtime": "",
+          "endpoint": ""
+        },
+        "timestamp": "2026-09-13T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.network.0",
+            "source": "proc/self/net/protocols",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.network.1",
+            "source": "proc/sys/net/ipv6/conf/all/disable_ipv6",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.network.2",
+            "source": "proc/sys/net/ipv6/conf/default/disable_ipv6",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
           "os": {
             "id": "debian",
             "version_id": "12",
@@ -255,6 +343,43 @@
           {
             "id": "host.os.0",
             "source": "etc/os-release",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "resolver": {
+            "present": true,
+            "nameservers": [
+              "192.0.2.53"
+            ],
+            "domain": "",
+            "search": [
+              "example.test"
+            ],
+            "options": [
+              "ndots:2",
+              "rotate"
+            ]
+          }
+        },
+        "id": "host.resolver",
+        "probe_id": "host.resolver",
+        "scope": {
+          "run_id": "host-basic",
+          "context_id": "current",
+          "runtime": "",
+          "endpoint": ""
+        },
+        "timestamp": "2026-09-13T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.resolver.0",
+            "source": "etc/resolv.conf",
             "timestamp": "2026-09-13T00:00:00Z",
             "completeness": "complete"
           }

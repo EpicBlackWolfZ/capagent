@@ -45,9 +45,21 @@
       "content": "ID=debian\nVERSION_ID=12\n"
     },
     {
+      "path": "etc/resolv.conf",
+      "kind": "file",
+      "mode": 420,
+      "content": "nameserver 192.0.2.53\nsearch example.test\noptions ndots:2 rotate\n"
+    },
+    {
       "path": "proc/1",
       "kind": "directory",
       "mode": 493
+    },
+    {
+      "path": "proc/filesystems",
+      "kind": "file",
+      "mode": 420,
+      "content": "nodev\toverlay\nnodev\tfuse\next4\n"
     },
     {
       "path": "proc/self",
@@ -93,6 +105,11 @@
       "content": "1 0 0:1 / /sys/fs/cgroup rw - cgroup2 cgroup rw\n"
     },
     {
+      "path": "proc/self/net",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
       "path": "proc/self/ns",
       "kind": "directory",
       "mode": 493
@@ -127,6 +144,12 @@
       "path": "sys/module/apparmor",
       "kind": "directory",
       "mode": 493
+    },
+    {
+      "path": "proc/self/net/protocols",
+      "kind": "file",
+      "mode": 420,
+      "content": "protocol size sockets memory press maxhdr slab module\nTCP 1 0 0 no 0 yes kernel\nUDP 1 0 0 no 0 yes kernel\n"
     },
     {
       "path": "proc/self/ns/cgroup",

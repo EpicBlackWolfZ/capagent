@@ -2,7 +2,7 @@
 
 ## Current availability
 
-The CLI supports [passive current-user Podman discovery](podman-discovery.md) and [offline fixture evaluation](fixture-evaluation.md), including JSON reports and requirement verdicts. It reads the selected fixture through kernel-backed confinement and simulates every fixture command through the existing fake runner. Live `--runtime podman --active` permits the bounded local inspection described below. The M1.1 platform/probe hardening contracts and full verification gate continue to apply.
+The CLI supports [passive host facts](host-facts.md), [passive current-user Podman discovery](podman-discovery.md) and [offline fixture evaluation](fixture-evaluation.md), including JSON reports and requirement verdicts. It reads the selected fixture through kernel-backed confinement and simulates every fixture command through the existing fake runner. Live `--runtime podman --active` permits the bounded local inspection described below. The M1.1 platform/probe hardening contracts and full verification gate continue to apply.
 
 Execution targets Linux 5.6+ with working `openat2` confinement on amd64 and arm64. Syscall availability and security policy matter in addition to kernel version. `NewScopedOSReader` reports unsupported syscall availability or the relevant policy error when confinement cannot be established. There is no insecure pathname fallback. Older distribution fixtures, including historical RHEL 8 data, test parsers; they do not establish support for execution on those kernels.
 
@@ -10,7 +10,7 @@ Execution targets Linux 5.6+ with working `openat2` confinement on amd64 and arm
 
 Default evaluation is intended to observe host and runtime state without creating containers, pulling images, changing namespaces, writing configuration or modifying networking. Native filesystem/kernel APIs are preferred. Bounded read-only system metadata interrogation may be used through an explicit execution policy when needed.
 
-A command called `info` or `--version` is not automatically passive. Podman 5.8.4 rootless startup performs directory creation or chmod even for the global version flag; the passive application therefore constructs no command runner. An adapter must verify that its chosen interrogation does not initialize storage or otherwise mutate host state. Network reachability, registry authentication, writable storage tests and disposable container execution belong to the separate, explicitly enabled active track. `--active` currently enables only the reviewed local version/info sequence. The application validates the current identity, selected executable and named HOME/XDG policy before constructing its runner; version failure skips info. Workload probes remain deferred.
+A command called `info` or `--version` is not automatically passive. Podman 5.8.4 rootless startup performs directory creation or chmod even for the global version flag; passive runtime discovery therefore never launches Podman. The separate host metadata policy permits only bounded `systemctl --version` interrogation. An adapter must verify that its chosen interrogation does not initialize storage or otherwise mutate host state. Network reachability, registry authentication, writable storage tests and disposable container execution belong to the separate, explicitly enabled active track. `--active` currently enables only the reviewed local version/info sequence. The application validates the current identity, selected executable and named HOME/XDG policy before constructing its runner; version failure skips info. Workload probes remain deferred.
 
 The info invocation is `podman --remote=false --trace=false info --format json`. The local-only `--trace=false` option is supplied at its default value: remote-only builds and configuration-selected remote mode reject it during flag parsing. Unknown-flag failure is final; there is no unguarded or remote retry. Source checks cover Podman 3.4.4, 4.4.4 and 5.8.4; native smoke tests reject configured-remote and a pinned remote-only client before connection attempts. See [inspection policy](podman-discovery.md#active-inspection).
 
@@ -81,8 +81,8 @@ This does not authorize general production shell/utility probes. The runner
 provides no shell-command-string API, but it is not an executable allowlist or
 sandbox: adapters must select reviewed commands and literal arguments whose
 passive behavior is established. Inspection that initializes storage or mutates
-runtime state must not be classified as passive. No live probe is added by these
-execution primitives.
+runtime state must not be classified as passive. The live host systemd probe uses this bounded policy; other utility probes require
+their own reviewed execution policy.
 
 Credentials, supplementary groups, namespaces, umask and other process attributes
 still come from the executing process. Target-user switching belongs to the

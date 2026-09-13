@@ -1153,9 +1153,171 @@
             }
           },
           "additionalProperties": false
+        },
+        "filesystems": {
+          "type": "object",
+          "properties": {
+            "registered": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "nodev": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "overlay_registered": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "fuse_registered": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "network": {
+          "type": "object",
+          "properties": {
+            "protocols": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 4096
+              }
+            },
+            "ipv4_tcp": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "ipv4_udp": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "ipv6_tcp": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "ipv6_udp": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "ipv6_all_disabled": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "ipv6_default_disabled": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "resolver": {
+          "type": "object",
+          "properties": {
+            "present": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "nameservers": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 4096
+              }
+            },
+            "domain": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "search": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 4096
+              }
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 4096
+              }
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "evaluation"
+        ],
+        "properties": {
+          "evaluation": {
+            "properties": {
+              "scope": {
+                "properties": {
+                  "runtime": {
+                    "const": ""
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "runtimes": {
+            "maxProperties": 0
+          },
+          "capabilities": {
+            "maxProperties": 0
+          },
+          "evaluation": {
+            "properties": {
+              "evidence": {
+                "maxItems": 0
+              },
+              "collection": {
+                "const": "passive"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }

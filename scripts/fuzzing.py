@@ -25,6 +25,8 @@ TARGETS = {
     'FuzzOrchestrator': ('tests/contract', 4096),
     'FuzzReportJSON': ('tests/contract', 65536),
     'FuzzPodmanInputs': ('tests/contract', 65536),
+    'FuzzOSRelease': ('tests/contract', 65536),
+    'FuzzHostNetwork': ('tests/contract', 65536),
 }
 
 

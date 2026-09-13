@@ -51,3 +51,35 @@ func TestHostProcfsPathsAndMountDecoding(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestProtocolTableCompleteness(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct {
+		row   string
+		valid bool
+	}{
+		{"protocol size sockets memory press maxhdr slab module", true}, {"TCPv6 1 0 0 no 0 yes kernel", true},
+		{"broken", false}, {"invalid! 1 0 0 no 0 yes kernel", false}, {"TCP NaN 0 0 no 0 yes kernel", false},
+		{"protocol invalid sockets memory press maxhdr slab module", false},
+	} {
+		if _, err := parseProtocolLine(tt.row); (err == nil) != tt.valid {
+			t.Fatal(tt.row, err)
+		}
+	}
+	mem := NewMemPlatformReader()
+	for _, dir := range []string{"/proc", "/proc/self", "/proc/self/net"} {
+		mem.AddDir(dir, 0o755)
+	}
+	mem.AddFile("/proc/self/net/protocols", []byte("TCP 1 0 0 no 0 yes kernel\n"), 0o644)
+	files := NewScopedMemReader("/", mem)
+	defer files.Close()
+	entries, err := NewHostProcfsReader(files).Protocols(t.Context())
+	if err == nil || len(entries) != 1 {
+		t.Fatal("missing header was ignored")
+	}
+	mem.AddFile("/proc/self/net/protocols", []byte("protocol size sockets memory press maxhdr slab module\n"+
+		"TCP 1 0 0 no 0 yes kernel\n"), 0o644)
+	if _, err = NewHostProcfsReader(files).Protocols(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+}

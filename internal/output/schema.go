@@ -296,6 +296,10 @@ func (r *Report) Validate() error {
 		}
 	}
 	if r.Evaluation != nil {
+		if r.Evaluation.Scope.Runtime == "" && (len(r.Runtimes) > 0 || len(r.Capabilities) > 0 ||
+			len(r.Evaluation.Evidence) > 0 || r.Evaluation.Collection == "active") {
+			return errors.New("host collection cannot contain runtime verdicts or active collection")
+		}
 		return r.Evaluation.Validate()
 	}
 

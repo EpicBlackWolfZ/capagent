@@ -84,6 +84,29 @@ func snapshotHost(input *model.HostObservation) *model.HostObservation {
 	if out == nil {
 		return nil
 	}
+	out.Filesystems = copyValue(out.Filesystems)
+	if f := out.Filesystems; f != nil {
+		f.Registered = slices.Clone(f.Registered)
+		f.OverlayRegistered = copyValue(f.OverlayRegistered)
+		f.FUSERegistered = copyValue(f.FUSERegistered)
+	}
+	out.Network = copyValue(out.Network)
+	if n := out.Network; n != nil {
+		n.Protocols = slices.Clone(n.Protocols)
+		n.IPv4TCP = copyValue(n.IPv4TCP)
+		n.IPv4UDP = copyValue(n.IPv4UDP)
+		n.IPv6TCP = copyValue(n.IPv6TCP)
+		n.IPv6UDP = copyValue(n.IPv6UDP)
+		n.IPv6AllDisabled = copyValue(n.IPv6AllDisabled)
+		n.IPv6DefaultDisabled = copyValue(n.IPv6DefaultDisabled)
+	}
+	out.Resolver = copyValue(out.Resolver)
+	if r := out.Resolver; r != nil {
+		r.Present = copyValue(r.Present)
+		r.Nameservers = slices.Clone(r.Nameservers)
+		r.Search = slices.Clone(r.Search)
+		r.Options = slices.Clone(r.Options)
+	}
 	out.OS = copyValue(out.OS)
 	if out.OS != nil {
 		out.OS.IDLike = slices.Clone(out.OS.IDLike)

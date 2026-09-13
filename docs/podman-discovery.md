@@ -9,7 +9,7 @@ capagent --runtime podman --context=current --podman-path /usr/bin/podman --json
 
 Run capagent as the intended deployment user. Only `--context=current` is supported. Alternate users, other runtimes and remote endpoints are rejected. Add `--active` only when Podman startup writes are acceptable. Fixture and live selection are mutually exclusive. Linux 5.6+ with working `openat2` confinement is required; see [security](security.md).
 
-Without `--active`, the application reads credentials, local account metadata, namespace links and executable metadata. It constructs no command runner and never launches Podman, including when capagent runs as root. It does not inspect Podman sockets or infer availability from them.
+Without `--active`, the application reads credentials, local account metadata, namespace links, executable metadata and the [passive host facts](host-facts.md). Host metadata may invoke the bounded `systemctl --version` policy. Passive runtime discovery never launches Podman, including when capagent runs as root. It does not inspect Podman sockets or infer availability from them.
 
 ## Selection and interpretation
 
@@ -19,12 +19,12 @@ The report separates these facts:
 
 - `context` and `evaluation.current`/`target` contain the actual effective numeric identity. UID 0 is root. Current and target are separate snapshots of the same identity. Real/effective credential mismatch prevents runtime collection.
 - Supplementary groups come from the kernel. Missing local passwd metadata does not erase a known UID/GID. Account lookup uses bounded local-file reads and does not provide arbitrary NSS directory-service lookup.
-- `evaluation.namespaces` contains observed `user`, `mnt` and `net` namespace link identifiers. Missing identifiers stay unknown.
+- `evaluation.namespaces` contains observed `user`, `pid`, `net`, `mnt`, `ipc`, `uts` and `cgroup` namespace link identifiers. Missing identifiers stay unknown.
 - `runtimes.podman.installed` is true for a selected regular file, false for a complete unsuccessful search, or null when discovery is uncertain. `path` retains the selected candidate or explicit override.
 - `file.executable_bits` describes permission bits, not successful execution. Nullable ownership distinguishes an observed root owner from unknown ownership.
 - `accessible` remains null. `version` and `cli_runnable` are unobserved in passive mode. No rootless, storage, DNS, engine-access or Quadlet capability is inferred from file presence or a UID.
 
-`evaluation.mode` and `provenance` are both `live`; `evaluation.collection` is `passive` or `active`. Host fields that this probe set does not measure stay unobserved. Reports preserve observations, diagnostic codes and requirement results. `--debug` additionally prints codes on stderr.
+`evaluation.mode` and `provenance` are both `live`; `evaluation.collection` is `passive` or `active`. Host observations have their own completeness and do not change the runtime requirement verdict. Reports preserve observations, diagnostic codes and requirement results. `--debug` additionally prints codes on stderr.
 
 ## Why passive discovery defers version execution
 
@@ -74,7 +74,7 @@ Runtime cgroups are reported under `runtimes.podman`; they are not direct host m
 | Recognizable CLI and complete local info | SATISFIED / 0 |
 | Good CLI; failed, malformed, partial or missing-field info | INDETERMINATE / 2 |
 | Version failure or invalid inspection environment | INDETERMINATE / 2; no info command |
-| No executable candidates | UNSATISFIED / 1; no commands |
+| No executable candidates | UNSATISFIED / 1; no Podman commands |
 | Complete info with CNI or a missing Netavark helper | Inspection may be SATISFIED / 0; separate Netavark verdict remains negative/unknown |
 
 Exit 0 authorizes no deployment. Rootless suitability, user systemd, Quadlet and workload requirements remain future work. Consumers can require both inspection predicates:

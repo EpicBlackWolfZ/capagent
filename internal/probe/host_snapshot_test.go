@@ -46,3 +46,29 @@ func TestHostSnapshotOwnsNestedValues(t *testing.T) {
 		t.Fatal("host measurement aliased its producer")
 	}
 }
+
+func TestHostPrerequisiteSnapshot(t *testing.T) {
+	t.Parallel()
+	present := true
+	original := model.Observation{Host: &model.HostObservation{
+		Filesystems: &model.FilesystemObservation{Registered: []model.FilesystemRegistration{{Name: "overlay"}},
+			OverlayRegistered: &present, FUSERegistered: &present},
+		Network: &model.NetworkObservation{Protocols: []string{"TCP"}, IPv4TCP: &present, IPv4UDP: &present, IPv6TCP: &present,
+			IPv6UDP: &present, IPv6AllDisabled: &present, IPv6DefaultDisabled: &present},
+		Resolver: &model.ResolverObservation{Present: &present, Nameservers: []string{"192.0.2.53"},
+			Search: []string{"example.test"}, Options: []string{"rotate"}},
+	}}
+	retained := SnapshotObservation(original).Host
+	present = false
+	original.Host.Filesystems.Registered[0].Name = snapshotChanged
+	original.Host.Network.Protocols[0] = snapshotChanged
+	original.Host.Resolver.Nameservers[0] = snapshotChanged
+	original.Host.Resolver.Search[0] = snapshotChanged
+	original.Host.Resolver.Options[0] = snapshotChanged
+	if !*retained.Filesystems.OverlayRegistered || retained.Filesystems.Registered[0].Name != "overlay" ||
+		!*retained.Network.IPv6DefaultDisabled || retained.Network.Protocols[0] != "TCP" || !*retained.Resolver.Present ||
+		retained.Resolver.Nameservers[0] != "192.0.2.53" || retained.Resolver.Search[0] != "example.test" ||
+		retained.Resolver.Options[0] != "rotate" {
+		t.Fatal("prerequisite snapshot aliased its producer")
+	}
+}
