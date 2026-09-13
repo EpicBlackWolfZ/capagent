@@ -126,6 +126,16 @@ capagent --fixture testdata/fixtures/v1/engine-denied --json
 `requirement` member contains its complete JSON requirement over delivered IDs.
 Fixtures are explicitly synthetic and do not assert deployment success.
 
+Sanitized native measurements in `testdata/podman/engine/` cover Nobara Podman
+5.8.4 rootless and Ubuntu Podman 4.9.3 rootless/rootful on amd64. Their replay
+uses the real info parser and capability mappings, retaining typed configuration
+projections and source digests. Raw configuration contents are not captured;
+the info JSON is reconstructed from published fields. These captures establish
+inspection and mapping behavior for those builds. They do not qualify other
+distribution patches, architectures, or workload operations. CI separately
+checks delegated contexts, passive traces and packaged launchers; arm64 artifact
+verification is static rather than native execution.
+
 ## Parsing and resource contract
 
 The pure-Go compile-time parser dependency is `go-toml/v2` v2.4.3, confined to
