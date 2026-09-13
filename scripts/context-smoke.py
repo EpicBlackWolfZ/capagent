@@ -71,8 +71,34 @@ def verify_subids(report, account):
             raise ValueError('mapping privilege metadata was lost or overstated')
 
 
+def joined_context_trace(text):
+    # strace can print ??? for threads interrupted by a sibling's exit_group.
+    # Accept only terminal records tied to a known thread group and observed exit;
+    # real incomplete syscalls and unknown processes still fail closed.
+    interrupted = re.findall(r'^(\d+) \?\?\?\( <unfinished \.\.\.>$', text, re.M)
+    filtered = re.sub(r'^\d+ \?\?\?\( <unfinished \.\.\.>\n', '', text, flags=re.M)
+    joined = PASSIVE.joined_trace(filtered)
+    parents = dict((child, parent) for parent, child in re.findall(
+        r'^(\d+)\s+clone3?\(.*CLONE_THREAD.*\)\s+= (\d+)$', joined, re.M))
+    def group(pid):
+        seen = set()
+        while pid in parents:
+            if pid in seen:
+                raise ValueError('cyclic thread trace')
+            seen.add(pid)
+            pid = parents[pid]
+        return pid
+    exits = re.findall(r'^(\d+) exit_group\((\d+)\)', joined, re.M)
+    for pid in interrupted:
+        terminal = re.search(r'^' + pid + r' \+\+\+ exited with (\d+) \+\+\+$', joined, re.M)
+        if pid not in parents or terminal is None or not any(
+                group(owner) == group(pid) and code == terminal[1] for owner, code in exits):
+            raise ValueError('unexplained interrupted syscall trace')
+    return joined
+
+
 def verify_trace(text, binary):
-    text = PASSIVE.joined_trace(text)
+    text = joined_context_trace(text)
     # No container/namespace creation, host mutation, user-manager connection, or arbitrary executable.
     if re.search(r'\b(?:connect|bind|listen|unshare|setns|mount|mkdir(?:at)?|unlink(?:at)?|rename(?:at2?)?|chmod|chown)\(', text):
         raise ValueError('passive delegation changed host state or connected to a service')
@@ -164,18 +190,19 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     environment = {'PATH': '/usr/bin:/bin', 'LC_ALL': 'C', 'HOME': '/deliberately-wrong-launcher-home',
                    'XDG_RUNTIME_DIR': '/deliberately-wrong-launcher-runtime', 'DBUS_SESSION_BUS_ADDRESS': 'tcp:host=127.0.0.1,port=9'}
-    for execution in ('memfd', 'cache') if args.packaged else ('native',):
-        if args.packaged:
-            environment.update(MICROFAT_EXEC_MODE=execution, MICROFAT_CACHE_DIR=str(output / 'cache'))
-        for kind, selector in (('username', 'user:' + account.pw_name), ('numeric', 'uid:' + str(account.pw_uid))):
-            trace = None if args.packaged else output / (kind + '.strace')
-            report = run_case(binary, selector, environment, trace)
-            verify_report(report, 0, account.pw_uid, local_groups(account))
-            if not args.packaged:
-                verify_subids(report, account)
-            (output / (execution + '-' + kind + '.json')).write_text(json.dumps(report, indent=2) + '\n')
-            if trace:
-                verify_trace(trace.read_text(), binary)
+    with tempfile.TemporaryDirectory(prefix='capagent-package-cache-') as cache:
+        for execution in ('memfd', 'cache') if args.packaged else ('native',):
+            if args.packaged:
+                environment.update(MICROFAT_EXEC_MODE=execution, MICROFAT_CACHE_DIR=cache)
+            for kind, selector in (('username', 'user:' + account.pw_name), ('numeric', 'uid:' + str(account.pw_uid))):
+                trace = None if args.packaged else output / (kind + '.strace')
+                report = run_case(binary, selector, environment, trace)
+                verify_report(report, 0, account.pw_uid, local_groups(account))
+                if not args.packaged:
+                    verify_subids(report, account)
+                (output / (execution + '-' + kind + '.json')).write_text(json.dumps(report, indent=2) + '\n')
+                if trace:
+                    verify_trace(trace.read_text(), binary)
     if not args.packaged:
         # Runtime directory setup belongs to the test harness, never the probe.
         runtime = Path('/run/user/' + str(account.pw_uid))
