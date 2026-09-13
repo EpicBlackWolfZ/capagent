@@ -106,10 +106,10 @@ make fuzz-stress       # Every target, 60 seconds each
 python3 -B scripts/fuzzing.py stress --target FuzzRegistryDAG
 ```
 
-There are 13 required targets: mountinfo, cgroups, filesystems, sysfs state,
+There are 14 required targets: mountinfo, cgroups, filesystems, sysfs state,
 cgroup names, subpaths, scoped symlink graphs, command specifications,
 environment policy, bounded buffers, registry DAGs, orchestrator outcomes,
-and report JSON. os-release belongs to its future parser implementation (#15).
+report JSON, and Podman version/info input. os-release belongs to its future parser implementation (#15).
 JSON fuzzing tests the shipped DTO/serialization and schema contracts; it does
 not assume the partial DTO validator implements the entire schema (#64).
 
@@ -206,3 +206,11 @@ Application tests cover concurrent borrowed services, close-after-join ownership
 ## Passive Podman discovery
 
 `tests/contract/podman_live_test.go` checks live-mode schema/provenance pairs, version replay goldens and the CLI availability consumer. Unit tests exercise missing/denied paths, current credentials, fresh timestamps, command failure sanitization and immutable observation transfer. The discovery smoke script traces the actual CGO-disabled binary under the current user and, in CI, host root; it rejects subprocess execution, write-capable opens and filesystem mutations. Live version execution remains disabled following the startup review documented in [Podman discovery](podman-discovery.md).
+
+## Native Podman inspection evidence
+
+CI keeps the passive syscall smoke check for both the runner account and host root. It also builds a CGO-disabled capagent binary and runs `scripts/podman-inspection-smoke.py` on the disposable hosted machine. The active harness requires root, `GITHUB_ACTIONS=true` and `--ephemeral-host`; do not use it on a persistent host. It temporarily supplies owned rootful storage configuration and restores the original file even on failure. Rootless state uses dedicated HOME/XDG directories. Runtime state and traced pause processes remain until runner teardown; the harness never runs reset/prune.
+
+The root tracer uses `strace -u <account>` so UID/GID/groups and setuid mapping helpers retain their normal semantics. Both real accounts run fresh and initialized inspection. A delayed `execve` exceeds the version deadline and traces the runner's cancellation/reaping path. Configured remote mode and a checksum-pinned Podman 5.8.4 remote-only client must fail before any connection attempt. Local D-Bus attempts are recorded separately from remote transports. Captured reports, syscall traces, environment policy, selected argv, process remnants and package identity are uploaded under `.work/gate/podman/`. These checks establish inspection behavior on the tested runner, not general workload readiness or a distribution support matrix.
+
+Authentic parser captures and their redaction/source notes live in `testdata/podman/info/` and `testdata/podman/version/`. The historical 3.x/4.x info sources are published YAML captures transcoded into the equivalent JSON shape; the 5.x capture came from a native local command. Missing source fields stay missing. Combined fixtures use synthetic contexts and failure mutations explicitly labeled as such.

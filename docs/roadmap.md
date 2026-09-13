@@ -23,7 +23,7 @@ M0/M1 initial foundation
   → M14 knowledge → M15 broader corpus → M16 wider real matrix
   → M18 final hardening → M19 API freeze → M20 guides → M21 release
 
-M17 active verification is an optional experimental track after its prerequisites.
+M17 workload verification is an optional experimental track after its prerequisites. The early phase 3 `--active` slice permits only local Podman version/info inspection and its startup effects.
 ```
 
 Pure parser, fixture and domain work may proceed before the hardening gate closes. Integration that executes platform or runtime operations must use the completed M1.1 contracts. Each capability gets fixtures and real validation when introduced; M15/M16 expand coverage rather than introducing testing for the first time.
@@ -90,9 +90,9 @@ Exit: one deterministic fixture can pass through facts, observations, evidence, 
 | M2 | [#15](https://github.com/EpicBlackWolfZ/capagent/issues/15) os-release; [#16](https://github.com/EpicBlackWolfZ/capagent/issues/16) kernel; [#17](https://github.com/EpicBlackWolfZ/capagent/issues/17) systemd; [#18](https://github.com/EpicBlackWolfZ/capagent/issues/18) cgroups; [#19](https://github.com/EpicBlackWolfZ/capagent/issues/19) namespaces/security; [#65](https://github.com/EpicBlackWolfZ/capagent/issues/65) platform syscall adapters; [#83](https://github.com/EpicBlackWolfZ/capagent/issues/83) filesystem/network prerequisites | Accurate scoped observations, unknown/error preservation and a real supported-host fact-to-JSON test. Version strings and namespace-file presence do not by themselves prove capability usability. |
 | M3 | [#3](https://github.com/EpicBlackWolfZ/capagent/issues/3) model validation; [#20](https://github.com/EpicBlackWolfZ/capagent/issues/20) identities; [#21](https://github.com/EpicBlackWolfZ/capagent/issues/21) subordinate IDs/helpers; [#22](https://github.com/EpicBlackWolfZ/capagent/issues/22) XDG/user systemd | Explicit current/target credentials and groups, validated ranges/ownership, and real supported rootless checks. Required subordinate range size is workload-specific. |
 | M4 | [#23](https://github.com/EpicBlackWolfZ/capagent/issues/23) runtime discovery | Explicit executable and endpoint policy; binary existence, service availability and target accessibility stay distinct. |
-| M5 | [#24](https://github.com/EpicBlackWolfZ/capagent/issues/24) versions; [#25](https://github.com/EpicBlackWolfZ/capagent/issues/25) effective info; [#82](https://github.com/EpicBlackWolfZ/capagent/issues/82) lifecycle/helper observations | Real Podman fixtures and bounded target-scoped observations whose passive behavior is verified. |
+| M5 | [#24](https://github.com/EpicBlackWolfZ/capagent/issues/24) versions; [#25](https://github.com/EpicBlackWolfZ/capagent/issues/25) effective info; [#82](https://github.com/EpicBlackWolfZ/capagent/issues/82) lifecycle/helper observations | Real Podman fixtures and bounded target-scoped observations whose command behavior and opt-in boundary are verified. |
 
-The phase 2 current-user slices of #65/#20/#3 and local Podman discovery from #23 are implemented. #24 has a bounded version parser, observation and replay path. Live version execution is deferred: source review and traces confirmed rootless startup writes even for `--version`. These broader issues remain open for their remaining acceptance. See [local Podman discovery](podman-discovery.md).
+The phase 2 current-user slices of #65/#20/#3 and local Podman discovery from #23 are implemented. Phase 3 adds live opt-in version/info collection for #24/#25, a complete inspection predicate and authentic 3.x/4.x/5.x parser captures. The narrow #67/#68/#77 slices reuse runtime evidence and explicit dispatch; their broader acceptance remains open. Version and info require `--active` because Podman startup can write state. Alternate identities, configuration merging, lifecycle helpers and workload verification remain deferred. See [local Podman discovery](podman-discovery.md).
 
 
 Read-only system metadata interrogation such as `systemctl --version` must use the explicit command policy. It is not permission for arbitrary shell utilities. Active namespace creation, storage writes, network reachability tests and container execution remain outside default observation.
@@ -177,6 +177,7 @@ These IDs describe intended scope. `runtime.podman.netavark` is emitted by info 
 - `runtime.podman.quadlet`: Podman Quadlet generator present and functional.
 - `runtime.podman.kube_apply`: Podman `kube play`/`apply` support.
 - `runtime.podman.generate_systemd`: Podman legacy systemd unit generation.
+- `runtime.podman.info`: Selected local engine returned complete effective inspection fields; runtime evidence with derived confidence, no workload claim.
 - `runtime.podman.netavark`: Netavark network backend configured.
 - `runtime.podman.cni`: Legacy CNI network backend configured.
 - `runtime.podman.aardvark`: Aardvark container DNS service active.
