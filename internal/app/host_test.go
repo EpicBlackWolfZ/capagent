@@ -42,6 +42,10 @@ func TestHostReportHasNoDeploymentVerdict(t *testing.T) {
 	if len(wire["runtimes"].(map[string]any)) != 0 || len(wire["capabilities"].(map[string]any)) != 0 {
 		t.Fatal("invented runtime or capability")
 	}
+	report.Host.Completeness = string(model.Complete)
+	if hostExit(report) != ExitSatisfied {
+		t.Fatal("complete host collection failed")
+	}
 	if report.Host.OS != "debian" {
 		t.Fatal("lost collected OS")
 	}

@@ -26,7 +26,8 @@ func TestOSReleaseContract(t *testing.T) {
 			mem.AddFile("/etc/os-release", []byte(tt.text), 0o644)
 			files := platform.NewScopedMemReader("/", mem)
 			defer files.Close()
-			env := platform.NewEnvironment(nil, nil, nil, nil).WithFiles(files).WithScope(model.EvaluationScope{RunID: "run", ContextID: "current"})
+			env := platform.NewEnvironment(nil, nil, nil, nil).WithFiles(files).
+				WithScope(model.EvaluationScope{RunID: "run", ContextID: hostTestContext})
 			obs, _ := (OSReleaseProbe{Now: func() time.Time { return time.Unix(1, 0) }}).Run(t.Context(), env)
 			if obs.Host.OS.ID != tt.id || obs.Host.OS.VersionID != tt.version || (obs.Completeness != model.Complete) != tt.partial {
 				t.Fatalf("unexpected observation: %+v %+v", obs, obs.Host.OS)

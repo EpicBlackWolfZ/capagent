@@ -14,7 +14,7 @@
     "os_version": "12",
     "kernel": "6.12.0-test",
     "architecture": "amd64",
-    "cgroup_version": "unknown",
+    "cgroup_version": "v2",
     "systemd": false
   },
   "runtimes": {},
@@ -33,6 +33,78 @@
     "target": null,
     "namespaces": [],
     "observations": [
+      {
+        "host": {
+          "cgroups": {
+            "mode": "v2",
+            "memberships": [
+              {
+                "hierarchy": "0",
+                "controllers": [],
+                "path": "/"
+              }
+            ],
+            "mounts": [
+              {
+                "path": "/sys/fs/cgroup",
+                "root": "/",
+                "type": "cgroup2",
+                "controller_path": "/sys/fs/cgroup/",
+                "controllers": [
+                  "cpu",
+                  "memory"
+                ],
+                "subtree_control": [
+                  "cpu"
+                ]
+              }
+            ]
+          }
+        },
+        "id": "host.cgroups",
+        "probe_id": "host.cgroups",
+        "scope": {
+          "run_id": "host-basic",
+          "context_id": "current",
+          "runtime": "",
+          "endpoint": ""
+        },
+        "timestamp": "2026-09-13T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.cgroups.0",
+            "source": "proc/self/mountinfo",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.cgroups.1",
+            "source": "proc/self/cgroup",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.cgroups.2",
+            "source": "statfs.cgroup_mount",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.cgroups.3",
+            "source": "sys/fs/cgroup/cgroup.controllers",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.cgroups.4",
+            "source": "sys/fs/cgroup/cgroup.subtree_control",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
       {
         "host": {
           "kernel": {
@@ -69,6 +141,97 @@
       },
       {
         "host": {
+          "namespaces": {
+            "namespaces": [
+              {
+                "kind": "user",
+                "id": "user:[42]"
+              },
+              {
+                "kind": "pid",
+                "id": "pid:[43]"
+              },
+              {
+                "kind": "net",
+                "id": "net:[44]"
+              },
+              {
+                "kind": "mnt",
+                "id": "mnt:[45]"
+              },
+              {
+                "kind": "ipc",
+                "id": "ipc:[46]"
+              },
+              {
+                "kind": "uts",
+                "id": "uts:[47]"
+              },
+              {
+                "kind": "cgroup",
+                "id": "cgroup:[48]"
+              }
+            ]
+          }
+        },
+        "id": "host.namespaces",
+        "probe_id": "host.namespaces",
+        "scope": {
+          "run_id": "host-basic",
+          "context_id": "current",
+          "runtime": "",
+          "endpoint": ""
+        },
+        "timestamp": "2026-09-13T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.namespaces.0",
+            "source": "proc/self/ns/user",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.1",
+            "source": "proc/self/ns/pid",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.2",
+            "source": "proc/self/ns/net",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.3",
+            "source": "proc/self/ns/mnt",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.4",
+            "source": "proc/self/ns/ipc",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.5",
+            "source": "proc/self/ns/uts",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.namespaces.6",
+            "source": "proc/self/ns/cgroup",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
           "os": {
             "id": "debian",
             "version_id": "12",
@@ -92,6 +255,89 @@
           {
             "id": "host.os.0",
             "source": "etc/os-release",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "security": {
+            "selinux": "disabled",
+            "lsms": [
+              "capability",
+              "landlock"
+            ],
+            "apparmor_enabled": false,
+            "apparmor_profiles": [],
+            "seccomp_mode": 0,
+            "seccomp_actions": [
+              "kill_process",
+              "kill_thread",
+              "trap",
+              "errno",
+              "user_notif",
+              "trace",
+              "log",
+              "allow"
+            ],
+            "no_new_privileges": false,
+            "process_scope": "process-leader",
+            "unprivileged_userns_clone": null,
+            "max_user_namespaces": 0
+          }
+        },
+        "id": "host.security",
+        "probe_id": "host.security",
+        "scope": {
+          "run_id": "host-basic",
+          "context_id": "current",
+          "runtime": "",
+          "endpoint": ""
+        },
+        "timestamp": "2026-09-13T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.security.0",
+            "source": "sys/kernel/security/lsm",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.1",
+            "source": "sys/fs/selinux/enforce",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.2",
+            "source": "sys/module/apparmor/parameters/enabled",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.3",
+            "source": "proc/self/status",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.4",
+            "source": "proc/sys/kernel/seccomp/actions_avail",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.5",
+            "source": "proc/sys/kernel/unprivileged_userns_clone",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.security.6",
+            "source": "proc/sys/user/max_user_namespaces",
             "timestamp": "2026-09-13T00:00:00Z",
             "completeness": "complete"
           }

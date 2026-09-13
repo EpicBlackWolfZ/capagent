@@ -17,11 +17,24 @@
       "Release": "6.12.0-test",
       "Version": "test kernel",
       "Machine": "x86_64"
+    },
+    "filesystems": {
+      "/sys/fs/cgroup": 1667723888
     }
   },
   "files": [
     {
       "path": "etc",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys",
       "kind": "directory",
       "mode": 493
     },
@@ -32,12 +45,32 @@
       "content": "ID=debian\nVERSION_ID=12\n"
     },
     {
-      "path": "proc",
+      "path": "proc/1",
       "kind": "directory",
       "mode": 493
     },
     {
-      "path": "proc/1",
+      "path": "proc/self",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/sys",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/fs",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/kernel",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/module",
       "kind": "directory",
       "mode": 493
     },
@@ -46,6 +79,142 @@
       "kind": "file",
       "mode": 420,
       "content": "init\n"
+    },
+    {
+      "path": "proc/self/cgroup",
+      "kind": "file",
+      "mode": 420,
+      "content": "0::/\n"
+    },
+    {
+      "path": "proc/self/mountinfo",
+      "kind": "file",
+      "mode": 420,
+      "content": "1 0 0:1 / /sys/fs/cgroup rw - cgroup2 cgroup rw\n"
+    },
+    {
+      "path": "proc/self/ns",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/self/status",
+      "kind": "file",
+      "mode": 420,
+      "content": "Seccomp:\t0\nNoNewPrivs:\t0\n"
+    },
+    {
+      "path": "proc/sys/kernel",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/sys/user",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/fs/cgroup",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/kernel/security",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/module/apparmor",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/self/ns/cgroup",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "cgroup:[48]"
+    },
+    {
+      "path": "proc/self/ns/ipc",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "ipc:[46]"
+    },
+    {
+      "path": "proc/self/ns/mnt",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "mnt:[45]"
+    },
+    {
+      "path": "proc/self/ns/net",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "net:[44]"
+    },
+    {
+      "path": "proc/self/ns/pid",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "pid:[43]"
+    },
+    {
+      "path": "proc/self/ns/user",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "user:[42]"
+    },
+    {
+      "path": "proc/self/ns/uts",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "uts:[47]"
+    },
+    {
+      "path": "proc/sys/kernel/seccomp",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/sys/user/max_user_namespaces",
+      "kind": "file",
+      "mode": 420,
+      "content": "0\n"
+    },
+    {
+      "path": "sys/fs/cgroup/cgroup.controllers",
+      "kind": "file",
+      "mode": 420,
+      "content": "cpu memory\n"
+    },
+    {
+      "path": "sys/fs/cgroup/cgroup.subtree_control",
+      "kind": "file",
+      "mode": 420,
+      "content": "cpu\n"
+    },
+    {
+      "path": "sys/kernel/security/lsm",
+      "kind": "file",
+      "mode": 420,
+      "content": "capability,landlock\n"
+    },
+    {
+      "path": "sys/module/apparmor/parameters",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/sys/kernel/seccomp/actions_avail",
+      "kind": "file",
+      "mode": 420,
+      "content": "kill_process kill_thread trap errno user_notif trace log allow\n"
+    },
+    {
+      "path": "sys/module/apparmor/parameters/enabled",
+      "kind": "file",
+      "mode": 420,
+      "content": "N\n"
     }
   ],
   "commands": []

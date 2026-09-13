@@ -962,6 +962,197 @@
             }
           },
           "additionalProperties": false
+        },
+        "cgroups": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "enum": [
+                "v1",
+                "v2",
+                "mixed",
+                "unavailable",
+                "unknown"
+              ]
+            },
+            "memberships": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "hierarchy": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "controllers": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  },
+                  "path": {
+                    "type": "string",
+                    "maxLength": 4096
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "mounts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "root": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "type": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "controller_path": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "controllers": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  },
+                  "subtree_control": {
+                    "type": [
+                      "array",
+                      "null"
+                    ],
+                    "items": {
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "namespaces": {
+          "type": "object",
+          "properties": {
+            "namespaces": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/namespace"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "security": {
+          "type": "object",
+          "properties": {
+            "selinux": {
+              "enum": [
+                "enforcing",
+                "permissive",
+                "disabled",
+                "unknown"
+              ]
+            },
+            "lsms": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string",
+                "maxLength": 4096
+              }
+            },
+            "apparmor_enabled": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "apparmor_profiles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "mode": {
+                    "enum": [
+                      "enforce",
+                      "complain",
+                      "kill",
+                      "unconfined"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "seccomp_mode": {
+              "enum": [
+                null,
+                0,
+                1,
+                2
+              ]
+            },
+            "seccomp_actions": {
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string",
+                "maxLength": 4096
+              }
+            },
+            "no_new_privileges": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "process_scope": {
+              "const": "process-leader"
+            },
+            "unprivileged_userns_clone": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "max_user_namespaces": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 18446744073709551615
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

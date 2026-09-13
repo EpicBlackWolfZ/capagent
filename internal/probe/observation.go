@@ -92,6 +92,33 @@ func snapshotHost(input *model.HostObservation) *model.HostObservation {
 	if out.Kernel != nil {
 		out.Kernel.Parts = copyValue(out.Kernel.Parts)
 	}
+	out.Cgroups = copyValue(out.Cgroups)
+	if c := out.Cgroups; c != nil {
+		c.Memberships = slices.Clone(c.Memberships)
+		c.Mounts = slices.Clone(c.Mounts)
+		for i := range c.Memberships {
+			c.Memberships[i].Controllers = slices.Clone(c.Memberships[i].Controllers)
+		}
+		for i := range c.Mounts {
+			c.Mounts[i].Controllers = slices.Clone(c.Mounts[i].Controllers)
+			c.Mounts[i].SubtreeControl = slices.Clone(c.Mounts[i].SubtreeControl)
+		}
+	}
+	out.Namespaces = copyValue(out.Namespaces)
+	if out.Namespaces != nil {
+		out.Namespaces.Namespaces = slices.Clone(out.Namespaces.Namespaces)
+	}
+	out.Security = copyValue(out.Security)
+	if s := out.Security; s != nil {
+		s.LSMs = slices.Clone(s.LSMs)
+		s.AppArmorProfiles = slices.Clone(s.AppArmorProfiles)
+		s.SeccompActions = slices.Clone(s.SeccompActions)
+		s.AppArmorEnabled = copyValue(s.AppArmorEnabled)
+		s.SeccompMode = copyValue(s.SeccompMode)
+		s.NoNewPrivileges = copyValue(s.NoNewPrivileges)
+		s.UnprivilegedUserNSClone = copyValue(s.UnprivilegedUserNSClone)
+		s.MaxUserNamespaces = copyValue(s.MaxUserNamespaces)
+	}
 	out.Systemd = copyValue(out.Systemd)
 	if s := out.Systemd; s != nil {
 		s.Installed, s.UtilityInstalled = copyValue(s.Installed), copyValue(s.UtilityInstalled)
