@@ -1,0 +1,1068 @@
+11482 execve("/capagent", ["/capagent", "--context=uid:1001", "--json", "--active"], 0x7ffe3c4878a0 /* 5 vars */) = 0
+11482 openat(AT_FDCWD</home/runner/work/capagent/capagent>, "/sys/kernel/mm/transparent_hugepage/hpage_pmd_size", O_RDONLY) = 3</sys/kernel/mm/transparent_hugepage/hpage_pmd_size>
+11482 mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f919d9a2000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d9a2000, 262144, " Go: immortal metadata") = 0
+11482 mmap(NULL, 131072, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f919d982000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d982000, 131072, " Go: page summary") = 0
+11482 mmap(NULL, 1048576, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f919d882000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d882000, 1048576, " Go: page summary") = 0
+11482 mmap(NULL, 8388608, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f919d000000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d000000, 8388608, " Go: page summary") = 0
+11482 mmap(NULL, 67108864, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f9199000000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f9199000000, 67108864, " Go: page summary") = 0
+11482 mmap(NULL, 536870912, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f9179000000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f9179000000, 536870912, " Go: page summary") = 0
+11482 mmap(NULL, 536870912, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f9159000000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f9159000000, 536870912, " Go: scavenge index") = 0
+11482 mmap(0x22830c000000, 67108864, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x22830c000000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x22830c000000, 67108864, " Go: heap reservation") = 0
+11482 mmap(NULL, 33554432, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f9157000000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f9157000000, 33554432, " Go: heap index") = 0
+11482 madvise(0x7f9157000000, 33554432, MADV_NOHUGEPAGE) = 0
+11482 mmap(NULL, 69648, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f919d870000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d870000, 69648, " Go: immortal metadata") = 0
+11482 mmap(0x22830d400000, 4194304, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x22830d400000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x22830d400000, 4194304, " Go: heap") = 0
+11482 mmap(0x7f919d982000, 131072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f919d982000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d982000, 131072, " Go: page alloc") = 0
+11482 mmap(0x7f919d924000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f919d924000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d924000, 4096, " Go: page alloc") = 0
+11482 mmap(0x7f919d514000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f919d514000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d514000, 4096, " Go: page alloc") = 0
+11482 mmap(0x7f919b8a0000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f919b8a0000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919b8a0000, 4096, " Go: page alloc") = 0
+11482 mmap(0x7f918d506000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f918d506000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f918d506000, 4096, " Go: page alloc") = 0
+11482 mmap(0x7f916d506000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f916d506000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f916d506000, 4096, " Go: scavenge index") = 0
+11482 mmap(NULL, 1048576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f9156f00000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f9156f00000, 1048576, " Go: page alloc index") = 0
+11482 madvise(0x7f9156f00000, 1048576, MADV_NOHUGEPAGE) = 0
+11482 mmap(NULL, 65536, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f919d860000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d860000, 65536, " Go: allspans array") = 0
+11482 mmap(NULL, 65536, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f919d850000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d850000, 65536, " Go: gc bits") = 0
+11482 fcntl(0<pipe:[28396]>, F_GETFD)   = 0
+11482 fcntl(1<pipe:[29244]>, F_GETFD)   = 0
+11482 fcntl(2<pipe:[29245]>, F_GETFD)   = 0
+11482 mmap(NULL, 1439992, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f9156da0000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f9156da0000, 1439992, " Go: profiler hash buckets") = 0
+11482 openat(AT_FDCWD</home/runner/work/capagent/capagent>, "/proc/self/cgroup", O_RDONLY|O_CLOEXEC) = 3</proc/11482/cgroup>
+11482 openat(AT_FDCWD</home/runner/work/capagent/capagent>, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 3</proc/11482/mountinfo>
+11482 openat(AT_FDCWD</home/runner/work/capagent/capagent>, "/sys/fs/cgroup/system.slice/hosted-compute-agent.service/cpu.max", O_RDONLY|O_CLOEXEC) = 3</sys/fs/cgroup/system.slice/hosted-compute-agent.service/cpu.max>
+11482 clone(child_stack=0x22830d5b0000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x22830d5ce090) = 11483
+11482 mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f919d810000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d810000, 262144, " Go: immortal metadata") = 0
+11482 clone(child_stack=0x22830d5ea000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x22830d5ce890) = 11484
+11482 clone(child_stack=0x22830d5e6000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x22830d5cf090) = 11485
+11484 mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f9156d60000
+11484 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f9156d60000, 262144, " Go: immortal metadata") = 0
+11484 clone(child_stack=0x22830d618000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x22830d600090) = 11486
+11482 fcntl(0<pipe:[28396]>, F_GETFL)   = 0 (flags O_RDONLY)
+11482 fcntl(1<pipe:[29244]>, F_GETFL)   = 0x1 (flags O_WRONLY)
+11482 fcntl(2<pipe:[29245]>, F_GETFL)   = 0x1 (flags O_WRONLY)
+11482 mmap(0x22830d800000, 4194304, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x22830d800000
+11482 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x22830d800000, 4194304, " Go: heap") = 0
+11482 clone(child_stack=0x22830d614000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x22830d5cf890) = 11487
+11484 clone(child_stack=0x22830d628000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x22830d600890) = 11488
+11488 openat2(AT_FDCWD</home/runner/work/capagent/capagent>, "/", {flags=O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY, resolve=RESOLVE_NO_MAGICLINKS}, 24) = 4</>
+11488 getuid()                          = 0
+11488 geteuid()                         = 0
+11488 getgid( <unfinished ...>
+11485 clone(child_stack=0x22830d624000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS <unfinished ...>
+11488 <... getgid resumed>)             = 0
+11488 getegid()                         = 0
+11485 <... clone resumed>, tls=0x22830d7e2090) = 11489
+11488 getgroups(0, NULL)                = 1
+11488 getgroups(1, [0])                 = 1
+11488 eventfd2(0, EFD_CLOEXEC|EFD_NONBLOCK) = 6<anon_inode:[eventfd]>
+11488 mmap(NULL, 4096, PROT_READ|PROT_WRITE, 0x8 /* MAP_??? */|MAP_ANONYMOUS, -1, 0) = 0x7f919d80f000
+11488 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f919d80f000, 4096, " Go: getrandom states") = 0
+11488 openat2(4</>, "etc/passwd", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</etc/passwd>
+11488 openat2(4</>, "etc/passwd", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8</etc/passwd>
+11488 openat2(4</>, "proc/self/ns/user", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11482/ns/user>
+11488 readlinkat(7</proc/11482/ns/user>, "", "user:[4026531837]", 4096) = 17
+11488 openat2(4</>, "proc/self/ns/pid", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11482/ns/pid>
+11488 readlinkat(7</proc/11482/ns/pid>, "", "pid:[4026531836]", 4096) = 16
+11488 openat2(4</>, "proc/self/ns/net", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11482/ns/net>
+11488 readlinkat(7</proc/11482/ns/net>, "", "net:[4026531833]", 4096) = 16
+11488 openat2(4</>, "proc/self/ns/mnt", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11482/ns/mnt>
+11488 readlinkat(7</proc/11482/ns/mnt>, "", "mnt:[4026531832]", 4096) = 16
+11488 openat2(4</>, "proc/self/ns/ipc", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11482/ns/ipc>
+11488 readlinkat(7</proc/11482/ns/ipc>, "", "ipc:[4026531839]", 4096) = 16
+11488 openat2(4</>, "proc/self/ns/uts", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11482/ns/uts>
+11488 readlinkat(7</proc/11482/ns/uts>, "", "uts:[4026531838]", 4096) = 16
+11488 openat2(4</>, "proc/self/ns/cgroup", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11482/ns/cgroup>
+11488 readlinkat(7</proc/11482/ns/cgroup>, "", "cgroup:[4026531835]", 4096) = 19
+11488 openat2(4</>, "etc/passwd", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</etc/passwd>
+11488 openat2(4</>, "etc/passwd", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8</etc/passwd>
+11488 openat2(4</>, "etc/group", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</etc/group>
+11488 openat2(4</>, "etc/group", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8</etc/group>
+11488 getuid()                          = 0
+11488 geteuid()                         = 0
+11488 getgid()                          = 0
+11488 getegid()                         = 0
+11488 getgroups(0, NULL)                = 1
+11488 getgroups(1, [0])                 = 1
+11488 openat(AT_FDCWD</home/runner/work/capagent/capagent>, "/proc/self/exe", O_RDONLY|O_CLOEXEC) = 7</capagent>
+11488 fcntl(7</capagent>, F_GETFL) = 0x8000 (flags O_RDONLY|O_LARGEFILE)
+11488 fcntl(7</capagent>, F_SETFL, O_RDONLY|O_NONBLOCK|O_LARGEFILE) = 0
+11488 fcntl(7</capagent>, F_GETFL) = 0x8800 (flags O_RDONLY|O_NONBLOCK|O_LARGEFILE)
+11488 fcntl(7</capagent>, F_SETFL, O_RDONLY|O_LARGEFILE) = 0
+11488 fcntl(8<pipe:[29262]>, F_GETFL)   = 0 (flags O_RDONLY)
+11488 fcntl(8<pipe:[29262]>, F_SETFL, O_RDONLY|O_NONBLOCK) = 0
+11488 fcntl(9<pipe:[29262]>, F_GETFL)   = 0x1 (flags O_WRONLY)
+11485 mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11488 fcntl(9<pipe:[29262]>, F_SETFL, O_WRONLY|O_NONBLOCK) = 0
+11485 <... mmap resumed>)               = 0x7f9156d20000
+11485 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7f9156d20000, 262144, " Go: immortal metadata") = 0
+11488 fcntl(10<pipe:[29263]>, F_GETFL)  = 0 (flags O_RDONLY)
+11488 fcntl(10<pipe:[29263]>, F_SETFL, O_RDONLY|O_NONBLOCK) = 0
+11488 fcntl(11<pipe:[29263]>, F_GETFL)  = 0x1 (flags O_WRONLY)
+11488 fcntl(11<pipe:[29263]>, F_SETFL, O_WRONLY|O_NONBLOCK) = 0
+11488 fcntl(12<pipe:[29264]>, F_GETFL)  = 0 (flags O_RDONLY)
+11488 fcntl(12<pipe:[29264]>, F_SETFL, O_RDONLY|O_NONBLOCK) = 0
+11488 fcntl(13<pipe:[29264]>, F_GETFL)  = 0x1 (flags O_WRONLY)
+11488 fcntl(13<pipe:[29264]>, F_SETFL, O_WRONLY|O_NONBLOCK) = 0
+11488 waitid(P_PIDFD, 14<pid:11482>, 0x22830d87d728, WEXITED, NULL) = -1 ECHILD (No child processes)
+11488 pidfd_send_signal(14<pid:11482>, 0, NULL, 0) = 0
+11488 clone(child_stack=NULL, flags=CLONE_VM|CLONE_PIDFD|CLONE_VFORK <unfinished ...>
+11490 exit_group(0)                     = ?
+11490 +++ exited with 0 +++
+11488 <... clone resumed>, parent_tid=[15<pid:11490>]) = 11490
+11488 waitid(P_PIDFD, 15<pid:11490>, {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11490, si_uid=0, si_status=0, si_utime=0, si_stime=0}, WEXITED|__WCLONE, NULL) = 0
+11488 fcntl(8<pipe:[29262]>, F_GETFL)   = 0x800 (flags O_RDONLY|O_NONBLOCK)
+11488 fcntl(8<pipe:[29262]>, F_SETFL, O_RDONLY) = 0
+11488 fcntl(11<pipe:[29263]>, F_GETFL)  = 0x801 (flags O_WRONLY|O_NONBLOCK)
+11488 fcntl(11<pipe:[29263]>, F_SETFL, O_WRONLY) = 0
+11488 fcntl(13<pipe:[29264]>, F_GETFL)  = 0x801 (flags O_WRONLY|O_NONBLOCK)
+11488 fcntl(13<pipe:[29264]>, F_SETFL, O_WRONLY) = 0
+11488 clone(child_stack=NULL, flags=CLONE_VM|CLONE_PIDFD|CLONE_VFORK|SIGCHLD <unfinished ...>
+11491 chdir("/")                        = 0
+11491 execve("/proc/self/fd/3", ["/proc/self/fd/3", "--internal-target-worker"], 0x22830d63c2b8 /* 2 vars */ <unfinished ...>
+11488 <... clone resumed>, parent_tid=[16<pid:11491>]) = 11491
+11491 <... execve resumed>)             = 0
+11491 openat(AT_FDCWD</>, "/sys/kernel/mm/transparent_hugepage/hpage_pmd_size", O_RDONLY) = 4</sys/kernel/mm/transparent_hugepage/hpage_pmd_size>
+11491 mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb9d6a9a000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d6a9a000, 262144, " Go: immortal metadata") = 0
+11485 write(9<pipe:[29262]>, "{\"version\":1,\"run_id\":\"WONMUTYXJIDZHJZBUDUDFDW5RN\",\"context_id\":\"uid:1001\",\"target\":{\"uid\":1001,\"gid\":1001,\"username\":\"runner\",\"home_dir\":\"/home/runner\",\"supplementary_groups\":[4,100,118,999,1001],\"groups_known\":true},\"namespaces\":[{\"kind\":\"user\",\"id\":\"user:[4026531837]\"},{\"kind\":\"pid\",\"id\":\"pid:[4026531836]\"},{\"kind\":"..., 1159 <unfinished ...>
+11491 mmap(NULL, 131072, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11484 clone(child_stack=0x22830d7fe000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS <unfinished ...>
+11491 <... mmap resumed>)               = 0x7fb9d6a7a000
+11485 <... write resumed>)              = 1159
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d6a7a000, 131072, " Go: page summary") = 0
+11484 <... clone resumed>, tls=0x22830d7e2890) = 11492
+11491 mmap(NULL, 1048576, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb9d697a000
+11488 waitid(P_PIDFD, 16<pid:11491>,  <unfinished ...>
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d697a000, 1048576, " Go: page summary") = 0
+11491 mmap(NULL, 8388608, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb9d6000000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d6000000, 8388608, " Go: page summary") = 0
+11491 mmap(NULL, 67108864, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb9d2000000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d2000000, 67108864, " Go: page summary") = 0
+11491 mmap(NULL, 536870912, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb9b2000000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9b2000000, 536870912, " Go: page summary") = 0
+11491 mmap(NULL, 536870912, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb992000000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb992000000, 536870912, " Go: scavenge index") = 0
+11491 mmap(0x48488000000, 67108864, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x48488000000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x48488000000, 67108864, " Go: heap reservation") = 0
+11491 mmap(NULL, 33554432, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb990000000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb990000000, 33554432, " Go: heap index") = 0
+11491 madvise(0x7fb990000000, 33554432, MADV_NOHUGEPAGE) = 0
+11491 mmap(NULL, 69648, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb9d6968000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d6968000, 69648, " Go: immortal metadata") = 0
+11491 mmap(0x4848a800000, 4194304, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4848a800000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x4848a800000, 4194304, " Go: heap") = 0
+11491 mmap(0x7fb9d6a7a000, 131072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fb9d6a7a000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d6a7a000, 131072, " Go: page alloc") = 0
+11491 mmap(0x7fb9d69fe000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fb9d69fe000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d69fe000, 4096, " Go: page alloc") = 0
+11491 mmap(0x7fb9d6424000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fb9d6424000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d6424000, 4096, " Go: page alloc") = 0
+11491 mmap(0x7fb9d4121000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fb9d4121000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d4121000, 4096, " Go: page alloc") = 0
+11491 mmap(0x7fb9c2909000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fb9c2909000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9c2909000, 4096, " Go: page alloc") = 0
+11491 mmap(0x7fb9a2909000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fb9a2909000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9a2909000, 4096, " Go: scavenge index") = 0
+11491 mmap(NULL, 1048576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb9d6868000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d6868000, 1048576, " Go: page alloc index") = 0
+11491 madvise(0x7fb9d6868000, 1048576, MADV_NOHUGEPAGE) = 0
+11491 mmap(NULL, 65536, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb9d6858000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d6858000, 65536, " Go: allspans array") = 0
+11491 mmap(NULL, 65536, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb9d6848000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d6848000, 65536, " Go: gc bits") = 0
+11491 fcntl(0<pipe:[29262]>, F_GETFD)   = 0
+11491 fcntl(1<pipe:[29263]>, F_GETFD)   = 0
+11491 fcntl(2<pipe:[29264]>, F_GETFD)   = 0
+11491 mmap(NULL, 1439992, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb98fea0000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb98fea0000, 1439992, " Go: profiler hash buckets") = 0
+11491 openat(AT_FDCWD</>, "/proc/self/cgroup", O_RDONLY|O_CLOEXEC) = 4</proc/11491/cgroup>
+11491 openat(AT_FDCWD</>, "/proc/self/mountinfo", O_RDONLY|O_CLOEXEC) = 4</proc/11491/mountinfo>
+11491 openat(AT_FDCWD</>, "/sys/fs/cgroup/system.slice/hosted-compute-agent.service/cpu.max", O_RDONLY|O_CLOEXEC) = 4</sys/fs/cgroup/system.slice/hosted-compute-agent.service/cpu.max>
+11491 clone(child_stack=0x4848a9a6000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x4848a9c2090) = 11493
+11491 mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb9d6808000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d6808000, 262144, " Go: immortal metadata") = 0
+11491 clone(child_stack=0x4848a9de000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x4848a9c2890) = 11494
+11491 clone(child_stack=0x4848a9da000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x4848a9c3090) = 11495
+11494 mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb98fe60000
+11494 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb98fe60000, 262144, " Go: immortal metadata") = 0
+11494 clone(child_stack=0x4848aa18000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x4848aa00090) = 11496
+11491 fcntl(0<pipe:[29262]>, F_GETFL)   = 0 (flags O_RDONLY)
+11491 fcntl(1<pipe:[29263]>, F_GETFL)   = 0x1 (flags O_WRONLY)
+11491 fcntl(2<pipe:[29264]>, F_GETFL)   = 0x1 (flags O_WRONLY)
+11491 mmap(0x4848ac00000, 4194304, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x4848ac00000
+11491 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x4848ac00000, 4194304, " Go: heap") = 0
+11491 clone(child_stack=0x4848aa14000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS, tls=0x4848a9c3890) = 11497
+11495 fcntl(3</capagent>, F_GETFL) = 0x8000 (flags O_RDONLY|O_LARGEFILE)
+11495 newfstatat(AT_FDCWD</>, "/proc/self/exe",  <unfinished ...>
+11494 clone(child_stack=0x4848aa28000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS <unfinished ...>
+11495 <... newfstatat resumed>{st_mode=S_IFREG|0755, st_size=6575955, ...}, 0) = 0
+11494 <... clone resumed>, tls=0x4848aa00890) = 11498
+11495 getuid()                          = 0
+11495 geteuid()                         = 0
+11495 getgid()                          = 0
+11495 getegid()                         = 0
+11495 getgroups(0, NULL)                = 1
+11495 getgroups(1, [0])                 = 1
+11495 setgroups(5, [4, 100, 118, 999, 1001]) = 0
+11495 tgkill(11491, 11498, SIGRT_1)     = 0
+11498 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11498 setgroups(5, [4, 100, 118, 999, 1001] <unfinished ...>
+11495 tgkill(11491, 11497, SIGRT_1 <unfinished ...>
+11498 <... setgroups resumed>)          = 0
+11495 <... tgkill resumed>)             = 0
+11497 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11497 setgroups(5, [4, 100, 118, 999, 1001]) = 0
+11495 tgkill(11491, 11496, SIGRT_1)     = 0
+11496 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11496 setgroups(5, [4, 100, 118, 999, 1001] <unfinished ...>
+11495 tgkill(11491, 11494, SIGRT_1 <unfinished ...>
+11496 <... setgroups resumed>)          = 0
+11495 <... tgkill resumed>)             = 0
+11494 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11494 setgroups(5, [4, 100, 118, 999, 1001] <unfinished ...>
+11495 tgkill(11491, 11493, SIGRT_1 <unfinished ...>
+11494 <... setgroups resumed>)          = 0
+11495 <... tgkill resumed>)             = 0
+11493 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11495 tgkill(11491, 11491, SIGRT_1 <unfinished ...>
+11493 setgroups(5, [4, 100, 118, 999, 1001] <unfinished ...>
+11495 <... tgkill resumed>)             = 0
+11493 <... setgroups resumed>)          = 0
+11491 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11491 setgroups(5, [4, 100, 118, 999, 1001]) = 0
+11495 setresgid(1001, 1001, 1001)       = 0
+11495 tgkill(11491, 11498, SIGRT_1)     = 0
+11498 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11498 setresgid(1001, 1001, 1001)       = 0
+11495 tgkill(11491, 11497, SIGRT_1)     = 0
+11497 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11497 setresgid(1001, 1001, 1001)       = 0
+11495 tgkill(11491, 11496, SIGRT_1)     = 0
+11496 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11496 setresgid(1001, 1001, 1001 <unfinished ...>
+11495 tgkill(11491, 11494, SIGRT_1 <unfinished ...>
+11496 <... setresgid resumed>)          = 0
+11495 <... tgkill resumed>)             = 0
+11494 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11494 setresgid(1001, 1001, 1001 <unfinished ...>
+11495 tgkill(11491, 11493, SIGRT_1 <unfinished ...>
+11494 <... setresgid resumed>)          = 0
+11495 <... tgkill resumed>)             = 0
+11493 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11495 tgkill(11491, 11491, SIGRT_1 <unfinished ...>
+11493 setresgid(1001, 1001, 1001 <unfinished ...>
+11495 <... tgkill resumed>)             = 0
+11493 <... setresgid resumed>)          = 0
+11491 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=0} ---
+11491 setresgid(1001, 1001, 1001)       = 0
+11495 setresuid(1001, 1001, 1001)       = 0
+11495 tgkill(11491, 11498, SIGRT_1)     = 0
+11498 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=1001} ---
+11498 setresuid(1001, 1001, 1001)       = 0
+11495 tgkill(11491, 11497, SIGRT_1)     = 0
+11497 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=1001} ---
+11497 setresuid(1001, 1001, 1001)       = 0
+11495 tgkill(11491, 11496, SIGRT_1)     = 0
+11496 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=1001} ---
+11496 setresuid(1001, 1001, 1001)       = 0
+11495 tgkill(11491, 11494, SIGRT_1)     = 0
+11494 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=1001} ---
+11495 tgkill(11491, 11493, SIGRT_1 <unfinished ...>
+11494 setresuid(1001, 1001, 1001 <unfinished ...>
+11495 <... tgkill resumed>)             = 0
+11494 <... setresuid resumed>)          = 0
+11493 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=1001} ---
+11493 setresuid(1001, 1001, 1001 <unfinished ...>
+11495 tgkill(11491, 11491, SIGRT_1 <unfinished ...>
+11493 <... setresuid resumed>)          = 0
+11495 <... tgkill resumed>)             = 0
+11491 --- SIGRT_1 {si_signo=SIGRT_1, si_code=SI_TKILL, si_pid=11491, si_uid=1001} ---
+11491 setresuid(1001, 1001, 1001)       = 0
+11495 getuid()                          = 1001
+11495 geteuid()                         = 1001
+11495 getgid()                          = 1001
+11495 getegid()                         = 1001
+11495 getgroups(0, NULL)                = 5
+11495 getgroups(5, [4, 100, 118, 999, 1001]) = 5
+11495 openat2(AT_FDCWD</>, "/", {flags=O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY, resolve=RESOLVE_NO_MAGICLINKS}, 24) = 3</>
+11495 openat2(3</>, "proc/self/ns/user", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5</proc/11491/ns/user>
+11495 readlinkat(5</proc/11491/ns/user>, "", "user:[4026531837]", 4096) = 17
+11495 openat2(3</>, "proc/self/ns/pid", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5</proc/11491/ns/pid>
+11495 readlinkat(5</proc/11491/ns/pid>, "", "pid:[4026531836]", 4096) = 16
+11495 openat2(3</>, "proc/self/ns/net", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5</proc/11491/ns/net>
+11495 readlinkat(5</proc/11491/ns/net>, "", "net:[4026531833]", 4096) = 16
+11495 openat2(3</>, "proc/self/ns/mnt", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5</proc/11491/ns/mnt>
+11495 readlinkat(5</proc/11491/ns/mnt>, "", "mnt:[4026531832]", 4096) = 16
+11495 openat2(3</>, "proc/self/ns/ipc", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5</proc/11491/ns/ipc>
+11495 readlinkat(5</proc/11491/ns/ipc>, "", "ipc:[4026531839]", 4096) = 16
+11495 openat2(3</>, "proc/self/ns/uts", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5</proc/11491/ns/uts>
+11495 readlinkat(5</proc/11491/ns/uts>, "", "uts:[4026531838]", 4096) = 16
+11495 openat2(3</>, "proc/self/ns/cgroup", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5</proc/11491/ns/cgroup>
+11495 readlinkat(5</proc/11491/ns/cgroup>, "", "cgroup:[4026531835]", 4096) = 19
+11495 openat2(3</>, "proc/self/status", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 5</proc/11491/status>
+11495 openat2(3</>, "proc/self/status", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 6</proc/11491/status>
+11495 openat2(AT_FDCWD</>, "/", {flags=O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY, resolve=RESOLVE_NO_MAGICLINKS}, 24) = 3</>
+11495 getuid()                          = 1001
+11495 geteuid()                         = 1001
+11495 getgid()                          = 1001
+11495 getegid()                         = 1001
+11495 getgroups(0, NULL)                = 5
+11495 getgroups(5, [4, 100, 118, 999, 1001]) = 5
+11495 eventfd2(0, EFD_CLOEXEC|EFD_NONBLOCK) = 6<anon_inode:[eventfd]>
+11495 mmap(NULL, 4096, PROT_READ|PROT_WRITE, 0x8 /* MAP_??? */|MAP_ANONYMOUS, -1, 0) = 0x7fb9d6807000
+11495 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb9d6807000, 4096, " Go: getrandom states") = 0
+11495 openat2(3</>, "etc/passwd", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</etc/passwd>
+11495 openat2(3</>, "etc/passwd", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8</etc/passwd>
+11495 openat2(3</>, "proc/self/ns/user", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11491/ns/user>
+11495 readlinkat(7</proc/11491/ns/user>, "", "user:[4026531837]", 4096) = 17
+11495 openat2(3</>, "proc/self/ns/pid", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11491/ns/pid>
+11495 readlinkat(7</proc/11491/ns/pid>, "", "pid:[4026531836]", 4096) = 16
+11495 openat2(3</>, "proc/self/ns/net", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11491/ns/net>
+11495 readlinkat(7</proc/11491/ns/net>, "", "net:[4026531833]", 4096) = 16
+11495 openat2(3</>, "proc/self/ns/mnt", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11491/ns/mnt>
+11495 readlinkat(7</proc/11491/ns/mnt>, "", "mnt:[4026531832]", 4096) = 16
+11495 openat2(3</>, "proc/self/ns/ipc", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11491/ns/ipc>
+11495 readlinkat(7</proc/11491/ns/ipc>, "", "ipc:[4026531839]", 4096) = 16
+11495 openat2(3</>, "proc/self/ns/uts", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11491/ns/uts>
+11495 readlinkat(7</proc/11491/ns/uts>, "", "uts:[4026531838]", 4096) = 16
+11495 openat2(3</>, "proc/self/ns/cgroup", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11491/ns/cgroup>
+11495 readlinkat(7</proc/11491/ns/cgroup>, "", "cgroup:[4026531835]", 4096) = 19
+11495 openat2(3</>, "etc/os-release", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</usr/lib/os-release>
+11498 clone(child_stack=0x4848aa24000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS <unfinished ...>
+11495 openat2(3</>, "etc/os-release", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 <... clone resumed>, tls=0x4848aa01090) = 11499
+11495 <... openat2 resumed>)            = 8</usr/lib/os-release>
+11498 openat2(3</>, "proc/1/comm", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 9</proc/1/comm>
+11499 clone(child_stack=0x4848ab3c000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS <unfinished ...>
+11498 openat2(3</>, "proc/1/comm", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11499 <... clone resumed>, tls=0x4848ab24090) = 11500
+11498 <... openat2 resumed>)            = 7</proc/1/comm>
+11495 openat2(3</>, "proc/self/mountinfo", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8</proc/11491/mountinfo>
+11499 openat2(3</>, "proc/self/ns/user", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10</proc/11491/ns/user>
+11495 openat2(3</>, "proc/self/mountinfo", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fb98fe20000
+11495 <... openat2 resumed>)            = 11</proc/11491/mountinfo>
+11500 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb98fe20000, 262144, " Go: immortal metadata" <unfinished ...>
+11499 readlinkat(10</proc/11491/ns/user>, "",  <unfinished ...>
+11500 <... prctl resumed>)              = 0
+11499 <... readlinkat resumed>"user:[4026531837]", 4096) = 17
+11500 openat2(3</>, "sys/kernel/security/lsm", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</sys/kernel/security/lsm>
+11499 openat2(3</>, "proc/self/ns/pid", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 openat2(3</>, "sys/kernel/security/lsm", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11499 <... openat2 resumed>)            = 9</proc/11491/ns/pid>
+11500 <... openat2 resumed>)            = 10</sys/kernel/security/lsm>
+11498 openat2(3</>, "run/systemd/system", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 12</run/systemd/system>
+11499 readlinkat(9</proc/11491/ns/pid>, "", "pid:[4026531836]", 4096) = 16
+11499 openat2(3</>, "proc/self/ns/net", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 openat2(3</>, "usr/lib/systemd/systemd", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 openat2(3</>, "sys/fs/selinux/enforce", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11499 <... openat2 resumed>)            = 7</proc/11491/ns/net>
+11495 openat2(3</>, "proc/self/cgroup", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 <... openat2 resumed>)            = -1 ENOENT (No such file or directory)
+11498 <... openat2 resumed>)            = 8</usr/lib/systemd/systemd>
+11495 <... openat2 resumed>)            = 9</proc/11491/cgroup>
+11500 openat2(3</>, "sys/module/apparmor/parameters/enabled", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10</sys/module/apparmor/parameters/enabled>
+11499 readlinkat(7</proc/11491/ns/net>, "", "net:[4026531833]", 4096) = 16
+11495 openat2(3</>, "proc/self/cgroup", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 openat2(3</>, "sys/module/apparmor/parameters/enabled", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11495 <... openat2 resumed>)            = 8</proc/11491/cgroup>
+11500 <... openat2 resumed>)            = 11</sys/module/apparmor/parameters/enabled>
+11498 openat2(3</>, "usr/bin/systemctl", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11499 openat2(3</>, "proc/self/ns/mnt", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 <... openat2 resumed>)            = 7</usr/bin/systemctl>
+11499 <... openat2 resumed>)            = 12</proc/11491/ns/mnt>
+11493 clone(child_stack=0x4848acb6000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM|CLONE_SETTLS <unfinished ...>
+11499 readlinkat(12</proc/11491/ns/mnt>, "", "mnt:[4026531832]", 4096) = 16
+11493 <... clone resumed>, tls=0x4848aca2090) = 11501
+11498 write(6<anon_inode:[eventfd]>, "\1\0\0\0\0\0\0\0", 8) = 8
+11499 openat2(3</>, "proc/self/ns/ipc", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 openat2(3</>, "sys/kernel/security/apparmor/profiles", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11499 <... openat2 resumed>)            = 7</proc/11491/ns/ipc>
+11498 openat(AT_FDCWD</>, "/dev/null", O_RDONLY|O_CLOEXEC <unfinished ...>
+11500 <... openat2 resumed>)            = 10</sys/kernel/security/apparmor/profiles>
+11498 <... openat resumed>)             = 11</dev/null<char 1:3>>
+11498 fcntl(11</dev/null<char 1:3>>, F_GETFL <unfinished ...>
+11500 openat2(3</>, "sys/kernel/security/apparmor/profiles", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11499 readlinkat(7</proc/11491/ns/ipc>, "",  <unfinished ...>
+11500 <... openat2 resumed>)            = -1 EACCES (Permission denied)
+11498 <... fcntl resumed>)              = 0x8000 (flags O_RDONLY|O_LARGEFILE)
+11499 <... readlinkat resumed>"ipc:[4026531839]", 4096) = 16
+11498 fcntl(11</dev/null<char 1:3>>, F_SETFL, O_RDONLY|O_NONBLOCK|O_LARGEFILE) = 0
+11500 openat2(3</>, "proc/self/status", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/11491/status>
+11499 openat2(3</>, "proc/self/ns/uts", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10</proc/11491/ns/uts>
+11498 fcntl(11</dev/null<char 1:3>>, F_GETFL <unfinished ...>
+11500 openat2(3</>, "proc/self/status", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 <... fcntl resumed>)              = 0x8800 (flags O_RDONLY|O_NONBLOCK|O_LARGEFILE)
+11500 <... openat2 resumed>)            = 8</proc/11491/status>
+11501 openat2(3</>, "sys/fs/cgroup", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 fcntl(11</dev/null<char 1:3>>, F_SETFL, O_RDONLY|O_LARGEFILE <unfinished ...>
+11501 <... openat2 resumed>)            = 9</sys/fs/cgroup>
+11499 readlinkat(10</proc/11491/ns/uts>, "",  <unfinished ...>
+11498 <... fcntl resumed>)              = 0
+11499 <... readlinkat resumed>"uts:[4026531838]", 4096) = 16
+11501 openat2(3</>, "sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.controllers", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 fcntl(9<pipe:[30023]>, F_GETFL <unfinished ...>
+11501 <... openat2 resumed>)            = 10</sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.controllers>
+11499 openat2(3</>, "proc/self/ns/cgroup", {flags=O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 <... fcntl resumed>)              = 0 (flags O_RDONLY)
+11499 <... openat2 resumed>)            = 13</proc/11491/ns/cgroup>
+11498 fcntl(9<pipe:[30023]>, F_SETFL, O_RDONLY|O_NONBLOCK <unfinished ...>
+11501 openat2(3</>, "sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.controllers", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 <... fcntl resumed>)              = 0
+11501 <... openat2 resumed>)            = 8</sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.controllers>
+11500 openat2(3</>, "proc/sys/kernel/seccomp/actions_avail", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11499 readlinkat(13</proc/11491/ns/cgroup>, "",  <unfinished ...>
+11500 <... openat2 resumed>)            = 7</proc/sys/kernel/seccomp/actions_avail>
+11499 <... readlinkat resumed>"cgroup:[4026531835]", 4096) = 19
+11498 fcntl(12<pipe:[30023]>, F_GETFL)  = 0x1 (flags O_WRONLY)
+11500 openat2(3</>, "proc/sys/kernel/seccomp/actions_avail", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 fcntl(12<pipe:[30023]>, F_SETFL, O_WRONLY|O_NONBLOCK <unfinished ...>
+11500 <... openat2 resumed>)            = 8</proc/sys/kernel/seccomp/actions_avail>
+11499 openat2(3</>, "proc/filesystems", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 <... fcntl resumed>)              = 0
+11499 <... openat2 resumed>)            = 13</proc/filesystems>
+11501 openat2(3</>, "sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.subtree_control", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 10</sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.subtree_control>
+11499 openat2(3</>, "proc/filesystems", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11501 openat2(3</>, "sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.subtree_control", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11499 <... openat2 resumed>)            = 16</proc/filesystems>
+11498 fcntl(14<pipe:[30024]>, F_GETFL <unfinished ...>
+11501 <... openat2 resumed>)            = 17</sys/fs/cgroup/system.slice/hosted-compute-agent.service/cgroup.subtree_control>
+11498 <... fcntl resumed>)              = 0 (flags O_RDONLY)
+11498 fcntl(14<pipe:[30024]>, F_SETFL, O_RDONLY|O_NONBLOCK) = 0
+11500 openat2(3</>, "proc/sys/kernel/unprivileged_userns_clone", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</proc/sys/kernel/unprivileged_userns_clone>
+11498 fcntl(15<pipe:[30024]>, F_GETFL <unfinished ...>
+11501 openat2(3</>, "proc/self/net/protocols", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 <... fcntl resumed>)              = 0x1 (flags O_WRONLY)
+11500 openat2(3</>, "proc/sys/kernel/unprivileged_userns_clone", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11501 <... openat2 resumed>)            = 8</proc/11491/net/protocols>
+11498 fcntl(15<pipe:[30024]>, F_SETFL, O_WRONLY|O_NONBLOCK <unfinished ...>
+11500 <... openat2 resumed>)            = 10</proc/sys/kernel/unprivileged_userns_clone>
+11498 <... fcntl resumed>)              = 0
+11501 openat2(3</>, "proc/self/net/protocols", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 13</proc/11491/net/protocols>
+11499 openat2(3</>, "etc/resolv.conf", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 16</run/systemd/resolve/stub-resolv.conf>
+11499 openat2(3</>, "etc/resolv.conf", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 7</run/systemd/resolve/stub-resolv.conf>
+11500 openat2(3</>, "proc/sys/user/max_user_namespaces", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 waitid(P_PIDFD, 10<pid:11491>,  <unfinished ...>
+11500 <... openat2 resumed>)            = 17</proc/sys/user/max_user_namespaces>
+11498 <... waitid resumed>0x4848aaa09f8, WEXITED, NULL) = -1 ECHILD (No child processes)
+11498 pidfd_send_signal(10<pid:11491>, 0, NULL, 0 <unfinished ...>
+11500 openat2(3</>, "proc/sys/user/max_user_namespaces", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 <... pidfd_send_signal resumed>)  = 0
+11501 openat2(3</>, "proc/sys/net/ipv6/conf/all/disable_ipv6", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 <... openat2 resumed>)            = 8</proc/sys/user/max_user_namespaces>
+11501 <... openat2 resumed>)            = 13</proc/sys/net/ipv6/conf/all/disable_ipv6>
+11498 clone(child_stack=NULL, flags=CLONE_VM|CLONE_PIDFD|CLONE_VFORK <unfinished ...>
+11501 openat2(3</>, "proc/sys/net/ipv6/conf/all/disable_ipv6", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 19</proc/sys/net/ipv6/conf/all/disable_ipv6>
+11502 exit_group(0)                     = ?
+11502 +++ exited with 0 +++
+11498 <... clone resumed>, parent_tid=[18<pid:11502>]) = 11502
+11499 openat2(3</>, "etc/subuid", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 openat2(3</>, "var/lib/systemd/linger/runner", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 waitid(P_PIDFD, 18<pid:11502>,  <unfinished ...>
+11500 <... openat2 resumed>)            = 8</var/lib/systemd/linger/runner>
+11499 <... openat2 resumed>)            = 7</etc/subuid>
+11498 <... waitid resumed>{si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11502, si_uid=1001, si_status=0, si_utime=0, si_stime=0}, WEXITED|__WCLONE, NULL) = 0
+11501 openat2(3</>, "proc/sys/net/ipv6/conf/default/disable_ipv6", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 13</proc/sys/net/ipv6/conf/default/disable_ipv6>
+11499 openat2(3</>, "etc/subuid", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 openat2(3</>, "run/user/1001", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11501 openat2(3</>, "proc/sys/net/ipv6/conf/default/disable_ipv6", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11499 <... openat2 resumed>)            = 8</etc/subuid>
+11500 <... openat2 resumed>)            = 16</run/user/1001>
+11501 <... openat2 resumed>)            = 10</proc/sys/net/ipv6/conf/default/disable_ipv6>
+11498 fcntl(12<pipe:[30023]>, F_GETFL)  = 0x801 (flags O_WRONLY|O_NONBLOCK)
+11498 fcntl(12<pipe:[30023]>, F_SETFL, O_WRONLY) = 0
+11500 openat2(3</>, "run/user/1001/systemd/private", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 fcntl(15<pipe:[30024]>, F_GETFL <unfinished ...>
+11500 <... openat2 resumed>)            = 16</run/user/1001/systemd/private>
+11498 <... fcntl resumed>)              = 0x801 (flags O_WRONLY|O_NONBLOCK)
+11498 fcntl(15<pipe:[30024]>, F_SETFL, O_WRONLY) = 0
+11500 openat2(3</>, "usr/bin/systemctl", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 8</usr/bin/systemctl>
+11499 openat2(3</>, "etc/subgid", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 13</etc/subgid>
+11499 openat2(3</>, "etc/subgid", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11498 clone(child_stack=NULL, flags=CLONE_VM|CLONE_PIDFD|CLONE_VFORK|SIGCHLD <unfinished ...>
+11500 openat(AT_FDCWD</>, "/dev/null", O_RDONLY|O_CLOEXEC <unfinished ...>
+11499 <... openat2 resumed>)            = 8</etc/subgid>
+11500 <... openat resumed>)             = 17</dev/null<char 1:3>>
+11500 fcntl(17</dev/null<char 1:3>>, F_GETFL) = 0x8000 (flags O_RDONLY|O_LARGEFILE)
+11500 fcntl(17</dev/null<char 1:3>>, F_SETFL, O_RDONLY|O_NONBLOCK|O_LARGEFILE) = 0
+11500 fcntl(17</dev/null<char 1:3>>, F_GETFL) = 0x8800 (flags O_RDONLY|O_NONBLOCK|O_LARGEFILE)
+11500 fcntl(17</dev/null<char 1:3>>, F_SETFL, O_RDONLY|O_LARGEFILE) = 0
+11500 fcntl(8<pipe:[29266]>, F_GETFL <unfinished ...>
+11499 openat2(3</>, "etc/nsswitch.conf", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 <... fcntl resumed>)              = 0 (flags O_RDONLY)
+11499 <... openat2 resumed>)            = 18</etc/nsswitch.conf>
+11500 fcntl(8<pipe:[29266]>, F_SETFL, O_RDONLY|O_NONBLOCK) = 0
+11499 openat2(3</>, "etc/nsswitch.conf", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 19</etc/nsswitch.conf>
+11500 fcntl(13<pipe:[29266]>, F_GETFL)  = 0x1 (flags O_WRONLY)
+11500 fcntl(13<pipe:[29266]>, F_SETFL, O_WRONLY|O_NONBLOCK) = 0
+11500 fcntl(20<pipe:[29267]>, F_GETFL)  = 0 (flags O_RDONLY)
+11500 fcntl(20<pipe:[29267]>, F_SETFL, O_RDONLY|O_NONBLOCK <unfinished ...>
+11499 openat2(3</>, "usr/bin/newuidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 <... fcntl resumed>)              = 0
+11499 <... openat2 resumed>)            = 18</usr/bin/newuidmap>
+11500 fcntl(21<pipe:[29267]>, F_GETFL)  = 0x1 (flags O_WRONLY)
+11500 fcntl(21<pipe:[29267]>, F_SETFL, O_WRONLY|O_NONBLOCK <unfinished ...>
+11499 openat2(3</>, "usr/bin/newuidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 <... fcntl resumed>)              = 0
+11499 <... openat2 resumed>)            = 18</usr/bin/newuidmap>
+11499 faccessat2(18</usr/bin/newuidmap>, "", X_OK, AT_EACCESS|AT_EMPTY_PATH) = 0
+11500 fcntl(13<pipe:[29266]>, F_GETFL)  = 0x801 (flags O_WRONLY|O_NONBLOCK)
+11500 fcntl(13<pipe:[29266]>, F_SETFL, O_WRONLY <unfinished ...>
+11499 openat2(3</>, "usr/bin/newuidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 <... fcntl resumed>)              = 0
+11499 <... openat2 resumed>)            = 18</usr/bin/newuidmap>
+11500 fcntl(21<pipe:[29267]>, F_GETFL)  = 0x801 (flags O_WRONLY|O_NONBLOCK)
+11500 fcntl(21<pipe:[29267]>, F_SETFL, O_WRONLY <unfinished ...>
+11499 openat2(3</>, "usr/bin/newuidmap", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24 <unfinished ...>
+11500 <... fcntl resumed>)              = 0
+11499 <... openat2 resumed>)            = 19</usr/bin/newuidmap>
+11500 clone(child_stack=NULL, flags=CLONE_VM|CLONE_PIDFD|CLONE_VFORK|SIGCHLD <unfinished ...>
+11499 openat2(3</>, "usr/bin/newuidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 18</usr/bin/newuidmap>
+11499 prctl(PR_GET_NO_NEW_PRIVS, 0, 0, 0, 0) = 0
+11499 openat2(3</>, "usr/bin/newgidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 18</usr/bin/newgidmap>
+11499 openat2(3</>, "usr/bin/newgidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 18</usr/bin/newgidmap>
+11499 faccessat2(18</usr/bin/newgidmap>, "", X_OK, AT_EACCESS|AT_EMPTY_PATH) = 0
+11499 openat2(3</>, "usr/bin/newgidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 18</usr/bin/newgidmap>
+11499 openat2(3</>, "usr/bin/newgidmap", {flags=O_RDONLY|O_NOCTTY|O_NONBLOCK|O_CLOEXEC, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 24</usr/bin/newgidmap>
+11499 openat2(3</>, "usr/bin/newgidmap", {flags=O_RDONLY|O_CLOEXEC|O_PATH, resolve=RESOLVE_NO_MAGICLINKS|RESOLVE_IN_ROOT}, 24) = 18</usr/bin/newgidmap>
+11499 prctl(PR_GET_NO_NEW_PRIVS, 0, 0, 0, 0) = 0
+11493 tgkill(11491, 11498, SIGURG)      = 0
+11504 chdir("/")                        = 0
+11493 tgkill(11491, 11500, SIGURG)      = 0
+11504 execve("/usr/bin/systemctl", ["/usr/bin/systemctl", "--user", "--no-pager", "--no-ask-password", "show", "--property=Version", "--value"], 0x4848ad085d0 /* 4 vars */ <unfinished ...>
+11503 chdir("/")                        = 0
+11500 <... clone resumed>, parent_tid=[19<pid:11504>]) = 11504
+11504 <... execve resumed>)             = 0
+11504 brk(NULL)                         = 0x5621bccb7000
+11500 --- SIGURG {si_signo=SIGURG, si_code=SI_TKILL, si_pid=11491, si_uid=1001} ---
+11504 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7faded768000
+11504 access("/etc/ld.so.preload", R_OK <unfinished ...>
+11503 execve("/usr/bin/systemctl", ["/usr/bin/systemctl", "--version"], 0x4848aa42048 /* 2 vars */ <unfinished ...>
+11504 <... access resumed>)             = -1 ENOENT (No such file or directory)
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v3/libcap.so.2", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11504 newfstatat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v3/", 0x7ffd39a78e00, 0) = -1 ENOENT (No such file or directory)
+11493 tgkill(11491, 11500, SIGURG <unfinished ...>
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v2/libcap.so.2", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 <... execve resumed>)             = 0
+11504 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11493 <... tgkill resumed>)             = 0
+11504 newfstatat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v2/",  <unfinished ...>
+11503 brk(NULL <unfinished ...>
+11504 <... newfstatat resumed>0x7ffd39a78e00, 0) = -1 ENOENT (No such file or directory)
+11500 --- SIGURG {si_signo=SIGURG, si_code=SI_TKILL, si_pid=11491, si_uid=1001} ---
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libcap.so.2", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 <... brk resumed>)                = 0x564a4b9d1000
+11504 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 newfstatat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+11503 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11504 openat(AT_FDCWD</>, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c7bd000
+11504 <... openat resumed>)             = 3</etc/ld.so.cache>
+11503 access("/etc/ld.so.preload", R_OK <unfinished ...>
+11498 <... clone resumed>, parent_tid=[16<pid:11503>]) = 11503
+11503 <... access resumed>)             = -1 ENOENT (No such file or directory)
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v3/libcap.so.2", O_RDONLY|O_CLOEXEC <unfinished ...>
+11499 mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11504 mmap(NULL, 38331, PROT_READ, MAP_PRIVATE, 3</etc/ld.so.cache>, 0 <unfinished ...>
+11503 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 <... mmap resumed>)               = 0x7faded75e000
+11503 newfstatat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v3/",  <unfinished ...>
+11499 <... mmap resumed>)               = 0x7fb98fde0000
+11503 <... newfstatat resumed>0x7fff0a77ae40, 0) = -1 ENOENT (No such file or directory)
+11499 prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7fb98fde0000, 262144, " Go: immortal metadata" <unfinished ...>
+11498 --- SIGURG {si_signo=SIGURG, si_code=SI_TKILL, si_pid=11491, si_uid=1001} ---
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v2/libcap.so.2", O_RDONLY|O_CLOEXEC <unfinished ...>
+11499 <... prctl resumed>)              = 0
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libcap.so.2", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libcap.so.2.66>
+11503 newfstatat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/glibc-hwcaps/x86-64-v2/", 0x7fff0a77ae40, 0) = -1 ENOENT (No such file or directory)
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libcap.so.2", O_RDONLY|O_CLOEXEC <unfinished ...>
+11500 waitid(P_PIDFD, 19<pid:11504>,  <unfinished ...>
+11503 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11493 tgkill(11491, 11498, SIGURG <unfinished ...>
+11503 newfstatat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/",  <unfinished ...>
+11493 <... tgkill resumed>)             = 0
+11503 <... newfstatat resumed>{st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+11504 mmap(NULL, 49224, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcap.so.2.66>, 0 <unfinished ...>
+11503 openat(AT_FDCWD</>, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded751000
+11498 --- SIGURG {si_signo=SIGURG, si_code=SI_TKILL, si_pid=11491, si_uid=1001} ---
+11504 mmap(0x7faded754000, 24576, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcap.so.2.66>, 0x3000 <unfinished ...>
+11503 <... openat resumed>)             = 3</etc/ld.so.cache>
+11504 <... mmap resumed>)               = 0x7faded754000
+11504 mmap(0x7faded75a000, 8192, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcap.so.2.66>, 0x9000) = 0x7faded75a000
+11504 mmap(0x7faded75c000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcap.so.2.66>, 0xb000 <unfinished ...>
+11503 mmap(NULL, 38331, PROT_READ, MAP_PRIVATE, 3</etc/ld.so.cache>, 0 <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded75c000
+11503 <... mmap resumed>)               = 0x7f898c7b3000
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/liblz4.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libcap.so.2", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11503 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libcap.so.2.66>
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/liblz4.so.1", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4>
+11503 mmap(NULL, 49224, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcap.so.2.66>, 0 <unfinished ...>
+11504 mmap(NULL, 135264, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4>, 0 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c7a6000
+11504 <... mmap resumed>)               = 0x7faded72f000
+11503 mmap(0x7f898c7a9000, 24576, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcap.so.2.66>, 0x3000 <unfinished ...>
+11504 mmap(0x7faded732000, 110592, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4>, 0x3000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c7a9000
+11504 <... mmap resumed>)               = 0x7faded732000
+11503 mmap(0x7f898c7af000, 8192, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcap.so.2.66>, 0x9000 <unfinished ...>
+11504 mmap(0x7faded74d000, 8192, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4>, 0x1e000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c7af000
+11504 <... mmap resumed>)               = 0x7faded74d000
+11503 mmap(0x7f898c7b1000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcap.so.2.66>, 0xb000 <unfinished ...>
+11504 mmap(0x7faded74f000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4>, 0x20000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c7b1000
+11504 <... mmap resumed>)               = 0x7faded74f000
+11498 waitid(P_PIDFD, 16<pid:11503>,  <unfinished ...>
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libselinux.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/liblz4.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11503 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libselinux.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/liblz4.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libselinux.so.1>
+11503 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4>
+11504 mmap(NULL, 181960, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libselinux.so.1>, 0 <unfinished ...>
+11503 mmap(NULL, 135264, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4>, 0 <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded702000
+11503 <... mmap resumed>)               = 0x7f898c784000
+11504 mmap(0x7faded708000, 118784, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libselinux.so.1>, 0x6000 <unfinished ...>
+11503 mmap(0x7f898c787000, 110592, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4>, 0x3000 <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded708000
+11504 mmap(0x7faded725000, 24576, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libselinux.so.1>, 0x23000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c787000
+11504 <... mmap resumed>)               = 0x7faded725000
+11503 mmap(0x7f898c7a2000, 8192, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4>, 0x1e000 <unfinished ...>
+11504 mmap(0x7faded72b000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libselinux.so.1>, 0x29000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c7a2000
+11504 <... mmap resumed>)               = 0x7faded72b000
+11503 mmap(0x7f898c7a4000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblz4.so.1.9.4>, 0x20000 <unfinished ...>
+11504 mmap(0x7faded72d000, 5832, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c7a4000
+11504 <... mmap resumed>)               = 0x7faded72d000
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/liblzma.so.5", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libselinux.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11503 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/liblzma.so.5", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libselinux.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5>
+11503 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libselinux.so.1>
+11504 mmap(NULL, 200728, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5>, 0 <unfinished ...>
+11503 mmap(NULL, 181960, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libselinux.so.1>, 0 <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded6d0000
+11503 <... mmap resumed>)               = 0x7f898c757000
+11504 mmap(0x7faded6d3000, 139264, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5>, 0x3000 <unfinished ...>
+11503 mmap(0x7f898c75d000, 118784, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libselinux.so.1>, 0x6000 <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded6d3000
+11504 mmap(0x7faded6f5000, 45056, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5>, 0x25000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c75d000
+11504 <... mmap resumed>)               = 0x7faded6f5000
+11503 mmap(0x7f898c77a000, 24576, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libselinux.so.1>, 0x23000 <unfinished ...>
+11504 mmap(0x7faded700000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5>, 0x30000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c77a000
+11504 <... mmap resumed>)               = 0x7faded700000
+11503 mmap(0x7f898c780000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libselinux.so.1>, 0x29000) = 0x7f898c780000
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libzstd.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 mmap(0x7f898c782000, 5832, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11504 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11503 <... mmap resumed>)               = 0x7f898c782000
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libzstd.so.1", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5>
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/liblzma.so.5", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11504 mmap(NULL, 757816, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5>, 0 <unfinished ...>
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/liblzma.so.5", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded616000
+11503 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5>
+11504 mmap(0x7faded61a000, 684032, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5>, 0x4000) = 0x7faded61a000
+11504 mmap(0x7faded6c1000, 53248, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5>, 0xab000) = 0x7faded6c1000
+11504 mmap(0x7faded6ce000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5>, 0xb7000 <unfinished ...>
+11503 mmap(NULL, 200728, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5>, 0 <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded6ce000
+11503 <... mmap resumed>)               = 0x7f898c725000
+11503 mmap(0x7f898c728000, 139264, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5>, 0x3000 <unfinished ...>
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libm.so.6", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c728000
+11504 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11503 mmap(0x7f898c74a000, 45056, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5>, 0x25000 <unfinished ...>
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libm.so.6", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c74a000
+11504 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libm.so.6>
+11503 mmap(0x7f898c755000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/liblzma.so.5.4.5>, 0x30000) = 0x7f898c755000
+11504 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7faded614000
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libzstd.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 mmap(NULL, 950296, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libm.so.6>, 0 <unfinished ...>
+11503 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 <... mmap resumed>)               = 0x7faded52b000
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libzstd.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 mmap(0x7faded53b000, 520192, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libm.so.6>, 0x10000 <unfinished ...>
+11503 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5>
+11504 <... mmap resumed>)               = 0x7faded53b000
+11504 mmap(0x7faded5ba000, 360448, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libm.so.6>, 0x8f000) = 0x7faded5ba000
+11504 mmap(0x7faded612000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libm.so.6>, 0xe7000) = 0x7faded612000
+11503 mmap(NULL, 757816, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5>, 0) = 0x7f898c66b000
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libblkid.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 mmap(0x7f898c66f000, 684032, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5>, 0x4000 <unfinished ...>
+11504 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libblkid.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c66f000
+11504 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libblkid.so.1.1.0>
+11503 mmap(0x7f898c716000, 53248, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5>, 0xab000) = 0x7f898c716000
+11503 mmap(0x7f898c723000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libzstd.so.1.5.5>, 0xb7000 <unfinished ...>
+11504 mmap(NULL, 238520, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libblkid.so.1.1.0>, 0 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c723000
+11504 <... mmap resumed>)               = 0x7faded4f0000
+11504 mmap(0x7faded4f7000, 147456, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libblkid.so.1.1.0>, 0x7000) = 0x7faded4f7000
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libm.so.6", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 mmap(0x7faded51b000, 36864, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libblkid.so.1.1.0>, 0x2b000 <unfinished ...>
+11503 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 <... mmap resumed>)               = 0x7faded51b000
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libm.so.6", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 mmap(0x7faded524000, 28672, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libblkid.so.1.1.0>, 0x33000 <unfinished ...>
+11503 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libm.so.6>
+11504 <... mmap resumed>)               = 0x7faded524000
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libgcrypt.so.20", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11503 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libgcrypt.so.20", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c669000
+11504 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libgcrypt.so.20.4.3>
+11503 mmap(NULL, 950296, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libm.so.6>, 0) = 0x7f898c580000
+11503 mmap(0x7f898c590000, 520192, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libm.so.6>, 0x10000 <unfinished ...>
+11504 mmap(NULL, 1344368, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgcrypt.so.20.4.3>, 0 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c590000
+11504 <... mmap resumed>)               = 0x7faded3a7000
+11503 mmap(0x7f898c60f000, 360448, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libm.so.6>, 0x8f000 <unfinished ...>
+11504 mmap(0x7faded3b6000, 1003520, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgcrypt.so.20.4.3>, 0xf000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c60f000
+11504 <... mmap resumed>)               = 0x7faded3b6000
+11503 mmap(0x7f898c667000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libm.so.6>, 0xe7000 <unfinished ...>
+11504 mmap(0x7faded4ab000, 241664, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgcrypt.so.20.4.3>, 0x104000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c667000
+11504 <... mmap resumed>)               = 0x7faded4ab000
+11504 mmap(0x7faded4e6000, 36864, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgcrypt.so.20.4.3>, 0x13f000) = 0x7faded4e6000
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libblkid.so.1", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 mmap(0x7faded4ef000, 880, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11503 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 <... mmap resumed>)               = 0x7faded4ef000
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libblkid.so.1", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libblkid.so.1.1.0>
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libmount.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libmount.so.1", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libmount.so.1.1.0>
+11503 mmap(NULL, 238520, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libblkid.so.1.1.0>, 0) = 0x7f898c545000
+11504 mmap(NULL, 311896, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libmount.so.1.1.0>, 0 <unfinished ...>
+11503 mmap(0x7f898c54c000, 147456, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libblkid.so.1.1.0>, 0x7000 <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded35a000
+11504 mmap(0x7faded363000, 212992, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libmount.so.1.1.0>, 0x9000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c54c000
+11504 <... mmap resumed>)               = 0x7faded363000
+11503 mmap(0x7f898c570000, 36864, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libblkid.so.1.1.0>, 0x2b000 <unfinished ...>
+11504 mmap(0x7faded397000, 53248, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libmount.so.1.1.0>, 0x3d000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c570000
+11504 <... mmap resumed>)               = 0x7faded397000
+11503 mmap(0x7f898c579000, 28672, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libblkid.so.1.1.0>, 0x33000 <unfinished ...>
+11504 mmap(0x7faded3a4000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libmount.so.1.1.0>, 0x49000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c579000
+11504 <... mmap resumed>)               = 0x7faded3a4000
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libcrypto.so.3", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libgcrypt.so.20", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11503 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libcrypto.so.3", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libgcrypt.so.20", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libcrypto.so.3>
+11503 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libgcrypt.so.20.4.3>
+11504 mmap(NULL, 5323728, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcrypto.so.3>, 0 <unfinished ...>
+11503 mmap(NULL, 1344368, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgcrypt.so.20.4.3>, 0 <unfinished ...>
+11504 <... mmap resumed>)               = 0x7fadece00000
+11503 <... mmap resumed>)               = 0x7f898c3fc000
+11504 mmap(0x7fadeceb3000, 3358720, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcrypto.so.3>, 0xb3000 <unfinished ...>
+11503 mmap(0x7f898c40b000, 1003520, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgcrypt.so.20.4.3>, 0xf000 <unfinished ...>
+11504 <... mmap resumed>)               = 0x7fadeceb3000
+11504 mmap(0x7faded1e7000, 831488, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcrypto.so.3>, 0x3e7000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c40b000
+11504 <... mmap resumed>)               = 0x7faded1e7000
+11503 mmap(0x7f898c500000, 241664, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgcrypt.so.20.4.3>, 0x104000 <unfinished ...>
+11504 mmap(0x7faded2b2000, 389120, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcrypto.so.3>, 0x4b1000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c500000
+11504 <... mmap resumed>)               = 0x7faded2b2000
+11503 mmap(0x7f898c53b000, 36864, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgcrypt.so.20.4.3>, 0x13f000 <unfinished ...>
+11504 mmap(0x7faded311000, 11216, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7faded311000
+11503 <... mmap resumed>)               = 0x7f898c53b000
+11503 mmap(0x7f898c544000, 880, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11504 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libc.so.6", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c544000
+11504 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libc.so.6>
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libmount.so.1", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libmount.so.1", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libmount.so.1.1.0>
+11504 mmap(NULL, 2170256, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libc.so.6>, 0) = 0x7fadeca00000
+11504 mmap(0x7fadeca28000, 1605632, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libc.so.6>, 0x28000) = 0x7fadeca28000
+11503 mmap(NULL, 311896, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libmount.so.1.1.0>, 0 <unfinished ...>
+11504 mmap(0x7fadecbb0000, 323584, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libc.so.6>, 0x1b0000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c3af000
+11504 <... mmap resumed>)               = 0x7fadecbb0000
+11503 mmap(0x7f898c3b8000, 212992, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libmount.so.1.1.0>, 0x9000 <unfinished ...>
+11504 mmap(0x7fadecbff000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libc.so.6>, 0x1fe000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c3b8000
+11504 <... mmap resumed>)               = 0x7fadecbff000
+11503 mmap(0x7f898c3ec000, 53248, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libmount.so.1.1.0>, 0x3d000 <unfinished ...>
+11504 mmap(0x7fadecc05000, 52624, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7fadecc05000
+11503 <... mmap resumed>)               = 0x7f898c3ec000
+11503 mmap(0x7f898c3f9000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libmount.so.1.1.0>, 0x49000 <unfinished ...>
+11504 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c3f9000
+11504 <... mmap resumed>)               = 0x7faded358000
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libpcre2-8.so.0", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libpcre2-8.so.0.11.2>
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libcrypto.so.3", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libcrypto.so.3", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 mmap(NULL, 627472, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libpcre2-8.so.0.11.2>, 0 <unfinished ...>
+11503 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libcrypto.so.3>
+11504 <... mmap resumed>)               = 0x7fadecd66000
+11504 mmap(0x7fadecd68000, 450560, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libpcre2-8.so.0.11.2>, 0x2000) = 0x7fadecd68000
+11504 mmap(0x7fadecdd6000, 163840, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libpcre2-8.so.0.11.2>, 0x70000) = 0x7fadecdd6000
+11503 mmap(NULL, 5323728, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcrypto.so.3>, 0 <unfinished ...>
+11504 mmap(0x7fadecdfe000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libpcre2-8.so.0.11.2>, 0x97000 <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898be00000
+11504 <... mmap resumed>)               = 0x7fadecdfe000
+11503 mmap(0x7f898beb3000, 3358720, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcrypto.so.3>, 0xb3000) = 0x7f898beb3000
+11504 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libgpg-error.so.0", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 mmap(0x7f898c1e7000, 831488, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcrypto.so.3>, 0x3e7000 <unfinished ...>
+11504 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libgpg-error.so.0.34.0>
+11503 <... mmap resumed>)               = 0x7f898c1e7000
+11503 mmap(0x7f898c2b2000, 389120, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libcrypto.so.3>, 0x4b1000) = 0x7f898c2b2000
+11504 mmap(NULL, 147880, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgpg-error.so.0.34.0>, 0 <unfinished ...>
+11503 mmap(0x7f898c311000, 11216, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded333000
+11503 <... mmap resumed>)               = 0x7f898c311000
+11504 mmap(0x7faded337000, 90112, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgpg-error.so.0.34.0>, 0x4000) = 0x7faded337000
+11504 mmap(0x7faded34d000, 36864, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgpg-error.so.0.34.0>, 0x1a000 <unfinished ...>
+11503 openat(AT_FDCWD</>, "/usr/lib/x86_64-linux-gnu/systemd/libc.so.6", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded34d000
+11503 <... openat resumed>)             = -1 ENOENT (No such file or directory)
+11504 mmap(0x7faded356000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgpg-error.so.0.34.0>, 0x23000 <unfinished ...>
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libc.so.6", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 <... mmap resumed>)               = 0x7faded356000
+11503 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libc.so.6>
+11504 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7faded331000
+11504 mmap(NULL, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7faded32e000
+11503 mmap(NULL, 2170256, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libc.so.6>, 0) = 0x7f898ba00000
+11503 mmap(0x7f898ba28000, 1605632, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libc.so.6>, 0x28000) = 0x7f898ba28000
+11503 mmap(0x7f898bbb0000, 323584, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libc.so.6>, 0x1b0000 <unfinished ...>
+11504 mprotect(0x7fadecbff000, 16384, PROT_READ <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898bbb0000
+11504 <... mprotect resumed>)           = 0
+11503 mmap(0x7f898bbff000, 24576, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libc.so.6>, 0x1fe000) = 0x7f898bbff000
+11504 mprotect(0x7faded356000, 4096, PROT_READ) = 0
+11503 mmap(0x7f898bc05000, 52624, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11504 mprotect(0x7fadecdfe000, 4096, PROT_READ) = 0
+11503 <... mmap resumed>)               = 0x7f898bc05000
+11503 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f898c3ad000
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libpcre2-8.so.0", O_RDONLY|O_CLOEXEC) = 3</usr/lib/x86_64-linux-gnu/libpcre2-8.so.0.11.2>
+11504 mprotect(0x7faded2b2000, 376832, PROT_READ) = 0
+11503 mmap(NULL, 627472, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libpcre2-8.so.0.11.2>, 0 <unfinished ...>
+11504 mprotect(0x7faded524000, 24576, PROT_READ <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898bd66000
+11504 <... mprotect resumed>)           = 0
+11503 mmap(0x7f898bd68000, 450560, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libpcre2-8.so.0.11.2>, 0x2000 <unfinished ...>
+11504 mprotect(0x7faded72b000, 4096, PROT_READ <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898bd68000
+11504 <... mprotect resumed>)           = 0
+11503 mmap(0x7f898bdd6000, 163840, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libpcre2-8.so.0.11.2>, 0x70000 <unfinished ...>
+11504 mprotect(0x7faded3a4000, 8192, PROT_READ <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898bdd6000
+11504 <... mprotect resumed>)           = 0
+11503 mmap(0x7f898bdfe000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libpcre2-8.so.0.11.2>, 0x97000) = 0x7f898bdfe000
+11504 mprotect(0x7faded4e6000, 20480, PROT_READ) = 0
+11504 mprotect(0x7faded612000, 4096, PROT_READ) = 0
+11503 openat(AT_FDCWD</>, "/lib/x86_64-linux-gnu/libgpg-error.so.0", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 mprotect(0x7faded6ce000, 4096, PROT_READ) = 0
+11503 <... openat resumed>)             = 3</usr/lib/x86_64-linux-gnu/libgpg-error.so.0.34.0>
+11504 mprotect(0x7faded700000, 4096, PROT_READ) = 0
+11504 mprotect(0x7faded74f000, 4096, PROT_READ) = 0
+11503 mmap(NULL, 147880, PROT_READ, MAP_PRIVATE|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgpg-error.so.0.34.0>, 0 <unfinished ...>
+11504 mprotect(0x7faded75c000, 4096, PROT_READ) = 0
+11503 <... mmap resumed>)               = 0x7f898c388000
+11503 mmap(0x7f898c38c000, 90112, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgpg-error.so.0.34.0>, 0x4000) = 0x7f898c38c000
+11503 mmap(0x7f898c3a2000, 36864, PROT_READ, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgpg-error.so.0.34.0>, 0x1a000) = 0x7f898c3a2000
+11504 mprotect(0x56219f308000, 65536, PROT_READ <unfinished ...>
+11503 mmap(0x7f898c3ab000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3</usr/lib/x86_64-linux-gnu/libgpg-error.so.0.34.0>, 0x23000 <unfinished ...>
+11504 <... mprotect resumed>)           = 0
+11503 <... mmap resumed>)               = 0x7f898c3ab000
+11504 mprotect(0x7faded7a8000, 8192, PROT_READ) = 0
+11504 munmap(0x7faded75e000, 38331 <unfinished ...>
+11503 mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11504 <... munmap resumed>)             = 0
+11503 <... mmap resumed>)               = 0x7f898c386000
+11503 mmap(NULL, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0 <unfinished ...>
+11504 brk(NULL <unfinished ...>
+11503 <... mmap resumed>)               = 0x7f898c383000
+11504 <... brk resumed>)                = 0x5621bccb7000
+11504 brk(0x5621bccd8000)               = 0x5621bccd8000
+11504 statfs("/sys/fs/selinux", 0x7ffd39a79bb0) = -1 ENOENT (No such file or directory)
+11504 statfs("/selinux", 0x7ffd39a79bb0) = -1 ENOENT (No such file or directory)
+11504 openat(AT_FDCWD</>, "/proc/filesystems", O_RDONLY|O_CLOEXEC <unfinished ...>
+11503 mprotect(0x7f898bbff000, 16384, PROT_READ <unfinished ...>
+11504 <... openat resumed>)             = 3</proc/filesystems>
+11503 <... mprotect resumed>)           = 0
+11503 mprotect(0x7f898c3ab000, 4096, PROT_READ) = 0
+11503 mprotect(0x7f898bdfe000, 4096, PROT_READ) = 0
+11504 access("/etc/selinux/config", F_OK) = -1 ENOENT (No such file or directory)
+11504 prctl(PR_CAPBSET_READ, CAP_MAC_OVERRIDE) = 1
+11504 prctl(PR_CAPBSET_READ, 0x30 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11504 prctl(PR_CAPBSET_READ, CAP_CHECKPOINT_RESTORE) = 1
+11504 prctl(PR_CAPBSET_READ, 0x2c /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11503 mprotect(0x7f898c2b2000, 376832, PROT_READ <unfinished ...>
+11504 prctl(PR_CAPBSET_READ, 0x2a /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11503 <... mprotect resumed>)           = 0
+11504 prctl(PR_CAPBSET_READ, 0x29 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11503 mprotect(0x7f898c579000, 24576, PROT_READ) = 0
+11503 mprotect(0x7f898c780000, 4096, PROT_READ) = 0
+11504 openat(AT_FDCWD</>, "/proc/", O_RDONLY|O_NOCTTY|O_CLOEXEC|O_PATH <unfinished ...>
+11503 mprotect(0x7f898c3f9000, 8192, PROT_READ <unfinished ...>
+11504 <... openat resumed>)             = 3</proc>
+11503 <... mprotect resumed>)           = 0
+11503 mprotect(0x7f898c53b000, 20480, PROT_READ <unfinished ...>
+11504 newfstatat(AT_FDCWD</>, "/proc/1/root",  <unfinished ...>
+11503 <... mprotect resumed>)           = 0
+11504 <... newfstatat resumed>0x7ffd39a79930, 0) = -1 EACCES (Permission denied)
+11503 mprotect(0x7f898c667000, 4096, PROT_READ) = 0
+11504 socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0 <unfinished ...>
+11503 mprotect(0x7f898c723000, 4096, PROT_READ <unfinished ...>
+11504 <... socket resumed>)             = 3<UNIX-STREAM:[29269]>
+11503 <... mprotect resumed>)           = 0
+11504 prctl(PR_GET_NAME,  <unfinished ...>
+11503 mprotect(0x7f898c755000, 4096, PROT_READ <unfinished ...>
+11504 <... prctl resumed>"systemctl")   = 0
+11503 <... mprotect resumed>)           = 0
+11503 mprotect(0x7f898c7a4000, 4096, PROT_READ <unfinished ...>
+11504 bind(3<UNIX-STREAM:[29269]>, {sa_family=AF_UNIX, sun_path=@"64b6565d8dfaa4a/bus/systemctl/"}, 33 <unfinished ...>
+11503 <... mprotect resumed>)           = 0
+11504 <... bind resumed>)               = 0
+11504 getsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_RCVBUF,  <unfinished ...>
+11503 mprotect(0x7f898c7b1000, 4096, PROT_READ <unfinished ...>
+11504 <... getsockopt resumed>[1048576], [4]) = 0
+11504 setsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_RCVBUF, [8388608], 4 <unfinished ...>
+11503 <... mprotect resumed>)           = 0
+11504 <... setsockopt resumed>)         = 0
+11504 getsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_RCVBUF, [2097152], [4]) = 0
+11504 setsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_RCVBUFFORCE, [8388608], 4 <unfinished ...>
+11503 mprotect(0x564a1911a000, 65536, PROT_READ <unfinished ...>
+11504 <... setsockopt resumed>)         = -1 EPERM (Operation not permitted)
+11504 getsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_SNDBUF,  <unfinished ...>
+11503 <... mprotect resumed>)           = 0
+11504 <... getsockopt resumed>[212992], [4]) = 0
+11503 mprotect(0x7f898c7fd000, 8192, PROT_READ <unfinished ...>
+11504 setsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_SNDBUF, [8388608], 4) = 0
+11503 <... mprotect resumed>)           = 0
+11504 getsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_SNDBUF, [425984], [4]) = 0
+11504 setsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_SNDBUFFORCE, [8388608], 4 <unfinished ...>
+11503 munmap(0x7f898c7b3000, 38331 <unfinished ...>
+11504 <... setsockopt resumed>)         = -1 EPERM (Operation not permitted)
+11504 connect(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, {sa_family=AF_UNIX, sun_path="/run/user/1001/systemd/private"}, 33 <unfinished ...>
+11503 <... munmap resumed>)             = 0
+11504 <... connect resumed>)            = 0
+11504 getsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_PEERCRED,  <unfinished ...>
+11503 brk(NULL <unfinished ...>
+11504 <... getsockopt resumed>{pid=1089, uid=1001, gid=1001}, [12]) = 0
+11504 getsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_PEERSEC,  <unfinished ...>
+11503 <... brk resumed>)                = 0x564a4b9d1000
+11504 <... getsockopt resumed>"unconfined", [64 => 10]) = 0
+11503 brk(0x564a4b9f2000 <unfinished ...>
+11504 getsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_PEERGROUPS,  <unfinished ...>
+11503 <... brk resumed>)                = 0x564a4b9f2000
+11504 <... getsockopt resumed>"\4\0\0\0d\0\0\0v\0\0\0\347\3\0\0\351\3\0\0", [256 => 20]) = 0
+11504 getpeername(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>,  <unfinished ...>
+11503 statfs("/sys/fs/selinux",  <unfinished ...>
+11504 <... getpeername resumed>{sa_family=AF_UNIX, sun_path="/run/user/1001/systemd/private"}, [127 => 33]) = 0
+11504 getsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_ACCEPTCONN,  <unfinished ...>
+11503 <... statfs resumed>0x7fff0a77bbf0) = -1 ENOENT (No such file or directory)
+11504 <... getsockopt resumed>[0], [4]) = 0
+11503 statfs("/selinux",  <unfinished ...>
+11504 getsockname(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>,  <unfinished ...>
+11503 <... statfs resumed>0x7fff0a77bbf0) = -1 ENOENT (No such file or directory)
+11504 <... getsockname resumed>{sa_family=AF_UNIX, sun_path=@"64b6565d8dfaa4a/bus/systemctl/"}, [128 => 33]) = 0
+11503 openat(AT_FDCWD</>, "/proc/filesystems", O_RDONLY|O_CLOEXEC <unfinished ...>
+11504 sendmsg(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\0AUTH EXTERNAL\r\nDATA\r\n", iov_len=22}, {iov_base="NEGOTIATE_UNIX_FD\r\n", iov_len=19}, {iov_base="BEGIN\r\n", iov_len=7}], msg_iovlen=3, msg_controllen=0, msg_flags=0}, MSG_DONTWAIT|MSG_NOSIGNAL <unfinished ...>
+11503 <... openat resumed>)             = 3</proc/filesystems>
+11504 <... sendmsg resumed>)            = 48
+11504 getsockopt(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, SOL_SOCKET, SO_PEERCRED, {pid=1089, uid=1001, gid=1001}, [12]) = 0
+11504 geteuid()                         = 1001
+11504 recvmsg(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="DATA\r\nOK 16a1c837cc9743be87da84112c0e3b75\r\nAGREE_UNIX_FD\r\n", iov_len=256}], msg_iovlen=1, msg_controllen=0, msg_flags=MSG_CMSG_CLOEXEC}, MSG_DONTWAIT|MSG_CMSG_CLOEXEC) = 58
+11504 sendmsg(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>, {msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="l\1\0\1\5\0\0\0\1\0\0\0\217\0\0\0\1\1o\0\31\0\0\0/org/freedesktop/systemd1\0\0\0\0\0\0\0\3\1s\0\6\0\0\0GetAll\0\0\2\1s\0\37\0\0\0org.freedesktop.DBus.Properties\0\6\1s\0\30\0\0\0org.freedesktop.systemd1\0\0\0\0\0\0\0\0\10\1g\0\1s\0\0", iov_len=160}, {iov_base="\0\0\0\0\0", iov_len=5}], msg_iovlen=2, msg_controllen=0, msg_flags=0}, MSG_DONTWAIT|MSG_NOSIGNAL) = 165
+11504 recvmsg(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>,  <unfinished ...>
+11503 access("/etc/selinux/config", F_OK <unfinished ...>
+11504 <... recvmsg resumed>{msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="l\2\1\1)\"\0\0\1\0\0\0;\0\0\0\5\1u\0\1\0\0\0", iov_len=24}], msg_iovlen=1, msg_controllen=0, msg_flags=MSG_CMSG_CLOEXEC}, MSG_DONTWAIT|MSG_CMSG_CLOEXEC) = 24
+11503 <... access resumed>)             = -1 ENOENT (No such file or directory)
+11504 recvmsg(3<UNIX-STREAM:[29269,@"64b6565d8dfaa4a/bus/systemctl/"]>,  <unfinished ...>
+11503 prctl(PR_CAPBSET_READ, CAP_MAC_OVERRIDE <unfinished ...>
+11504 <... recvmsg resumed>{msg_name=NULL, msg_namelen=0, msg_iov=[{iov_base="\7\1s\0\30\0\0\0org.freedesktop.systemd1\0\0\0\0\0\0\0\0\10\1g\0\5a{sv}\0\0\0\0\0\0!\"\0\0\0\0\0\0\7\0\0\0Version\0\1s\0\0\21\0\0\000255.4-1ubuntu8.17\0\0\0\10\0\0\0Features\0\1s\0)\1\0\0+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE "..., iov_len=8801}], msg_iovlen=1, msg_controllen=0, msg_flags=MSG_CMSG_CLOEXEC}, MSG_DONTWAIT|MSG_CMSG_CLOEXEC) = 8801
+11503 <... prctl resumed>)              = 1
+11503 prctl(PR_CAPBSET_READ, 0x30 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11503 prctl(PR_CAPBSET_READ, CAP_CHECKPOINT_RESTORE) = 1
+11503 prctl(PR_CAPBSET_READ, 0x2c /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11503 prctl(PR_CAPBSET_READ, 0x2a /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11503 prctl(PR_CAPBSET_READ, 0x29 /* CAP_??? */) = -1 EINVAL (Invalid argument)
+11503 ioctl(1<pipe:[30023]>, TCGETS, 0x7fff0a77b970) = -1 ENOTTY (Inappropriate ioctl for device)
+11503 newfstatat(AT_FDCWD</>, "/dev/null", {st_mode=S_IFCHR|0666, st_rdev=makedev(0x1, 0x3), ...}, 0) = 0
+11503 write(1<pipe:[30023]>, "systemd 255 (255.4-1ubuntu8.17)\n+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT default-hierarch"..., 330 <unfinished ...>
+11504 write(1<pipe:[29266]>, "255.4-1ubuntu8.17\n", 18 <unfinished ...>
+11503 <... write resumed>)              = 330
+11504 <... write resumed>)              = 18
+11503 exit_group(0 <unfinished ...>
+11504 exit_group(0)                     = ?
+11503 <... exit_group resumed>)         = ?
+11504 +++ exited with 0 +++
+11503 +++ exited with 0 +++
+11501 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11504, si_uid=1001, si_status=0, si_utime=0, si_stime=0} ---
+11500 <... waitid resumed>{si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11504, si_uid=1001, si_status=0, si_utime=0, si_stime=0}, WEXITED, {ru_utime={tv_sec=0, tv_usec=2789}, ru_stime={tv_sec=0, tv_usec=4183}, ...}) = 0
+11500 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11503, si_uid=1001, si_status=0, si_utime=0, si_stime=0} ---
+11498 <... waitid resumed>{si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11503, si_uid=1001, si_status=0, si_utime=0, si_stime=0}, WEXITED, {ru_utime={tv_sec=0, tv_usec=2227}, ru_stime={tv_sec=0, tv_usec=3340}, ...}) = 0
+11498 openat(AT_FDCWD</>, "/etc/localtime", O_RDONLY) = 3</usr/share/zoneinfo/Etc/UTC>
+11498 write(1<pipe:[29263]>, "{\"schema_version\":1,\"context\":{\"completeness\":\"complete\",\"uid\":1001,\"gid\":1001,\"target_user\":\"runner\",\"is_rootless\":null,\"in_container\":null},\"host\":{\"completeness\":\"partial\",\"os\":\"ubuntu\",\"os_version\":\"24.04\",\"kernel\":\"6.17.0-1022-azure\",\"architecture\":\"amd64\",\"cgroup_version\":\"v2\",\"systemd\":true},\"runtimes\":{},\"capab"..., 17821) = 17821
+11501 exit_group(0)                     = ?
+11501 +++ exited with 0 +++
+11500 +++ exited with 0 +++
+11499 +++ exited with 0 +++
+11498 +++ exited with 0 +++
+11497 +++ exited with 0 +++
+11495 +++ exited with 0 +++
+11494 +++ exited with 0 +++
+11493 +++ exited with 0 +++
+11496 +++ exited with 0 +++
+11491 +++ exited with 0 +++
+11488 <... waitid resumed>{si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11491, si_uid=1001, si_status=0, si_utime=0, si_stime=0}, WEXITED, {ru_utime={tv_sec=0, tv_usec=10294}, ru_stime={tv_sec=0, tv_usec=24989}, ...}) = 0
+11489 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=11491, si_uid=1001, si_status=0, si_utime=0, si_stime=1 /* 0.01 s */} ---
+11488 write(1<pipe:[29244]>, "{\"schema_version\":1,\"context\":{\"completeness\":\"complete\",\"uid\":1001,\"gid\":1001,\"target_user\":\"runner\",\"is_rootless\":null,\"in_container\":null},\"host\":{\"completeness\":\"partial\",\"os\":\"ubuntu\",\"os_version\":\"24.04\",\"kernel\":\"6.17.0-1022-azure\",\"architecture\":\"amd64\",\"cgroup_version\":\"v2\",\"systemd\":true},\"runtimes\":{},\"capab"..., 17821) = 17821
+11489 exit_group(2)                     = ?
+11484 +++ exited with 2 +++
+11492 +++ exited with 2 +++
+11489 +++ exited with 2 +++
+11488 +++ exited with 2 +++
+11487 +++ exited with 2 +++
+11486 +++ exited with 2 +++
+11483 +++ exited with 2 +++
+11485 +++ exited with 2 +++
+11482 +++ exited with 2 +++

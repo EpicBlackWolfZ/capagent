@@ -1,0 +1,15 @@
+{
+  "kind": "captured",
+  "description": "Native Ubuntu24.04 amd64, systemd255, failed active user-manager trace from run34762415730 job103737495974. Binary workspace path anonymized; syscall arguments/results preserved.",
+  "issue": 121,
+  "uid": 1001,
+  "gid": 1001,
+  "groups": [
+    4,
+    100,
+    118,
+    999,
+    1001
+  ],
+  "source": "https://github.com/systemd/systemd/blob/v255/src/libsystemd/sd-bus/bus-socket.c"
+}
