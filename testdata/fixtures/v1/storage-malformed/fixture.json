@@ -1,0 +1,759 @@
+{
+  "schema_version": 1,
+  "probe": "assessment",
+  "run_id": "storage-malformed",
+  "timestamp": "2026-09-13T12:00:00Z",
+  "provenance": {
+    "kind": "synthetic",
+    "description": "Synthetic storage source replacement, target access and precedence regression. No writes, mounts or workload operations."
+  },
+  "context": {
+    "id": "user:alice",
+    "identity": {
+      "current": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "alice",
+        "home_dir": "/home/alice",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      },
+      "target": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "alice",
+        "home_dir": "/home/alice",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      },
+      "execution": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "alice",
+        "home_dir": "/home/alice",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      },
+      "selection": "user:alice"
+    }
+  },
+  "runtime": "podman",
+  "endpoint": "local",
+  "host": {
+    "no_new_privileges": false,
+    "filesystems": {
+      "/": 61267,
+      "/sys/fs/cgroup": 1667723888
+    },
+    "mount_policies": {
+      "/": {
+        "nosuid": false,
+        "noexec": false
+      }
+    },
+    "uname": {
+      "Release": "6.12.0-test",
+      "Version": "test kernel",
+      "Machine": "x86_64"
+    }
+  },
+  "files": [
+    {
+      "path": "etc",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "etc/os-release",
+      "kind": "file",
+      "mode": 420,
+      "content": "ID=debian\nVERSION_ID=12\n"
+    },
+    {
+      "path": "etc/resolv.conf",
+      "kind": "file",
+      "mode": 420,
+      "content": "nameserver 192.0.2.53\nsearch example.test\noptions ndots:2 rotate\n"
+    },
+    {
+      "path": "proc/1",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/filesystems",
+      "kind": "file",
+      "mode": 420,
+      "content": "nodev\toverlay\nnodev\tfuse\next4\n"
+    },
+    {
+      "path": "proc/self",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/sys",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/fs",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/kernel",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/module",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/1/comm",
+      "kind": "file",
+      "mode": 420,
+      "content": "systemd\n"
+    },
+    {
+      "path": "proc/self/cgroup",
+      "kind": "file",
+      "mode": 420,
+      "content": "0::/\n"
+    },
+    {
+      "path": "proc/self/mountinfo",
+      "kind": "file",
+      "mode": 420,
+      "content": "1 0 0:1 / /sys/fs/cgroup rw - cgroup2 cgroup rw\n"
+    },
+    {
+      "path": "proc/self/net",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/self/ns",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/self/status",
+      "kind": "file",
+      "mode": 420,
+      "content": "Seccomp:\t0\nNoNewPrivs:\t0\n"
+    },
+    {
+      "path": "proc/sys/kernel",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/sys/user",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/fs/cgroup",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/kernel/security",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "sys/module/apparmor",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/self/net/protocols",
+      "kind": "file",
+      "mode": 420,
+      "content": "protocol size sockets memory press maxhdr slab module\nTCP 1 0 0 no 0 yes kernel\nUDP 1 0 0 no 0 yes kernel\n"
+    },
+    {
+      "path": "proc/self/ns/cgroup",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "cgroup:[48]"
+    },
+    {
+      "path": "proc/self/ns/ipc",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "ipc:[46]"
+    },
+    {
+      "path": "proc/self/ns/mnt",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "mnt:[45]"
+    },
+    {
+      "path": "proc/self/ns/net",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "net:[44]"
+    },
+    {
+      "path": "proc/self/ns/pid",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "pid:[43]"
+    },
+    {
+      "path": "proc/self/ns/user",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "user:[42]"
+    },
+    {
+      "path": "proc/self/ns/uts",
+      "kind": "symlink",
+      "mode": 511,
+      "target": "uts:[47]"
+    },
+    {
+      "path": "proc/sys/kernel/seccomp",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/sys/user/max_user_namespaces",
+      "kind": "file",
+      "mode": 420,
+      "content": "0\n"
+    },
+    {
+      "path": "sys/fs/cgroup/cgroup.controllers",
+      "kind": "file",
+      "mode": 420,
+      "content": "cpu memory\n"
+    },
+    {
+      "path": "sys/fs/cgroup/cgroup.subtree_control",
+      "kind": "file",
+      "mode": 420,
+      "content": "cpu\n"
+    },
+    {
+      "path": "sys/kernel/security/lsm",
+      "kind": "file",
+      "mode": 420,
+      "content": "capability,landlock\n"
+    },
+    {
+      "path": "sys/module/apparmor/parameters",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "proc/sys/kernel/seccomp/actions_avail",
+      "kind": "file",
+      "mode": 420,
+      "content": "kill_process kill_thread trap errno user_notif trace log allow\n"
+    },
+    {
+      "path": "sys/module/apparmor/parameters/enabled",
+      "kind": "file",
+      "mode": 420,
+      "content": "N\n"
+    },
+    {
+      "path": "usr",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/bin",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/local",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/local/bin",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "bin",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "etc/subuid",
+      "kind": "file",
+      "mode": 420,
+      "content": "alice:100000:30\n1000:200000:5\n"
+    },
+    {
+      "path": "etc/subgid",
+      "kind": "file",
+      "mode": 420,
+      "content": "alice:300000:12\n"
+    },
+    {
+      "path": "etc/nsswitch.conf",
+      "kind": "file",
+      "mode": 420,
+      "content": "subid: files\n"
+    },
+    {
+      "path": "usr/bin/newuidmap",
+      "kind": "file",
+      "mode": 8389101,
+      "uid": 0,
+      "gid": 0,
+      "executable_access": true
+    },
+    {
+      "path": "usr/bin/newgidmap",
+      "kind": "file",
+      "mode": 8389101,
+      "uid": 0,
+      "gid": 0,
+      "executable_access": true
+    },
+    {
+      "path": "run",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "run/user",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "run/user/1000",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "run/user/1000/systemd",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "var",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "var/lib",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "var/lib/systemd",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "var/lib/systemd/linger",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "run/user/1000/systemd/private",
+      "kind": "socket",
+      "mode": 384,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "var/lib/systemd/linger/alice",
+      "kind": "file",
+      "mode": 420,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/systemctl",
+      "kind": "file",
+      "mode": 493,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/podman",
+      "kind": "file",
+      "mode": 493,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "home",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "usr/libexec",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "usr/libexec/podman",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "usr/libexec/podman/netavark",
+      "kind": "file",
+      "mode": 493,
+      "content": "synthetic executable metadata; never executed",
+      "uid": 0,
+      "gid": 0,
+      "executable_access": true
+    },
+    {
+      "path": "home/alice",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "usr/lib",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/lib/systemd",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/lib/systemd/user-generators",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/lib/systemd/system-generators",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/bin/crun",
+      "kind": "file",
+      "mode": 493,
+      "content": "synthetic executable metadata; never executed",
+      "uid": 0,
+      "gid": 0,
+      "executable_access": true
+    },
+    {
+      "path": "usr/bin/conmon",
+      "kind": "file",
+      "mode": 493,
+      "content": "synthetic executable metadata; never executed",
+      "uid": 0,
+      "gid": 0,
+      "executable_access": true
+    },
+    {
+      "path": "usr/lib/systemd/user-generators/podman-user-generator",
+      "kind": "file",
+      "mode": 493,
+      "content": "synthetic executable metadata; never executed",
+      "uid": 0,
+      "gid": 0,
+      "executable_access": true
+    },
+    {
+      "path": "usr/lib/systemd/system-generators/podman-system-generator",
+      "kind": "file",
+      "mode": 493,
+      "content": "synthetic executable metadata; never executed",
+      "uid": 0,
+      "gid": 0,
+      "executable_access": true
+    },
+    {
+      "path": "usr/lib/systemd/systemd",
+      "kind": "file",
+      "mode": 493,
+      "content": "synthetic systemd"
+    },
+    {
+      "path": "run/systemd",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "run/systemd/system",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "etc/containers",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "etc/containers/containers.conf",
+      "kind": "file",
+      "mode": 420,
+      "content": "[engine]\nruntime='crun'\ncgroup_manager='systemd'\nconmon_path=['/usr/bin/conmon']\n[engine.runtimes]\ncrun=['/usr/bin/crun']\n"
+    },
+    {
+      "path": "storage",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "storage/graph",
+      "kind": "directory",
+      "mode": 493,
+      "directory_read": true,
+      "directory_write": true,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "storage/run",
+      "kind": "directory",
+      "mode": 493,
+      "directory_read": true,
+      "directory_write": true,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "storage/images",
+      "kind": "directory",
+      "mode": 493,
+      "directory_read": true,
+      "directory_write": true,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "storage/additional",
+      "kind": "directory",
+      "mode": 493,
+      "directory_read": true,
+      "directory_write": true,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "storage/layers",
+      "kind": "directory",
+      "mode": 493,
+      "directory_read": true,
+      "directory_write": true,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "runtime",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "runtime/graph",
+      "kind": "directory",
+      "mode": 493,
+      "directory_read": true,
+      "directory_write": true,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "runtime/run",
+      "kind": "directory",
+      "mode": 493,
+      "directory_read": true,
+      "directory_write": true,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "usr/bin/fuse-overlayfs",
+      "kind": "file",
+      "mode": 493,
+      "executable_access": true
+    },
+    {
+      "path": "usr/share",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/share/containers",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/share/containers/storage.conf",
+      "kind": "file",
+      "mode": 420,
+      "content": "[storage]\ndriver='vfs'\n[storage.options]\nmount_program='/vendor-must-not-survive'\n"
+    },
+    {
+      "path": "etc/containers/storage.conf",
+      "kind": "file",
+      "mode": 420,
+      "content": "[storage]\ndriver='overlay'\ngraphroot='/storage/graph'\nrunroot='/storage/run'\nimagestore='/storage/images'\n[storage.options]\nmount_program='/usr/bin/fuse-overlayfs'\nadditionalimagestores=['/storage/additional']\nadditionallayerstores=['/storage/layers:ref']\n"
+    },
+    {
+      "path": "home/alice/.config",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "home/alice/.config/containers",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "home/alice/.config/containers/storage.conf",
+      "kind": "file",
+      "mode": 420,
+      "content": "[storage]\ndriver=3\n"
+    }
+  ],
+  "commands": [
+    {
+      "path": "/usr/bin/podman",
+      "args": [
+        "--version"
+      ],
+      "directory": "/",
+      "timeout_ms": 5000,
+      "stdout": "podman version 5.8.4\n",
+      "environment": {
+        "HOME": "/home/alice",
+        "XDG_RUNTIME_DIR": "/run/user/1000"
+      }
+    },
+    {
+      "path": "/usr/bin/podman",
+      "args": [
+        "--remote=false",
+        "--trace=false",
+        "info",
+        "--format",
+        "json"
+      ],
+      "directory": "/",
+      "timeout_ms": 30000,
+      "environment": {
+        "HOME": "/home/alice",
+        "XDG_RUNTIME_DIR": "/run/user/1000"
+      },
+      "stdout": "",
+      "exit_code": 1
+    },
+    {
+      "path": "/usr/bin/systemctl",
+      "args": [
+        "--version"
+      ],
+      "directory": "/",
+      "timeout_ms": 2000,
+      "stdout": "systemd 258.3\n"
+    },
+    {
+      "path": "/usr/bin/systemctl",
+      "args": [
+        "--user",
+        "--no-pager",
+        "--no-ask-password",
+        "show",
+        "--property=Version",
+        "--value"
+      ],
+      "environment": {
+        "XDG_RUNTIME_DIR": "/run/user/1000",
+        "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1000/systemd/private"
+      },
+      "directory": "/",
+      "timeout_ms": 2000,
+      "stdout": "258.3\n"
+    }
+  ],
+  "user_query": true,
+  "active": true,
+  "podman_path": "/usr/bin/podman",
+  "environment": {
+    "HOME": "/home/alice",
+    "XDG_RUNTIME_DIR": "/run/user/1000"
+  },
+  "requirement": {
+    "all": [
+      {
+        "capability": "runtime.podman.config.storage.parsed"
+      },
+      {
+        "capability": "runtime.podman.storage.overlay"
+      },
+      {
+        "capability": "runtime.podman.storage.mount_program.executable"
+      },
+      {
+        "capability": "runtime.podman.storage.roots.accessible"
+      },
+      {
+        "capability": "runtime.podman.storage.image_store.accessible"
+      },
+      {
+        "capability": "runtime.podman.storage.additional_stores.accessible"
+      },
+      {
+        "capability": "runtime.podman.storage.kernel.overlay"
+      },
+      {
+        "capability": "runtime.podman.storage.kernel.fuse"
+      }
+    ]
+  }
+}

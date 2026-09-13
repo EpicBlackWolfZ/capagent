@@ -16,8 +16,9 @@ const contextProbe = "context"
 const hostVersionMillis = 2000
 
 type MountPolicy struct {
-	NoSUID bool `json:"nosuid"`
-	NoExec bool `json:"noexec"`
+	ReadOnly bool `json:"read_only"`
+	NoSUID   bool `json:"nosuid"`
+	NoExec   bool `json:"noexec"`
 }
 
 type HostCalls struct {
@@ -89,7 +90,11 @@ func hostFilesystems(d *Document) map[string]platform.FilesystemInfo {
 	for mount, kind := range d.Host.Filesystems {
 		out[mount] = platform.FilesystemInfo{Type: kind}
 		if policy, ok := d.Host.MountPolicies[mount]; ok {
-			out[mount] = platform.FilesystemInfo{Type: kind, FlagsKnown: true, NoExec: policy.NoExec, NoSUID: policy.NoSUID}
+			out[mount] = platform.FilesystemInfo{Type: kind,
+				FlagsKnown: true,
+				NoExec:     policy.NoExec,
+				NoSUID:     policy.NoSUID,
+				ReadOnly:   policy.ReadOnly}
 		}
 	}
 	return out

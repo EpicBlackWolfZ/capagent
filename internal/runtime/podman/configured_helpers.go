@@ -30,7 +30,7 @@ func (ConfiguredHelperProbe) Dependencies() []string { return nil }
 
 func (p ConfiguredHelperProbe) Run(ctx context.Context, env platform.Environment) (model.Observation, error) {
 	obs := runtimeObservation(p.ID(), env.Scope(), measurementTime(p.Now))
-	x := &model.ExecutableObservation{Role: p.Role, Source: "configuration", SourceID: p.Source.ID,
+	x := &model.ExecutableObservation{Role: p.Role, Source: sourceConfiguration, SourceID: p.Source.ID,
 		Candidates: []model.ExecutableCandidate{}}
 	obs.Executable = x
 	c := p.Source.Configuration

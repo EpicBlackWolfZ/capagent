@@ -19,7 +19,7 @@ const engineSystemPath = "/etc/containers/containers.conf"
 
 func TestEngineSourceProfiles(t *testing.T) {
 	t.Parallel()
-	for _, version := range []string{"4.9.3", testVersion, "9.0.0", ""} {
+	for _, version := range []string{storageLegacyVersion, testVersion, "9.0.0", ""} {
 		for _, uid := range []uint32{0, 1001} {
 			t.Run(version+"/"+strconv.FormatUint(uint64(uid), 10), func(t *testing.T) {
 				t.Parallel()
@@ -119,7 +119,7 @@ func TestEngineSourceFailures(t *testing.T) {
 
 func TestEngineLegacySymlinkDirectorySelection(t *testing.T) {
 	t.Parallel()
-	for _, version := range []string{"4.9.3", testVersion} {
+	for _, version := range []string{storageLegacyVersion, testVersion} {
 		t.Run(version, func(t *testing.T) {
 			t.Parallel()
 			mem := platform.NewMemPlatformReader()
@@ -128,7 +128,7 @@ func TestEngineLegacySymlinkDirectorySelection(t *testing.T) {
 			mem.AddSymlink(engineSystemPath+".d", "/srv/dropins")
 			obs := runEngine(t, mem, engineProbe(t, version, 0))
 			want := "custom"
-			if version == "4.9.3" {
+			if version == storageLegacyVersion {
 				want = "crun" // filepath.WalkDir does not follow its root symlink.
 			}
 			if obs.Configuration.Engine.Runtime.Value != want {
@@ -167,7 +167,7 @@ func TestEngineSourceBoundsAndPartialReads(t *testing.T) {
 			addEngineFile(mem, engineSystemPath, "[engine]\nruntime='crun'")
 			version := testVersion
 			if scenario == "disappeared legacy file" {
-				version = "4.9.3"
+				version = storageLegacyVersion
 			}
 			for i := range 70 {
 				if scenario == "file count" {

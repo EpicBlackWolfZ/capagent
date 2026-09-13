@@ -2,6 +2,7 @@
 package podman
 
 import (
+	"encoding/json/jsontext"
 	json "encoding/json/v2"
 	"errors"
 
@@ -33,9 +34,10 @@ type infoDocument struct {
 		} `json:"security"`
 	} `json:"host"`
 	Store struct {
-		GraphDriverName *string `json:"graphDriverName"`
-		GraphRoot       *string `json:"graphRoot"`
-		RunRoot         *string `json:"runRoot"`
+		GraphOptions    map[string]jsontext.Value `json:"graphOptions"`
+		GraphDriverName *string                   `json:"graphDriverName"`
+		GraphRoot       *string                   `json:"graphRoot"`
+		RunRoot         *string                   `json:"runRoot"`
 	} `json:"store"`
 }
 
@@ -47,8 +49,16 @@ func ParseInfo(data []byte) (model.PodmanInfo, error) {
 	if err := json.Unmarshal(data, &document, json.MatchCaseInsensitiveNames(true)); err != nil || document == nil {
 		return model.PodmanInfo{}, errors.New("invalid Podman info document")
 	}
-	return model.PodmanInfo{Version: document.Version.Version, NetworkBackend: document.Host.NetworkBackend,
-		OCIRuntime: document.Host.OCIRuntime, ConmonPath: document.Host.Conmon.Path,
+	var mountProgram struct{ Executable string }
+	if value, ok := document.Store.GraphOptions["overlay.mount_program"]; ok {
+		if err := json.Unmarshal(value, &mountProgram, json.MatchCaseInsensitiveNames(true)); err != nil {
+			return model.PodmanInfo{}, errors.New("invalid Podman storage helper metadata")
+		}
+	}
+	return model.PodmanInfo{StorageMountProgram: mountProgram.Executable,
+		Version:        document.Version.Version,
+		NetworkBackend: document.Host.NetworkBackend,
+		OCIRuntime:     document.Host.OCIRuntime, ConmonPath: document.Host.Conmon.Path,
 		AardvarkPath: document.Host.NetworkBackendInfo.DNS.Path, PastaPath: document.Host.Pasta.Executable,
 		SlirpPath:  document.Host.Slirp.Executable,
 		HelperPath: document.Host.NetworkBackendInfo.Path, CgroupVersion: document.Host.CgroupVersion,

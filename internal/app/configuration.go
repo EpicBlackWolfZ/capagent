@@ -38,5 +38,31 @@ func collectConfiguration(ctx context.Context, env platform.Environment,
 		obs, _ := helper.Run(ctx, env) // Selected-source and metadata uncertainty remain explicit in the observation.
 		observations = append(observations, obs)
 	}
+	return collectStorage(ctx, env, observations, p, source, now)
+}
+
+func collectStorage(ctx context.Context, env platform.Environment, observations []model.Observation,
+	selection podman.EngineProbe, engine model.Observation, now func() time.Time) []model.Observation {
+	source, _ := (podman.StorageProbe{Selection: selection, Engine: engine}).Run(ctx, env)
+	// Fixed diagnostics, source status and completeness preserve collection errors.
+	observations = append(observations, source)
+	for _, writable := range []bool{true, false} {
+		obs, _ := (podman.StoragePathProbe{Source: source, Writable: writable, Now: now}).Run(ctx, env)
+		observations = append(observations, obs)
+	}
+	sources := []model.Observation{source}
+	for _, obs := range observations {
+		if obs.Podman != nil && obs.Podman.Available != nil && *obs.Podman.Available && obs.Completeness == model.Complete {
+			sources = append(sources, obs)
+			paths, _ := (podman.StoragePathProbe{Source: obs, Writable: true, Now: now}).Run(ctx, env)
+			observations = append(observations, paths)
+		}
+	}
+	for _, source := range sources {
+		for _, helper := range podman.StorageHelperProbes(source, now) {
+			obs, _ := helper.Run(ctx, env)
+			observations = append(observations, obs)
+		}
+	}
 	return observations
 }

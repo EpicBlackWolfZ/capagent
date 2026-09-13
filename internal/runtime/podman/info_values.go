@@ -18,7 +18,7 @@ var infoToken = regexp.MustCompile(`^[a-zA-Z0-9_.+-]{1,128}$`)
 // remains internal. Unrecognized but well-formed names remain available as data.
 func normalizeInfo(p *model.PodmanInfo) bool {
 	valid := true
-	for _, field := range []*string{&p.ConmonPath, &p.AardvarkPath, &p.PastaPath, &p.SlirpPath} {
+	for _, field := range []*string{&p.ConmonPath, &p.AardvarkPath, &p.PastaPath, &p.SlirpPath, &p.StorageMountProgram} {
 		if *field != "" && !safeInfoPath(*field) {
 			*field, valid = "", false
 		}

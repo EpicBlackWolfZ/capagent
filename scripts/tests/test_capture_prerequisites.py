@@ -52,3 +52,16 @@ class PrerequisiteCaptureTests(unittest.TestCase):
         self.assertIn('runtime.podman.config.engine.parsed', result['states'])
         self.assertIn('runtime.podman.cgroup_manager.systemd', result['states'])
         self.assertEqual(result['context']['identity']['target']['username'], 'captured-user')
+
+    def test_storage_capture_retains_paths_and_reconstructs_only_selected_helper(self):
+        report = json.loads((ROOT / 'testdata/fixtures/v1/storage-runtime-override/expected.json').read_text())
+        report['evaluation'].update(mode='live', collection='active', provenance='live')
+        report['runtimes']['podman']['raw_graph_options'] = {'secret': 'PRIVATE_CREDENTIAL'}
+        result = CAPTURE.project(report, 'storage projection test', configuration=True)
+        self.assertIn('runtime.podman.config.storage.parsed', result['states'])
+        self.assertIn('runtime.podman.storage.roots.accessible', result['states'])
+        self.assertTrue(any('storage_paths' in item for item in result['observations']))
+        self.assertTrue(any('filesystems' in item.get('host', {}) for item in result['observations']))
+        self.assertEqual(result['info']['store']['graphOptions']['overlay.mount_program'],
+                         {'Executable': '/usr/bin/fuse-overlayfs'})
+        self.assertNotIn('PRIVATE_CREDENTIAL', json.dumps(result))

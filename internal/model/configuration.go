@@ -4,20 +4,23 @@ package model
 // atomic transaction with runtime inspection. Selected means membership in the
 // source plan; Applied additionally requires successful preceding inputs.
 type ConfigurationSource struct {
-	ID       string               `json:"id"`
-	Path     string               `json:"path"`
-	Kind     string               `json:"kind"`
-	Status   string               `json:"status"`
-	Order    int                  `json:"order"`
-	Selected bool                 `json:"selected"`
-	Applied  bool                 `json:"applied"`
-	SHA256   string               `json:"sha256,omitempty"`
-	Field    string               `json:"field,omitempty"`
-	Problem  string               `json:"problem,omitempty"`
-	Engine   *EngineConfiguration `json:"engine,omitempty"`
+	Phase    string                `json:"phase,omitempty"`
+	Storage  *StorageConfiguration `json:"storage,omitempty"`
+	ID       string                `json:"id"`
+	Path     string                `json:"path"`
+	Kind     string                `json:"kind"`
+	Status   string                `json:"status"`
+	Order    int                   `json:"order"`
+	Selected bool                  `json:"selected"`
+	Applied  bool                  `json:"applied"`
+	SHA256   string                `json:"sha256,omitempty"`
+	Field    string                `json:"field,omitempty"`
+	Problem  string                `json:"problem,omitempty"`
+	Engine   *EngineConfiguration  `json:"engine,omitempty"`
 }
 
 type ConfigurationObservation struct {
+	Storage           *StorageConfiguration `json:"storage,omitempty"`
 	Family            string                `json:"family"`
 	RuntimePath       string                `json:"runtime_path,omitempty"`
 	VersionSourceID   string                `json:"version_source_id,omitempty"`

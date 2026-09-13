@@ -28,18 +28,22 @@ type Provenance struct {
 	Description string `json:"description"`
 }
 type File struct {
-	ExecutableAccess  *bool                         `json:"executable_access,omitempty"`
-	AccessFailure     string                        `json:"access_failure,omitempty"`
-	Capabilities      *platform.CapabilityAttribute `json:"capabilities,omitempty"`
-	CapabilityFailure string                        `json:"capability_failure,omitempty"`
-	Path              string                        `json:"path"`
-	Kind              string                        `json:"kind"`
-	Mode              uint32                        `json:"mode"`
-	UID               *uint32                       `json:"uid,omitempty"`
-	GID               *uint32                       `json:"gid,omitempty"`
-	Content           string                        `json:"content,omitempty"`
-	Target            string                        `json:"target,omitempty"`
-	Failure           string                        `json:"failure,omitempty"`
+	DirectoryRead         *bool                         `json:"directory_read,omitempty"`
+	DirectoryWrite        *bool                         `json:"directory_write,omitempty"`
+	DirectoryReadFailure  string                        `json:"directory_read_failure,omitempty"`
+	DirectoryWriteFailure string                        `json:"directory_write_failure,omitempty"`
+	ExecutableAccess      *bool                         `json:"executable_access,omitempty"`
+	AccessFailure         string                        `json:"access_failure,omitempty"`
+	Capabilities          *platform.CapabilityAttribute `json:"capabilities,omitempty"`
+	CapabilityFailure     string                        `json:"capability_failure,omitempty"`
+	Path                  string                        `json:"path"`
+	Kind                  string                        `json:"kind"`
+	Mode                  uint32                        `json:"mode"`
+	UID                   *uint32                       `json:"uid,omitempty"`
+	GID                   *uint32                       `json:"gid,omitempty"`
+	Content               string                        `json:"content,omitempty"`
+	Target                string                        `json:"target,omitempty"`
+	Failure               string                        `json:"failure,omitempty"`
 }
 type Command struct {
 	Path             string            `json:"path"`
@@ -190,7 +194,11 @@ func validateFiles(files []File) error {
 		default:
 			return errors.New("invalid fixture file kind")
 		}
-		for _, code := range []string{file.Failure, file.AccessFailure, file.CapabilityFailure} {
+		for _, code := range []string{file.Failure,
+			file.AccessFailure,
+			file.CapabilityFailure,
+			file.DirectoryReadFailure,
+			file.DirectoryWriteFailure} {
 			if _, err := failure(code); err != nil {
 				return err
 			}
@@ -303,6 +311,9 @@ func addFile(mem *platform.MemPlatformReader, file File) error {
 			return err
 		}
 	}
+	if err := addDirectoryAccess(mem, name, file); err != nil {
+		return err
+	}
 	if file.Capabilities != nil || file.CapabilityFailure != "" {
 		var attribute platform.CapabilityAttribute
 		if file.Capabilities != nil {
@@ -360,4 +371,23 @@ func registerCommand(runner *platform.FakeCommandRunner, command Command) (platf
 
 func validFixtureRuntime(d *Document) bool {
 	return (d.Probe == hostProbe || d.Probe == contextProbe) || (d.Runtime == "podman" && d.Endpoint == "local")
+}
+
+func addDirectoryAccess(mem *platform.MemPlatformReader, name string, file File) error {
+	for _, row := range []struct {
+		writable bool
+		allowed  *bool
+		code     string
+	}{
+		{false, file.DirectoryRead, file.DirectoryReadFailure}, {true, file.DirectoryWrite, file.DirectoryWriteFailure},
+	} {
+		if row.allowed == nil && row.code == "" {
+			continue
+		}
+		err, _ := failure(row.code)
+		if err := mem.SetDirectoryAccess(name, row.writable, row.allowed != nil && *row.allowed, err); err != nil {
+			return err
+		}
+	}
+	return nil
 }

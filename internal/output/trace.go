@@ -40,6 +40,7 @@ type FactRecord struct {
 type HostObservation model.HostObservation
 
 type ObservationRecord struct {
+	StoragePaths  *model.StoragePathObservation   `json:"storage_paths,omitempty"`
 	Configuration *model.ConfigurationObservation `json:"configuration,omitempty"`
 	Executable    *model.ExecutableObservation    `json:"executable,omitempty"`
 	Quadlet       *model.QuadletObservation       `json:"quadlet,omitempty"`

@@ -56,24 +56,25 @@ type Namespace struct {
 // missing versus explicit empty/false values. Helper metadata is a separate
 // observation, never inferred from networkBackend.
 type PodmanInfo struct {
-	OCIRuntime      *SelectedOCIRuntime
-	ConmonPath      string
-	AardvarkPath    string
-	PastaPath       string
-	SlirpPath       string
-	VersionParts    *PodmanVersion `json:"version_parts,omitempty"`
-	Path            string         `json:"path,omitempty"`
-	GraphRoot       *string        `json:"graph_root,omitempty"`
-	RunRoot         *string        `json:"run_root,omitempty"`
-	ServiceIsRemote *bool          `json:"service_is_remote,omitempty"`
-	Version         string         `json:"version,omitempty"`
-	NetworkBackend  *string        `json:"network_backend,omitempty"`
-	StorageDriver   *string        `json:"storage_driver,omitempty"`
-	CgroupVersion   *string        `json:"cgroup_version,omitempty"`
-	CgroupManager   *string        `json:"cgroup_manager,omitempty"`
-	Rootless        *bool          `json:"rootless,omitempty"`
-	HelperPath      string         `json:"helper_path,omitempty"`
-	Available       *bool          `json:"available,omitempty"`
+	StorageMountProgram string `json:"storage_mount_program,omitempty"`
+	OCIRuntime          *SelectedOCIRuntime
+	ConmonPath          string
+	AardvarkPath        string
+	PastaPath           string
+	SlirpPath           string
+	VersionParts        *PodmanVersion `json:"version_parts,omitempty"`
+	Path                string         `json:"path,omitempty"`
+	GraphRoot           *string        `json:"graph_root,omitempty"`
+	RunRoot             *string        `json:"run_root,omitempty"`
+	ServiceIsRemote     *bool          `json:"service_is_remote,omitempty"`
+	Version             string         `json:"version,omitempty"`
+	NetworkBackend      *string        `json:"network_backend,omitempty"`
+	StorageDriver       *string        `json:"storage_driver,omitempty"`
+	CgroupVersion       *string        `json:"cgroup_version,omitempty"`
+	CgroupManager       *string        `json:"cgroup_manager,omitempty"`
+	Rootless            *bool          `json:"rootless,omitempty"`
+	HelperPath          string         `json:"helper_path,omitempty"`
+	Available           *bool          `json:"available,omitempty"`
 }
 
 // PodmanHelper is a scoped filesystem measurement linked to one info observation.

@@ -33,6 +33,7 @@ type ObservationRef struct {
 // Completeness and diagnostics survive failure; no generic attribute bag or
 // capability evaluation is part of the model.
 type Observation struct {
+	StoragePaths  *StoragePathObservation   `json:"storage_paths,omitempty"`
 	Configuration *ConfigurationObservation `json:"configuration,omitempty"`
 	Quadlet       *QuadletObservation       `json:"quadlet,omitempty"`
 	Executable    *ExecutableObservation    `json:"executable,omitempty"`

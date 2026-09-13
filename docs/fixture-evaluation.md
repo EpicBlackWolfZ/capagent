@@ -112,3 +112,12 @@ The `context` fixture probe replays subordinate-ID and user-context observations
 The `assessment` probe combines the existing host/context, Podman inspection and prerequisite collectors. It requires explicit current, execution and target identities, a `host` snapshot, `podman_path`, and the bounded named HOME/XDG `environment`. `active` and `user_query` govern offline replay only; `--fixture` still cannot execute host commands. At most four scripted commands are accepted: the reviewed Podman version/info pair, `systemctl --version`, and the bounded user-manager query. Each must match its exact argv, environment, directory and timeout. Omitted commands remain incomplete if requested; malformed authority is rejected. Discovery and inspection-environment failures prevent dispatch.
 
 `assessment-rootless` and `assessment-rootful` evaluate the [documented prerequisite examples](podman-prerequisites.md). The other `assessment-*` scenarios cover missing, denied and masked generators, denied selected helpers, deferred manager queries and an invalid runtime directory. File execution access is an explicit fixture measurement, never inferred from Unix mode bits.
+
+
+Storage assessment fixtures (`storage-*`) use the same source/provenance report
+contract as engine fixtures. Virtual directories explicitly declare
+`directory_read` and `directory_write` kernel-access results; mode bits alone
+leave access unmeasured. `directory_read_failure`/`directory_write_failure`
+retain bounded failure codes. Filesystem mount policies can declare `read_only`.
+See [storage prerequisites](podman-storage-config.md) for selection semantics,
+capability IDs and the limits of these measurements.
