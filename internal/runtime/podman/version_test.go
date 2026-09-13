@@ -17,7 +17,7 @@ func TestVersionCorpus(t *testing.T) {
 		t.Fatal(err)
 	}
 	version, err := podman.ParseVersion(captured)
-	if err != nil || version.Canonical != "5.8.4" {
+	if err != nil || version.Canonical != testVersion {
 		t.Fatal("captured version", version, err)
 	}
 	data, err := platform.ReadDocument(t.Context(), root, "synthetic.json", 4096)
@@ -48,7 +48,7 @@ func TestParseVersion(t *testing.T) {
 		{"podman version 4.9.4-3.el9_4", "4.9.4", "3.el9_4", "", ""},
 		{"podman version 5.0.0-dev", "5.0.0", "dev", "", ""},
 		{"podman version 5.0.0-rc.1+abc123 amd64", "5.0.0", "rc.1", "abc123", "amd64"},
-		{"podman version 5.8.4 (git abcdef) linux/amd64", "5.8.4", "", "", "(git abcdef) linux/amd64"},
+		{"podman version 5.8.4 (git abcdef) linux/amd64", testVersion, "", "", "(git abcdef) linux/amd64"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestParseVersion(t *testing.T) {
 
 func TestParseVersionRejectsAmbiguousOutput(t *testing.T) {
 	t.Parallel()
-	inputs := []string{"", "5.8.4", "docker version 5.8.4", "podman version 5.8", "podman version 05.8.4",
+	inputs := []string{"", testVersion, "docker version 5.8.4", "podman version 5.8", "podman version 05.8.4",
 		"podman version 5.8.4-", "podman version 5.8.4+", "podman version 5.8.4\nsecret", "podman version 5.8.4\x1b[31m",
 		"podman version 4294967296.0.0", "podman version 5.8.4 https://secret.invalid/token", strings.Repeat("x", 4097)}
 	inputs = append(inputs, "podman version 5.8.4 SECRET", "podman version 5.8.4 4.9.4", "podman version 5.8.4 user/password")

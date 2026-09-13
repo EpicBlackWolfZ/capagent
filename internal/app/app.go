@@ -45,6 +45,7 @@ type Input struct {
 	At           time.Time
 	Provenance   string
 	Requirement  *requirement.Node
+	Collection   string
 	Mode         string
 	Now          func() time.Time
 	Observations []model.Observation
@@ -84,6 +85,7 @@ func Evaluate(ctx context.Context, input Input, env platform.Environment, probes
 			dataset.Observations = append(dataset.Observations, result.Observation)
 		}
 	}
+	dataset.Observations = collectHelpers(ctx, env, dataset.Observations, input)
 	if err := validateRuntimeSelection(input.Scope, dataset.Observations); err != nil {
 		return nil, err
 	}
@@ -124,6 +126,12 @@ func validateRuntimeSelection(scope model.EvaluationScope, observations []model.
 		if obs.Version != nil {
 			paths = append(paths, obs.Version.Path)
 		}
+		if obs.Podman != nil {
+			paths = append(paths, obs.Podman.Path)
+		}
+		if obs.PodmanHelper != nil {
+			paths = append(paths, obs.PodmanHelper.Path)
+		}
 		for _, path := range paths {
 			if path == "" {
 				continue
@@ -152,12 +160,25 @@ func evaluateFixture(ctx context.Context, doc *fixture.Document) (*output.Report
 	}
 	input := Input{Scope: doc.Scope(), Context: doc.Context, At: doc.Timestamp, Provenance: doc.Provenance.Kind,
 		Requirement: services.Requirement}
-	probes := []probe.Probe{podman.InfoProbe{Command: services.Command, Timestamp: doc.Timestamp}}
+	probes := []probe.Probe{podman.InfoProbe{Command: services.Command, LegacyInfo: true, Timestamp: doc.Timestamp}}
 	if doc.Probe == "version" {
 		input.Definitions = []capability.Definition{capability.PodmanDefinition()}
 		now := func() time.Time { return doc.Timestamp }
 		probes = []probe.Probe{podman.DiscoveryProbe{Path: services.Command.Path, Now: now},
 			podman.VersionProbe{Command: services.Command, Now: now}}
+	}
+	if doc.Probe == "inspection" {
+		input.Definitions = []capability.Definition{capability.PodmanDefinition(),
+			capability.PodmanInfoDefinition(), capability.NetavarkDefinition()}
+		now := func() time.Time { return doc.Timestamp }
+		discovery, _ := (podman.DiscoveryProbe{Path: services.Command.Path, Now: now}).Run(ctx, services.Environment)
+		// Discovery failures are retained in the observation and prevent dispatch.
+		input.Observations = []model.Observation{discovery}
+		probes = nil
+		if d := discovery.Discovery; d != nil && d.File != nil && d.File.Regular && d.File.ExecutableBits {
+			probes = []probe.Probe{podman.VersionProbe{Command: services.Command, Now: now},
+				podman.InfoProbe{Command: services.InfoCommand, Now: now, AfterVersion: true}}
+		}
 	}
 	return evaluateOwned(ctx, input, services.Environment, probes, services)
 }
@@ -167,7 +188,7 @@ func evaluateFixture(ctx context.Context, doc *fixture.Document) (*output.Report
 // --debug emits structured codes and fixed application messages only.
 func Execute(ctx context.Context, opts Options, stdout, stderr io.Writer) int {
 	if !validOptions(opts) {
-		return failure(stderr, ExitUsage, "select --fixture DIR or --runtime podman with current context; active execution is unavailable")
+		return failure(stderr, ExitUsage, "select --fixture DIR or --runtime podman; --active permits current-user local inspection")
 	}
 	var report *output.Report
 	var err error
@@ -238,4 +259,22 @@ func exitCode(state string) int {
 	default:
 		return ExitIndeterminate
 	}
+}
+
+func collectHelpers(ctx context.Context, env platform.Environment, observations []model.Observation, input Input) []model.Observation {
+	count := len(observations)
+	for i := range count {
+		obs := observations[i]
+		p := obs.Podman
+		if p == nil || p.Available == nil || !*p.Available || p.NetworkBackend == nil || *p.NetworkBackend != "netavark" {
+			continue
+		}
+		at := input.At
+		if input.Now != nil {
+			at = input.Now()
+		}
+		helper, _ := podman.ObserveHelper(ctx, env, obs, at) // Failure is retained in the partial helper observation and diagnostics.
+		observations = append(observations, helper)
+	}
+	return observations
 }

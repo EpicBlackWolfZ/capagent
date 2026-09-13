@@ -1,0 +1,16 @@
+[
+  {
+    "file": "ubuntu-3.4.4.txt",
+    "kind": "captured",
+    "source": "https://github.com/podman-container-tools/podman/issues/23808",
+    "command": "podman --version",
+    "transformation": "Exact version output line; prompt and unrelated issue text excluded"
+  },
+  {
+    "file": "rhel-4.9.4.txt",
+    "kind": "captured",
+    "source": "https://github.com/podman-container-tools/podman/discussions/22943",
+    "command": "podman --version",
+    "transformation": "Exact version output line; prompt and unrelated discussion text excluded"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "file": "ubuntu-3.4.4.json",
+    "kind": "captured",
+    "source": "https://github.com/containers/podman/issues/14154",
+    "source_format": "YAML transcribed to JSON",
+    "transformations": "Only tested info fields retained; user paths and IDs replaced consistently. Missing fields remain missing.",
+    "observed_version": "3.4.4",
+    "retrieved_at": "2026-09-13",
+    "source_sha256": "458141b110984e81e5a5c829bd2991766cf15582085aa8c372c4b50a25692b6a",
+    "source_hash_input": "Full parsed capture serialized as JSON before field filtering and redaction",
+    "capture_environment": "Ubuntu 22.04, rootful Podman 3.4.4, cgroup v1; backend field absent in source"
+  },
+  {
+    "file": "arch-4.4.4.json",
+    "kind": "captured",
+    "source": "https://github.com/containers/podman/issues/18168",
+    "source_format": "YAML transcribed to JSON",
+    "transformations": "Only tested info fields retained; user paths and IDs replaced consistently. Missing fields remain missing.",
+    "observed_version": "4.4.4",
+    "retrieved_at": "2026-09-13",
+    "source_sha256": "3192963c5d8b461cc70682f8e2f9bf4aa1995d68c6bda3e7025447c8bedc6a0d",
+    "source_hash_input": "Full parsed capture serialized as JSON before field filtering and redaction",
+    "capture_environment": "Arch Linux, rootless Podman 4.4.4, cgroup v2/Netavark"
+  },
+  {
+    "file": "fedora-5.8.4.json",
+    "kind": "captured",
+    "source": "Local owned HOME/XDG capture, current host UID 1000, podman-5.8.4-1.fc44.x86_64",
+    "source_format": "JSON",
+    "transformations": "Only tested info fields retained; user paths and IDs replaced consistently. Missing fields remain missing.",
+    "observed_version": "5.8.4",
+    "retrieved_at": "2026-09-13",
+    "source_sha256": "c9a1237b856d0f28d002c08e6fa2ab3a8f2e1db9641604347e67514bb7eadf38",
+    "source_hash_input": "Original native command stdout bytes before field filtering and redaction",
+    "capture_environment": "Nobara 44 with Fedora fc44 package, native host UID 1000, cgroup v2/Netavark"
+  }
+]

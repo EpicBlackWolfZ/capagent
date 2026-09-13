@@ -19,12 +19,14 @@
   },
   "runtimes": {
     "podman": {
+      "rootless": true,
       "completeness": "complete",
       "installed": null,
       "version": "5.8.1",
       "accessible": true,
       "network_backend": "cni",
-      "storage_driver": "overlay"
+      "storage_driver": "overlay",
+      "path": "/usr/bin/podman"
     }
   },
   "capabilities": {
@@ -33,7 +35,7 @@
       "confidence": "derived",
       "reason": "selected complete runtime evidence",
       "evidence": [
-        "podman.info.netavark"
+        "podman.info.runtime.podman.netavark"
       ]
     }
   },
@@ -87,19 +89,36 @@
         "completeness": "complete",
         "facts": [
           {
-            "id": "podman.info.stdout",
+            "id": "podman.info.measurement",
             "source": "podman.info",
             "timestamp": "2026-09-12T00:00:00Z",
             "completeness": "complete"
           }
         ],
-        "diagnostics": []
+        "diagnostics": [
+          {
+            "code": "info_missing_cgroup_version",
+            "message": "requested runtime field is absent or empty"
+          },
+          {
+            "code": "info_missing_cgroup_manager",
+            "message": "requested runtime field is absent or empty"
+          },
+          {
+            "code": "info_missing_graph_root",
+            "message": "requested runtime field is absent or empty"
+          },
+          {
+            "code": "info_missing_run_root",
+            "message": "requested runtime field is absent or empty"
+          }
+        ]
       }
     ],
     "evidence": [
       {
-        "id": "podman.info.netavark",
-        "source": "podman effective info and helper metadata",
+        "id": "podman.info.runtime.podman.netavark",
+        "source": "Podman effective runtime observation",
         "claim": "runtime.podman.netavark",
         "scope": {
           "run_id": "fixture-unsupported",
@@ -137,6 +156,23 @@
         }
       ]
     },
-    "diagnostics": []
+    "diagnostics": [
+      {
+        "code": "info_missing_cgroup_version",
+        "message": "requested runtime field is absent or empty"
+      },
+      {
+        "code": "info_missing_cgroup_manager",
+        "message": "requested runtime field is absent or empty"
+      },
+      {
+        "code": "info_missing_graph_root",
+        "message": "requested runtime field is absent or empty"
+      },
+      {
+        "code": "info_missing_run_root",
+        "message": "requested runtime field is absent or empty"
+      }
+    ]
   }
 }

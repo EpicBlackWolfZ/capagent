@@ -88,7 +88,7 @@ func FuzzReportJSON(f *testing.F) {
 			}
 			// Generated reports stay inside the currently shipped schema contract.
 			report := output.NewReport()
-			report.Host.OS, report.Host.CgroupVersion = "linux", "unknown"
+			report.Host.OS, report.Host.CgroupVersion = "linux", testUnknown
 			report.Context.TargetUser = strings.ToValidUTF8(string(input), "?")
 			states := []string{
 				string(model.StateSupported), string(model.StateUnsupported), string(model.StateMisconfigured),

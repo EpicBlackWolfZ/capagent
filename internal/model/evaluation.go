@@ -53,16 +53,28 @@ type Namespace struct {
 }
 
 // PodmanInfo is the initial concrete observation payload. Pointer fields retain
-// missing versus explicit empty/false values. HelperPresent is a separate direct
-// metadata observation, not inferred from networkBackend.
+// missing versus explicit empty/false values. Helper metadata is a separate
+// observation, never inferred from networkBackend.
 type PodmanInfo struct {
-	Version        string  `json:"version,omitempty"`
-	NetworkBackend *string `json:"network_backend,omitempty"`
-	StorageDriver  *string `json:"storage_driver,omitempty"`
-	CgroupVersion  *string `json:"cgroup_version,omitempty"`
-	CgroupManager  *string `json:"cgroup_manager,omitempty"`
-	Rootless       *bool   `json:"rootless,omitempty"`
-	HelperPath     string  `json:"helper_path,omitempty"`
-	HelperPresent  *bool   `json:"helper_present,omitempty"`
-	Available      *bool   `json:"available,omitempty"`
+	VersionParts    *PodmanVersion `json:"version_parts,omitempty"`
+	Path            string         `json:"path,omitempty"`
+	GraphRoot       *string        `json:"graph_root,omitempty"`
+	RunRoot         *string        `json:"run_root,omitempty"`
+	ServiceIsRemote *bool          `json:"service_is_remote,omitempty"`
+	Version         string         `json:"version,omitempty"`
+	NetworkBackend  *string        `json:"network_backend,omitempty"`
+	StorageDriver   *string        `json:"storage_driver,omitempty"`
+	CgroupVersion   *string        `json:"cgroup_version,omitempty"`
+	CgroupManager   *string        `json:"cgroup_manager,omitempty"`
+	Rootless        *bool          `json:"rootless,omitempty"`
+	HelperPath      string         `json:"helper_path,omitempty"`
+	Available       *bool          `json:"available,omitempty"`
+}
+
+// PodmanHelper is a scoped filesystem measurement linked to one info observation.
+type PodmanHelper struct {
+	Path       string
+	InfoID     string
+	HelperPath string
+	Present    *bool
 }

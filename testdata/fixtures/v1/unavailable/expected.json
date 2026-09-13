@@ -21,7 +21,8 @@
     "podman": {
       "completeness": "complete",
       "installed": null,
-      "accessible": false
+      "accessible": false,
+      "path": "/usr/bin/podman"
     }
   },
   "capabilities": {
@@ -30,7 +31,7 @@
       "confidence": "derived",
       "reason": "selected complete runtime evidence",
       "evidence": [
-        "podman.info.netavark"
+        "podman.info.runtime.podman.netavark"
       ]
     }
   },
@@ -84,7 +85,7 @@
         "completeness": "complete",
         "facts": [
           {
-            "id": "podman.info.stdout",
+            "id": "podman.info.measurement",
             "source": "podman.info",
             "timestamp": "2026-09-12T00:00:00Z",
             "completeness": "complete"
@@ -92,7 +93,7 @@
         ],
         "diagnostics": [
           {
-            "code": "runtime_unavailable",
+            "code": "info_exit_failed",
             "message": "runtime inspection did not succeed"
           }
         ]
@@ -100,8 +101,8 @@
     ],
     "evidence": [
       {
-        "id": "podman.info.netavark",
-        "source": "podman effective info and helper metadata",
+        "id": "podman.info.runtime.podman.netavark",
+        "source": "Podman effective runtime observation",
         "claim": "runtime.podman.netavark",
         "scope": {
           "run_id": "fixture-unavailable",
@@ -151,7 +152,7 @@
     },
     "diagnostics": [
       {
-        "code": "runtime_unavailable",
+        "code": "info_exit_failed",
         "message": "runtime inspection did not succeed"
       },
       {

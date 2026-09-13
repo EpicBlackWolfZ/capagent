@@ -1,0 +1,19 @@
+{
+  "host": {
+    "cgroupVersion": "v2",
+    "cgroupManager": "systemd",
+    "networkBackend": "netavark",
+    "serviceIsRemote": false,
+    "security": {
+      "rootless": true
+    }
+  },
+  "store": {
+    "graphDriverName": "btrfs",
+    "graphRoot": "/home/capture/.local/share/containers/storage",
+    "runRoot": "/run/user/1000/containers"
+  },
+  "version": {
+    "Version": "4.4.4"
+  }
+}

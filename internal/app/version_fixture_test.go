@@ -15,7 +15,7 @@ func TestVersionFixtures(t *testing.T) {
 		name, state string
 		code        int
 	}{
-		{"version-supported", "supported", app.ExitSatisfied},
+		{"version-supported", testSupported, app.ExitSatisfied},
 		{"version-nonzero", "unavailable", app.ExitIndeterminate},
 		{"version-malformed", "unknown", app.ExitIndeterminate},
 		{"version-timeout", "unknown", app.ExitIndeterminate},

@@ -1,0 +1,22 @@
+{
+  "host": {
+    "cgroupVersion": "v2",
+    "cgroupManager": "cgroupfs",
+    "networkBackend": "netavark",
+    "serviceIsRemote": false,
+    "security": {
+      "rootless": true
+    },
+    "networkBackendInfo": {
+      "path": "/usr/libexec/podman/netavark"
+    }
+  },
+  "store": {
+    "graphDriverName": "overlay",
+    "graphRoot": "/home/capture/inspection/data/containers/storage",
+    "runRoot": "/home/capture/inspection/runtime/containers"
+  },
+  "version": {
+    "Version": "5.8.4"
+  }
+}

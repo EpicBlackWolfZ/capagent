@@ -253,6 +253,49 @@
               "canonical",
               "raw"
             ]
+          },
+          "rootless": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Runtime-reported rootless mode; false is an observed rootful value and absence/null is unknown."
+          },
+          "cgroup_version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 128,
+            "pattern": "^[a-zA-Z0-9_.+-]*$",
+            "description": "Effective runtime metadata; this is not a direct host or workload capability measurement."
+          },
+          "cgroup_manager": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 128,
+            "pattern": "^[a-zA-Z0-9_.+-]*$",
+            "description": "Effective runtime metadata; this is not a direct host or workload capability measurement."
+          },
+          "graph_root": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 4096,
+            "pattern": "^(/|$)",
+            "description": "Sanitized effective storage path; empty is preserved and absence/null is unknown. No write test is implied."
+          },
+          "run_root": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 4096,
+            "pattern": "^(/|$)",
+            "description": "Sanitized effective storage path; empty is preserved and absence/null is unknown. No write test is implied."
           }
         }
       }
@@ -685,6 +728,13 @@
           "items": {
             "$ref": "#/$defs/diagnostic"
           }
+        },
+        "collection": {
+          "enum": [
+            "passive",
+            "active"
+          ],
+          "description": "Explicit live collection policy. Active permits reviewed Podman startup/inspection effects."
         }
       },
       "required": [
@@ -723,6 +773,20 @@
                   "synthetic",
                   "captured"
                 ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "collection"
+            ]
+          },
+          "then": {
+            "properties": {
+              "mode": {
+                "const": "live"
               }
             }
           }

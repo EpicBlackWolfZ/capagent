@@ -13,16 +13,22 @@ def allowed(report, capability_id="runtime.podman.netavark"):
     evaluation = report.get("evaluation", {})
     if not isinstance(capabilities, dict) or not isinstance(evaluation, dict):
         return False
-    capability = capabilities.get(capability_id, {})
     requirement = evaluation.get("requirement", {})
+    required = ("runtime.podman", "runtime.podman.info") if capability_id == "runtime.podman.info" else (capability_id,)
+    return (
+        isinstance(requirement, dict)
+        and requirement.get("state") == "SATISFIED"
+        and all(supported(capabilities.get(key)) for key in required)
+    )
+
+
+def supported(capability):
     return (
         isinstance(capability, dict)
-        and isinstance(requirement, dict)
         and capability.get("state") == "supported"
         and capability.get("confidence") in ("verified", "derived")
         and isinstance(capability.get("evidence"), list)
         and bool(capability["evidence"])
-        and requirement.get("state") == "SATISFIED"
     )
 
 
@@ -30,7 +36,7 @@ def main():
     if len(sys.argv) > 2:
         return 2
     capability_id = sys.argv[1] if len(sys.argv) == 2 else "runtime.podman.netavark"
-    if capability_id not in ("runtime.podman.netavark", "runtime.podman"):
+    if capability_id not in ("runtime.podman.netavark", "runtime.podman", "runtime.podman.info"):
         return 2
     try:
         report = json.load(sys.stdin)

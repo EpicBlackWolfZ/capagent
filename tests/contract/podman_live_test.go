@@ -53,12 +53,13 @@ func TestLiveSchemaModeAndProvenance(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, mode := range []string{"fixture", "live"} {
-		for _, provenance := range []string{"captured", "synthetic", "live", "invalid"} {
+		for _, provenance := range []string{"captured", "synthetic", "live", testInvalid} {
 			r, err := output.Unmarshal(stdout.Bytes())
 			if err != nil {
 				t.Fatal(err)
 			}
 			r.Evaluation.Mode, r.Evaluation.Provenance = mode, provenance
+			r.Evaluation.Collection = ""
 			data, err := json.Marshal(r)
 			if err != nil {
 				t.Fatal(err)

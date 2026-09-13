@@ -28,7 +28,7 @@ func TestFixtureExecutableConsumer(t *testing.T) {
 		t.Fatalf("build: %v %s", err, data)
 	}
 	schema := compileSchema(t)
-	for _, name := range []string{fixtureSupported, "unsupported", "misconfigured", "unavailable", "unknown"} {
+	for _, name := range []string{fixtureSupported, "unsupported", "misconfigured", "unavailable", testUnknown} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			fixtureDir := filepath.Join(root, fixtureRelativeRoot, name)
@@ -130,7 +130,7 @@ func TestIdentitySchemaAndDTOBoundsAgree(t *testing.T) {
 	t.Parallel()
 	const maximumUID = 4294967295
 	schema := compileSchema(t)
-	expected, err := os.ReadFile(filepath.Join(findRepoRoot(t), fixtureRelativeRoot, fixtureSupported, "expected.json"))
+	expected, err := os.ReadFile(filepath.Join(findRepoRoot(t), fixtureRelativeRoot, "supported", "expected.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -118,11 +118,17 @@ func validate(d *Document) error {
 	if (d.Provenance.Kind != "synthetic" && d.Provenance.Kind != "captured") || d.Provenance.Description == "" {
 		return errors.New("fixture requires explicit captured or synthetic provenance")
 	}
-	if d.Probe != "" && d.Probe != "info" && d.Probe != "version" {
+	switch d.Probe {
+	case "", "info", "version", "inspection":
+	default:
 		return errors.New("unknown fixture probe")
 	}
-	if len(d.Files) > maxFiles || len(d.Commands) != 1 {
-		return errors.New("fixture requires at most 4096 files and exactly one command")
+	commands := 1
+	if d.Probe == "inspection" {
+		commands = inspectionCommandCount
+	}
+	if len(d.Files) > maxFiles || len(d.Commands) != commands {
+		return errors.New("fixture file or command count exceeds its probe contract")
 	}
 	if _, err := config.ParseRequirement(d.Requirement); err != nil {
 		return err
@@ -151,6 +157,7 @@ func validate(d *Document) error {
 type Services struct {
 	Environment platform.Environment
 	Command     platform.CommandSpec
+	InfoCommand platform.CommandSpec
 	Requirement *requirement.Node
 	files       platform.ScopedReader
 }
@@ -169,35 +176,29 @@ func Open(d *Document) (*Services, error) {
 			return nil, err
 		}
 	}
-	command := d.Commands[0]
-	if command.TimeoutMillis > maxTimeoutMillis {
-		return nil, errors.New("fixture timeout exceeds command budget")
-	}
-	policy, err := platform.NewEnvPolicy(nil, command.Environment)
-	if err != nil {
-		return nil, err
-	}
-	spec := platform.CommandSpec{Path: command.Path, Args: command.Args, Env: policy, Dir: command.Directory,
-		Timeout: time.Duration(command.TimeoutMillis) * time.Millisecond}
-	commandErr, err := failure(command.Failure)
-	if err != nil {
-		return nil, err
-	}
 	runner := platform.NewFakeCommandRunner()
-	result := platform.ExecResult{Stdout: []byte(command.Stdout), Stderr: []byte(command.Stderr), ExitCode: command.ExitCode,
-		StdoutTruncated: command.StdoutTruncated, StderrTruncated: command.StderrTruncated, TimedOut: command.Failure == "timeout"}
-	if err := runner.RegisterWithError(spec, result, commandErr); err != nil {
-		return nil, err
+	specs := make([]platform.CommandSpec, 0, len(d.Commands))
+	for _, command := range d.Commands {
+		spec, err := registerCommand(runner, command)
+		if err != nil {
+			return nil, err
+		}
+		specs = append(specs, spec)
 	}
-	// Register snapshots args; the invocation must also be independent of Document.
-	spec.Args = append([]string(nil), spec.Args...)
 	node, err := config.ParseRequirement(d.Requirement)
 	if err != nil {
 		return nil, err
 	}
 	files := platform.NewScopedMemReader("/", mem)
 	env := platform.NewEnvironment(nil, nil, nil, runner).WithFiles(files).WithScope(d.Scope())
-	return &Services{Environment: env, Command: spec, Requirement: node, files: files}, nil
+	services := &Services{Environment: env, Command: specs[0], Requirement: node, files: files}
+	if d.Probe == "inspection" {
+		services.InfoCommand = specs[1]
+		if err := validateInspection(d, services); err != nil {
+			return nil, errors.Join(err, files.Close())
+		}
+	}
+	return services, nil
 }
 
 func addFile(mem *platform.MemPlatformReader, file File) error {
@@ -240,4 +241,26 @@ func failure(code string) (error, error) {
 	default:
 		return nil, errors.New("unknown fixture failure code")
 	}
+}
+
+func registerCommand(runner *platform.FakeCommandRunner, command Command) (platform.CommandSpec, error) {
+	if command.TimeoutMillis > maxTimeoutMillis {
+		return platform.CommandSpec{}, errors.New("fixture timeout exceeds command budget")
+	}
+	policy, err := platform.NewEnvPolicy(nil, command.Environment)
+	if err != nil {
+		return platform.CommandSpec{}, err
+	}
+	spec := platform.CommandSpec{Path: command.Path, Args: append([]string(nil), command.Args...), Env: policy,
+		Dir: command.Directory, Timeout: time.Duration(command.TimeoutMillis) * time.Millisecond}
+	commandErr, err := failure(command.Failure)
+	if err != nil {
+		return platform.CommandSpec{}, err
+	}
+	result := platform.ExecResult{Stdout: []byte(command.Stdout), Stderr: []byte(command.Stderr), ExitCode: command.ExitCode,
+		StdoutTruncated: command.StdoutTruncated, StderrTruncated: command.StderrTruncated, TimedOut: command.Failure == "timeout"}
+	if err := runner.RegisterWithError(spec, result, commandErr); err != nil {
+		return platform.CommandSpec{}, err
+	}
+	return spec, nil
 }

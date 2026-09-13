@@ -1,0 +1,18 @@
+{
+  "host": {
+    "cgroupVersion": "v1",
+    "cgroupManager": "cgroupfs",
+    "serviceIsRemote": false,
+    "security": {
+      "rootless": false
+    }
+  },
+  "store": {
+    "graphDriverName": "overlay",
+    "graphRoot": "/var/lib/containers/storage",
+    "runRoot": "/run/containers/storage"
+  },
+  "version": {
+    "Version": "3.4.4"
+  }
+}

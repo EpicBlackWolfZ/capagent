@@ -62,12 +62,12 @@ func TestInfoProbePreservesFailures(t *testing.T) {
 			mem.AddFile("/usr/libexec/podman/netavark", nil, 0o755)
 			reader := platform.NewScopedMemReader("/", mem)
 			defer reader.Close()
-			spec := platform.CommandSpec{Path: "/usr/bin/podman", Args: []string{"info", "--format", "json"}}
+			spec := platform.CommandSpec{Path: testPodmanPath, Args: []string{"--remote=false", "info", "--format", "json"}}
 			runner := platform.NewFakeCommandRunner()
 			runner.RegisterWithError(spec, tt.result, tt.err)
 			scope := model.EvaluationScope{RunID: "run", ContextID: "user", Runtime: "podman", Endpoint: "local"}
 			env := platform.NewEnvironment(nil, nil, nil, runner).WithFiles(reader).WithScope(scope)
-			probe := podman.InfoProbe{Command: spec, Timestamp: time.Unix(1, 0)}
+			probe := podman.InfoProbe{Command: spec, LegacyInfo: true, Timestamp: time.Unix(1, 0)}
 			if probe.Dependencies() != nil {
 				t.Fatal("unexpected probe dependency")
 			}
@@ -118,18 +118,21 @@ func TestInfoProbeHelperUncertainty(t *testing.T) {
 			defer reader.Close()
 			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
-			runner := runnerFunc(func(context.Context, platform.CommandSpec) (platform.ExecResult, error) {
-				if tt.cancel {
-					cancel()
-				}
-				return platform.ExecResult{Stdout: []byte(tt.raw)}, nil
-			})
-			env := platform.NewEnvironment(nil, nil, nil, runner).WithFiles(reader)
+			payload, parseErr := podman.ParseInfo([]byte(tt.raw))
+			if parseErr != nil {
+				t.Fatal(parseErr)
+			}
+			available := true
+			payload.Available = &available
+			input := model.Observation{ID: "podman.info", Podman: &payload, Completeness: model.Complete}
+			env := platform.NewEnvironment(nil, nil, nil, nil).WithFiles(reader)
 			if tt.missingFiles {
 				env = env.WithFiles(nil)
 			}
-			probe := podman.InfoProbe{Timestamp: time.Unix(1, 0)}
-			obs, err := probe.Run(ctx, env)
+			if tt.cancel {
+				cancel()
+			}
+			obs, err := podman.ObserveHelper(ctx, env, input, time.Unix(1, 0))
 			if obs.Completeness != model.Partial || len(obs.Diagnostics) == 0 {
 				t.Fatal(obs, err)
 			}

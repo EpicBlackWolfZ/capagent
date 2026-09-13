@@ -33,6 +33,7 @@ type ObservationRef struct {
 // Completeness and diagnostics survive failure; no generic attribute bag or
 // capability evaluation is part of the model.
 type Observation struct {
+	PodmanHelper *PodmanHelper             `json:"podman_helper,omitempty"`
 	ID           string                    `json:"id"`
 	ProbeID      string                    `json:"probe_id"`
 	Timestamp    time.Time                 `json:"timestamp"`

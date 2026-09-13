@@ -50,7 +50,7 @@ func TestEvaluationTimeFollowsCollection(t *testing.T) {
 		obs.Timestamp = measured
 		obs.Facts[0].Timestamp = measured
 		obs.Version = &model.PodmanVersionObservation{Path: "/usr/bin/podman", Runnable: &available,
-			Version: &model.PodmanVersion{Canonical: "5.8.4"}}
+			Version: &model.PodmanVersion{Canonical: testInspectionVersion}}
 		return obs, nil
 	}}
 	r, err := Evaluate(t.Context(), input, platform.NewEnvironment(nil, nil, nil, nil).WithScope(input.Scope), []probe.Probe{p})

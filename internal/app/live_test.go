@@ -58,7 +58,7 @@ func TestLiveDiscoveryPipeline(t *testing.T) {
 			}
 			want := "UNSATISFIED"
 			if installed {
-				want = "INDETERMINATE"
+				want = testIndeterminate
 			}
 			if report.Evaluation.Requirement.State != want {
 				t.Fatal("wrong decision", report.Evaluation.Requirement)
@@ -74,10 +74,12 @@ func TestLiveUsageRejectsUnsupportedSelection(t *testing.T) {
 	t.Parallel()
 	for _, opts := range []Options{{Runtime: "docker"}, {Runtime: testPodmanRuntime, Context: "uid:1"},
 		{Runtime: testPodmanRuntime, Fixture: "ignored"},
-		{Runtime: testPodmanRuntime, PodmanPath: "relative"}, {Runtime: testPodmanRuntime, Active: true}, {PodmanPath: "/usr/bin/podman"}} {
+		{Runtime: testPodmanRuntime, PodmanPath: "relative"}, {PodmanPath: "/usr/bin/podman"}} {
 		var out, err bytes.Buffer
 		if code := Execute(t.Context(), opts, &out, &err); code != ExitUsage || out.Len() != 0 || err.Len() == 0 {
 			t.Fatal("invalid live selection", code)
 		}
 	}
 }
+
+const testIndeterminate = "INDETERMINATE"

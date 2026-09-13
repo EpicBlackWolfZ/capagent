@@ -14,7 +14,7 @@ var fuzzHeldAllocation []byte
 
 func TestFuzzEnvelopeFailures(t *testing.T) {
 	t.Parallel()
-	for _, mode := range []string{"hang", "allocate", "invalid", "nondeterministic"} {
+	for _, mode := range []string{"hang", "allocate", testInvalid, "nondeterministic"} {
 		t.Run(mode, func(t *testing.T) {
 			t.Parallel()
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
@@ -43,7 +43,7 @@ func TestEnvelopeHelper(t *testing.T) {
 		e.Timeout = tinyTimeout
 	case "allocate":
 		e.AllocatedBytes = 1
-	case "invalid":
+	case testInvalid:
 		e.InputBytes = 0
 	}
 	e.Run(t, nil, func() {
