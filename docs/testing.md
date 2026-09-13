@@ -235,6 +235,13 @@ turn an unknown capability into a supported capability.
 
 ## Delegated passive trace policy
 
+Concurrent thread shutdown can leave a strace `exit_group` call without a resumed
+record. The joiner accepts only the exact single exit-code argument paired with
+the same PID's matching terminal exit record, and retains the normalized syscall
+for command-authority validation. Missing or conflicting terminal evidence and
+other unfinished calls still fail closed. A sanitized native excerpt and negative
+regressions cover this case in the Python trace suite.
+
 `scripts/context-smoke.py` traces the selected worker with the explicit inventory in
 `scripts/context_trace.py`. The inventory includes path and descriptor mutations,
 credential variants, network calls, namespace entry/creation, shared writable maps,

@@ -1,0 +1,8 @@
+{
+  "kind": "sanitized_native_excerpt",
+  "source_run": "https://github.com/EpicBlackWolfZ/capagent/actions/runs/34772153598",
+  "source_path": "user-context/passive.strace",
+  "architecture": "amd64",
+  "kernel": "6.17.0-1022-azure",
+  "description": "Selected initial-process thread-clone and exit-group records from a successful delegated passive assessment; PIDs and memory addresses replaced deterministically. This excerpt tests syscall joining, not complete command authority."
+}

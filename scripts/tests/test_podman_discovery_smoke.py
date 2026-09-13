@@ -32,6 +32,23 @@ class PassiveTraceTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             MODULE.verify_trace(trace.replace('2 exit_group', '2 getpid() = 2\n2 exit_group'), Path('/capagent'))
 
+    def test_concurrent_exit_group_has_matching_terminal_evidence(self):
+        trace = (MODULE_PATH.parent / 'tests/fixtures/context-trace/concurrent-exit.strace').read_text()
+        joined = MODULE.joined_trace(trace)
+        self.assertRegex(joined, r'101 exit_group\(2\)\s+= \?')
+        self.assertNotIn('unfinished', joined)
+
+    def test_unfinished_exit_cannot_hide_missing_or_conflicting_evidence(self):
+        for trace in (
+                '1 exit_group(2 <unfinished ...>\n',
+                '1 exit_group(2 <unfinished ...>\n1 +++ exited with 0 +++\n',
+                '1 exit_group(2 <unfinished ...>\n2 +++ exited with 2 +++\n',
+                '1 exit_group(2, 3 <unfinished ...>\n1 +++ exited with 2 +++\n',
+                '1 unlink("/state" <unfinished ...>\n1 +++ exited with 2 +++\n',
+                '1 execve("/helper", [] <unfinished ...>\n1 +++ exited with 2 +++\n'):
+            with self.subTest(trace=trace), self.assertRaises(RuntimeError):
+                MODULE.joined_trace(trace)
+
     def test_side_effects_cannot_hide_behind_success_or_failure(self):
         for operation in (
             'execve("/usr/bin/podman", ["podman", "--version"], 0x123) = 0',
