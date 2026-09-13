@@ -55,7 +55,7 @@ func TestInspectionFixturesSchemaAndConsumer(t *testing.T) {
 	t.Parallel()
 	schema, root := compileSchema(t), findRepoRoot(t)
 	for _, name := range []string{fixtureSupported, "info-failed", "version-failed", "truncated",
-		"missing-field", "version-conflict", "helper-missing"} {
+		"missing-field", "version-conflict", "helper-missing", "version-drain", "info-drain"} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			var stdout, stderr bytes.Buffer

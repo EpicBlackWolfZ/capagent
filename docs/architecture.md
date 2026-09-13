@@ -372,7 +372,7 @@ budget for lingering pipes after cancellation or observed direct-child exit,
 whichever occurs first. Pipe closure bounds drain even when a descendant
 changes session, subject to kernel/scheduling delays; it does not promise
 termination of escaped descendants. A successful exit with expired drain
-wraps `exec.ErrWaitDelay`; nonzero exit preserves `*exec.ExitError` through wrapping.
+wraps `exec.ErrWaitDelay`; nonzero exit preserves `*exec.ExitError` through wrapping. `ExecResult.OutputIncomplete` independently records failed stream draining, including when an exit error masks that failure. Platform-owned typed classification separates fully collected nonzero exits, proven startup failures and incomplete transport.
 Retained prefixes remain available on errors. Caller cancellation observable
 at classification wins over internal timeout, followed by execution errors.
 `TimedOut` is true only when the internal timeout is selected. ExitCode zero

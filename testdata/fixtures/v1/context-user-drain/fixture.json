@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "probe": "context",
+  "run_id": "context-user-drain",
+  "timestamp": "2026-09-13T12:00:00Z",
+  "provenance": {
+    "kind": "synthetic",
+    "description": "Synthetic regression for completed nonzero execution versus incomplete output draining; target context and command results are deterministic replay inputs, not live captures."
+  },
+  "context": {
+    "id": "user:alice",
+    "identity": {
+      "current": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "alice",
+        "home_dir": "/home/alice",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      },
+      "target": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "alice",
+        "home_dir": "/home/alice",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      },
+      "execution": {
+        "uid": 1000,
+        "gid": 1000,
+        "username": "alice",
+        "home_dir": "/home/alice",
+        "supplementary_groups": [
+          1000
+        ],
+        "groups_known": true
+      },
+      "selection": "user:alice"
+    }
+  },
+  "runtime": "",
+  "endpoint": "",
+  "host": {
+    "no_new_privileges": false,
+    "filesystems": {
+      "/": 61267
+    },
+    "mount_policies": {
+      "/": {
+        "nosuid": false,
+        "noexec": false
+      }
+    }
+  },
+  "files": [
+    {
+      "path": "etc",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/bin",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/local",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "usr/local/bin",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "bin",
+      "kind": "directory",
+      "mode": 493
+    },
+    {
+      "path": "etc/subuid",
+      "kind": "file",
+      "mode": 420,
+      "content": "alice:100000:30\n1000:200000:5\n"
+    },
+    {
+      "path": "etc/subgid",
+      "kind": "file",
+      "mode": 420,
+      "content": "alice:300000:12\n"
+    },
+    {
+      "path": "etc/nsswitch.conf",
+      "kind": "file",
+      "mode": 420,
+      "content": "subid: files\n"
+    },
+    {
+      "path": "usr/bin/newuidmap",
+      "kind": "file",
+      "mode": 8389101,
+      "uid": 0,
+      "gid": 0,
+      "executable_access": true
+    },
+    {
+      "path": "usr/bin/newgidmap",
+      "kind": "file",
+      "mode": 8389101,
+      "uid": 0,
+      "gid": 0,
+      "executable_access": true
+    },
+    {
+      "path": "run",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "run/user",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "run/user/1000",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "run/user/1000/systemd",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "var",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "var/lib",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "var/lib/systemd",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "var/lib/systemd/linger",
+      "kind": "directory",
+      "mode": 448,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "run/user/1000/systemd/private",
+      "kind": "socket",
+      "mode": 384,
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "path": "var/lib/systemd/linger/alice",
+      "kind": "file",
+      "mode": 420,
+      "uid": 0,
+      "gid": 0
+    },
+    {
+      "path": "usr/bin/systemctl",
+      "kind": "file",
+      "mode": 493,
+      "uid": 0,
+      "gid": 0
+    }
+  ],
+  "commands": [
+    {
+      "path": "/usr/bin/systemctl",
+      "args": [
+        "--user",
+        "--no-pager",
+        "--no-ask-password",
+        "show",
+        "--property=Version",
+        "--value"
+      ],
+      "environment": {
+        "XDG_RUNTIME_DIR": "/run/user/1000",
+        "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1000/systemd/private"
+      },
+      "directory": "/",
+      "timeout_ms": 2000,
+      "stdout": "258.3\n",
+      "exit_code": 1,
+      "output_incomplete": true
+    }
+  ],
+  "user_query": true
+}

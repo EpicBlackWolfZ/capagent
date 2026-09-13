@@ -10,9 +10,9 @@ import (
 	"github.com/EpicBlackWolfZ/capagent/internal/platform"
 )
 
-// VersionProbe is wired only to offline fixture services. Even --version can
-// mutate rootless runtime directories during Podman startup. Live dispatch
-// requires the future explicit active boundary, not an inferred safe version.
+// VersionProbe runs in offline replay or explicitly opted-in active collection.
+// Even --version can mutate rootless runtime directories during Podman startup.
+// Passive discovery never dispatches this command; info depends on its success.
 type VersionProbe struct {
 	Command platform.CommandSpec
 	Now     func() time.Time
@@ -65,10 +65,14 @@ func versionFailure(result platform.ExecResult, err error) string {
 		return "version_timeout"
 	case result.StdoutTruncated || result.StderrTruncated:
 		return "version_output_truncated"
-	case result.ExitCode != 0:
+	case result.OutputIncomplete:
+		return "version_output_incomplete"
+	case platform.CommandCompleted(result, err) && result.ExitCode != 0:
 		return "version_exit_failed"
-	case err != nil:
+	case platform.CommandFailedToStart(err):
 		return "version_start_failed"
+	case !platform.CommandCompleted(result, err):
+		return "version_output_incomplete"
 	default:
 		return ""
 	}

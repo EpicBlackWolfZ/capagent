@@ -34,7 +34,7 @@ func TestHostFixtureSchemaAndConsumer(t *testing.T) {
 
 func TestContextFixtureSchema(t *testing.T) {
 	t.Parallel()
-	for _, name := range []string{"context-rootless", "context-user-active"} {
+	for _, name := range []string{"context-rootless", "context-user-active", "context-user-unavailable", "context-user-drain"} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			dir := filepath.Join(findRepoRoot(t), "testdata/fixtures/v1/"+name)

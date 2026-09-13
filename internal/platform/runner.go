@@ -43,9 +43,12 @@ type ExecResult struct {
 	Stderr          []byte
 	StdoutTruncated bool
 	StderrTruncated bool
-	ExitCode        int
-	Duration        time.Duration
-	TimedOut        bool
+	// OutputIncomplete records a stream read/drain failure, even when a nonzero
+	// process exit masks that failure in os/exec's returned error.
+	OutputIncomplete bool
+	ExitCode         int
+	Duration         time.Duration
+	TimedOut         bool
 }
 
 // CommandRunner is the canonical subprocess execution abstraction for capagent probes.
@@ -76,10 +79,21 @@ func NewOSCommandRunner(defaultTimeout time.Duration) *OSCommandRunner {
 // subprocess never blocks) but only retains the first capacity bytes and
 // records that truncation occurred.
 type boundedBuffer struct {
-	mu        sync.Mutex
-	data      []byte
-	capacity  int
-	truncated bool
+	mu          sync.Mutex
+	data        []byte
+	capacity    int
+	truncated   bool
+	drainFailed atomic.Bool
+}
+
+// ReadFrom observes the copy result before os/exec can mask it with ExitError.
+// The writer-only wrapper prevents io.Copy from recursively calling ReadFrom.
+func (b *boundedBuffer) ReadFrom(reader io.Reader) (int64, error) {
+	n, err := io.Copy(struct{ io.Writer }{b}, reader)
+	if err != nil {
+		b.drainFailed.Store(true)
+	}
+	return n, err
 }
 
 func newBoundedBuffer(capacity int) *boundedBuffer {
@@ -247,11 +261,12 @@ func (r *OSCommandRunner) run(ctx context.Context, spec CommandSpec, input io.Re
 	}
 
 	result := ExecResult{
-		Stdout:          stdoutBuf.Bytes(),
-		Stderr:          stderrBuf.Bytes(),
-		StdoutTruncated: stdoutBuf.Truncated(),
-		StderrTruncated: stderrBuf.Truncated(),
-		Duration:        time.Since(start),
+		Stdout:           stdoutBuf.Bytes(),
+		Stderr:           stderrBuf.Bytes(),
+		StdoutTruncated:  stdoutBuf.Truncated(),
+		StderrTruncated:  stderrBuf.Truncated(),
+		OutputIncomplete: stdoutBuf.drainFailed.Load() || stderrBuf.drainFailed.Load(),
+		Duration:         time.Since(start),
 	}
 
 	if exitErr, ok := runErr.(*exec.ExitError); ok {

@@ -119,7 +119,7 @@ func queryUserManager(ctx context.Context, env platform.Environment, obs *model.
 	state := obs.UserContext
 	state.QueryAttempted = true
 	result, err := env.UserManager().Query(ctx, executable, runtimeDir)
-	if err != nil || result.TimedOut || result.StdoutTruncated || result.StderrTruncated {
+	if !platform.CommandCompleted(result, err) {
 		recordSource(obs, "user manager query", platform.ErrIncomplete)
 		return
 	}
