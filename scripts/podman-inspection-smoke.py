@@ -9,6 +9,7 @@ import pwd
 import re
 import signal
 import subprocess
+import tempfile
 import time
 
 
@@ -84,7 +85,7 @@ def trace_case(binary, executable, tracer, destination, account, environment, sc
     argv = [str(binary), "--runtime", "podman", "--active", "--podman-path", str(executable), "--json"]
     # A root tracer with -u preserves the real account's credentials, groups and
     # setuid newuidmap semantics. Namespace UID 0 is not host-root evidence.
-    command = [str(tracer), "-f", "-qq", "-s", "256", "-u", account.pw_name, "-o", str(trace), "-e", "trace=" + TRACE_CALLS]
+    command = [str(tracer), "-f", "-q", "-s", "256", "-u", account.pw_name, "-o", str(trace), "-e", "trace=" + TRACE_CALLS]
     if cancelled:
         # Deterministically exceed the 5s version budget in the real runner.
         # Delay only exec entry; no fake output or replacement executable.
@@ -149,17 +150,22 @@ def main():
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     output.chmod(0o755)
+    # Runtime databases and mode-0700 directories are not report artifacts.
+    # Keep them in an owned temporary tree until the ephemeral runner exits.
+    state = Path(tempfile.mkdtemp(prefix="capagent-inspection-"))
+    state.chmod(0o755)
     accounts = (pwd.getpwnam(args.user), pwd.getpwnam("root"))
     if accounts[0].pw_uid == 0:
         raise RuntimeError("the rootless test needs a real non-root host account")
-    summary = {"status": "running", "accounts": [account.pw_name for account in accounts], "cases": [],
+    summary = {"status": "running", "accounts": [account.pw_name for account in accounts], "cases": [], "owned_state_root": str(state),
                "cleanup": "configuration restored; owned Podman state/processes retained until disposable runner teardown"}
     try:
         for account in accounts:
             directory = output / account.pw_name
-            environment = environment_for(directory, account)
-            root_storage = '[storage]\ndriver="overlay"\ngraphroot=' + json.dumps(str(directory / "graph"))
-            root_storage += '\nrunroot=' + json.dumps(str(directory / "runroot")) + '\n'
+            directory.mkdir(mode=0o755)
+            environment = environment_for(state / account.pw_name, account)
+            root_storage = '[storage]\ndriver="overlay"\ngraphroot=' + json.dumps(str(state / account.pw_name / "graph"))
+            root_storage += '\nrunroot=' + json.dumps(str(state / account.pw_name / "runroot")) + '\n'
             storage = owned_config(Path("/etc/containers/storage.conf"), root_storage) if account.pw_uid == 0 else nullcontext()
             with storage:
                 for scenario in ("fresh", "initialized", "cancelled"):

@@ -1,6 +1,9 @@
 """Active smoke evidence must reject attempted transports and false success."""
 import importlib.util
+import os
 from pathlib import Path
+import pwd
+import tempfile
 import unittest
 
 SOURCE = Path(__file__).resolve().parents[1] / "podman-inspection-smoke.py"
@@ -10,6 +13,23 @@ SPEC.loader.exec_module(MODULE)
 
 
 class InspectionEvidenceTests(unittest.TestCase):
+    def test_owned_environment_and_config_restoration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            account = pwd.getpwuid(os.geteuid())
+            environment = MODULE.environment_for(directory / "state", account)
+            self.assertEqual(Path(environment['HOME']).stat().st_uid, account.pw_uid)
+            self.assertEqual(Path(environment['XDG_RUNTIME_DIR']).stat().st_mode & 0o777, 0o700)
+            config = directory / "storage.conf"
+            with MODULE.owned_config(config, 'test config'):
+                self.assertEqual(config.read_text(), 'test config')
+            self.assertFalse(config.exists())
+            config.write_bytes(b'original bytes')
+            with self.assertRaises(RuntimeError):
+                with MODULE.owned_config(config, 'replacement'):
+                    raise RuntimeError('failed validation')
+            self.assertEqual(config.read_bytes(), b'original bytes')
+
     def test_local_bus_is_distinct_from_remote_transport(self):
         MODULE.verify_connections('connect(3, {sa_family=AF_UNIX, sun_path="/run/dbus/system_bus_socket"}, 30) = -1 ENOENT', False)
         for text in ('connect(3, {sa_family=AF_INET}, 16) = -1 ECONNREFUSED',
