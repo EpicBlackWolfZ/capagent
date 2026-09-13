@@ -176,13 +176,18 @@ def credentials(rows, worker, parents, threads, target):
         raise ValueError('worker threads disagree on credentials')
 
 
-def operations(rows, raw_rows, query):
-    eventfds = set()
+def operations(rows, raw_rows, query, owners=None):
+    eventfds, legacy_eventfds = set(), set()
+    owners = owners or {}
     for (pid, call, args, result), (_, _, raw, raw_result) in zip(rows, raw_rows):
+        owner = owners.get(pid, pid)
         if call == 'eventfd2' and args == '0, EFD_CLOEXEC|EFD_NONBLOCK':
             match = re.search(r'eventfd-id=(\d+)', raw_result)
             if match:
-                eventfds.add(match[1])
+                eventfds.add((owner, match[1]))
+            legacy = re.fullmatch(r'(\d+)<anon_inode:\[eventfd\]>', raw_result)
+            if legacy:
+                legacy_eventfds.add((owner, legacy[1]))
         if MUTATIONS.fullmatch(call) or call in {'open', 'openat', 'openat2'} and re.search(
                 r'\bO_(?:WRONLY|RDWR|CREAT|TRUNC|APPEND|TMPFILE)\b', args):
             raise ValueError('passive delegation attempted a mutation')
@@ -206,7 +211,9 @@ def operations(rows, raw_rows, query):
             pipe = re.match(r'\d+<pipe:\[\d+\]>,', raw)
             query_write = query and pid == query[0] and args.startswith(query[1] + ',')
             event = re.match(r'\d+<\{eventfd-count=\d+, eventfd-id=(\d+), eventfd-semaphore=0\}>,', raw)
-            wakeup = event and event[1] in eventfds and args.split(', ', 1)[-1] == r'"\1\0\0\0\0\0\0\0", 8'
+            legacy = re.match(r'(\d+)<anon_inode:\[eventfd\]>,', raw)
+            known_event = event and (owner, event[1]) in eventfds or legacy and (owner, legacy[1]) in legacy_eventfds
+            wakeup = known_event and args.split(', ', 1)[-1] == r'"\1\0\0\0\0\0\0\0", 8'
             if pipe is None and not query_write and not wakeup:
                 raise ValueError('write outside report/worker pipes or reviewed query socket')
         if call in {'mmap', 'mmap2'} and 'PROT_WRITE' in args and 'MAP_SHARED' in args and 'MAP_ANONYMOUS' not in args:
@@ -243,7 +250,8 @@ def verify(text, binary, target=None, query=None):
             pid == worker and call == 'setresuid' and args == ', '.join([str(selected_uid)] * 3)
             for pid, call, args, _ in rows):
         raise ValueError('worker credentials differ from numeric selector')
-    operations(rows, raw_rows, query)
+    owners = {pid: group(pid, parents, threads) for pid, _, _, _ in rows}
+    operations(rows, raw_rows, query, owners)
     verify_signals(rows, parents, threads, worker)
     verify_complete(text, rows, parents, threads, launch)
 

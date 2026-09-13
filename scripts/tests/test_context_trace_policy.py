@@ -64,6 +64,9 @@ class ContextTracePolicyTests(unittest.TestCase):
                    '21 write(6<{eventfd-count=0, eventfd-id=212, eventfd-semaphore=0}>, "\\1\\0\\0\\0\\0\\0\\0\\0", 8) = 8\n'
                    '21 fcntl(6</dev/null<char 1:3>>, F_GETFL) = 0x8000 (flags O_RDONLY|O_LARGEFILE)\n')
         verify(BASE + metadata + runtime, Path('/capagent'), TARGET)
+        legacy = runtime.replace('{eventfd-count=0, eventfd-id=212, eventfd-semaphore=0}', 'anon_inode:[eventfd]')
+        legacy = legacy.replace('21 write(', '20 write(')
+        verify(BASE + metadata + legacy, Path('/capagent'), TARGET)
         before = BASE.index('20 setgroups')
         thread = '20 clone(flags=CLONE_VM|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD) = 21\n'
         drops = BASE[before:].replace('20 ', '21 ')

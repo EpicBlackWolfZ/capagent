@@ -1,8 +1,8 @@
 {
   "kind": "captured",
-  "source_run": "https://github.com/EpicBlackWolfZ/capagent/actions/runs/34758938142",
-  "commit": "2f6e9298f9fde4f84cdde8d9906cfe4a7d70ae2c",
-  "source_sha256": "40900244607d51c2e8324d6a7c9f80e8dc3cbbff3e813ed7a64db7fd9185d319",
+  "source_run": "https://github.com/EpicBlackWolfZ/capagent/actions/runs/34759654670",
+  "commit": "d2601a7",
+  "source_sha256": "f61c6b1c5b3817e14c0fa94d360639563bdfdc24b0ddb29061fae7ef7ee03944",
   "architecture": "amd64",
   "target": {
     "uid": 1001,
@@ -19,5 +19,5 @@
   "redactions": [
     "Workspace-specific binary path replaced with /capagent; executable argv and process/credential records preserved."
   ],
-  "capture_inventory": "Historical %process,%file,%network,prctl,setgroups,setresgid,setresuid; structural replay only. Expanded descriptor inventory qualified separately in the producing CI run."
+  "capture_inventory": "%process,%file,%network,%creds,%memory,prctl,capset,setns,unshare,memfd_create,open_by_handle_at,fchmod,fchown,fchown32,ftruncate,ftruncate64,fallocate,fsync,fdatasync,sync,syncfs,sync_file_range,fsetxattr,fremovexattr,ioctl,fcntl,fcntl64,flock,eventfd,eventfd2,write,writev,pwrite64,pwritev,pwritev2,sendfile,sendfile64,copy_file_range,splice,tee,vmsplice,io_uring_setup,io_uring_enter,io_uring_register"
 }
