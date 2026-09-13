@@ -25,6 +25,15 @@ def _join_syscalls(text):
             if not prefix.startswith(resumed[2] + "("):
                 raise RuntimeError("mismatched syscall completion")
             line = resumed[1] + " " + prefix + resumed[3]
+        terminal = re.fullmatch(r"(\d+) \+\+\+ exited with (\d+) \+\+\+", line)
+        if terminal and terminal[1] in pending:
+            # Concurrent exit_group calls can kill a sibling before strace
+            # prints its completion. The exact argument plus matching terminal
+            # code confirms this one syscall; keep it for authority validation.
+            prefix = pending[terminal[1]]
+            if prefix == "exit_group(" + terminal[2]:
+                pending.pop(terminal[1])
+                lines.append(terminal[1] + " " + prefix + ") = ?")
         lines.append(line)
     if pending:
         raise RuntimeError("incomplete passive trace")
