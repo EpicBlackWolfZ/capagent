@@ -63,6 +63,13 @@ func ObserveCurrent(ctx context.Context, scope model.EvaluationScope, files plat
 	target := user
 	target.SupplementaryGroups = slices.Clone(user.SupplementaryGroups)
 	c.Identity = model.IdentityContext{Current: &user, Target: &target}
+	if credentials.IsValid() == nil && credentials.GroupsKnown && groupErr == nil {
+		execution := target
+		execution.SupplementaryGroups = slices.Clone(target.SupplementaryGroups)
+		c.Identity.Execution = &execution
+	}
+	obs.Authority = "execution"
+	obs.Identity = &model.IdentityObservation{Selection: "current", AccountSource: "local-files", GroupsSource: "kernel", Resolved: true}
 	return c, obs
 }
 

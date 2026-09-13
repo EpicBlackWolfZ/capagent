@@ -95,13 +95,14 @@ func validateIdentityPresence(data []byte) error {
 	}
 	var presence struct {
 		Context struct {
-			Identity struct{ Current, Target *identity }
+			Identity struct{ Current, Target, Execution *identity }
 		}
 	}
 	if err := json.Unmarshal(data, &presence, json.MatchCaseInsensitiveNames(true)); err != nil {
 		return errors.New("invalid identity metadata")
 	}
-	for _, user := range []*identity{presence.Context.Identity.Current, presence.Context.Identity.Target} {
+	for _, user := range []*identity{presence.Context.Identity.Current, presence.Context.Identity.Target,
+		presence.Context.Identity.Execution} {
 		if user != nil && (user.UID == nil || user.GID == nil) {
 			return errors.New("observed identity requires explicit UID and GID")
 		}
@@ -112,6 +113,9 @@ func validateIdentityPresence(data []byte) error {
 func validate(d *Document) error {
 	if d == nil || d.SchemaVersion != 1 || d.Timestamp.IsZero() || d.Scope().IsValid() != nil {
 		return errors.New("invalid fixture identity or version")
+	}
+	if err := d.Context.Identity.IsValid(); err != nil {
+		return err
 	}
 	if !validFixtureRuntime(d) {
 		return errors.New("fixture runtime must be local Podman")

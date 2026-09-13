@@ -182,6 +182,9 @@ func topological(edges map[string][]string) ([]string, error) {
 func indexContexts(input []model.EvaluationContext) (map[string]bool, error) {
 	contexts := make(map[string]bool)
 	for _, c := range input {
+		if err := c.Identity.IsValid(); err != nil {
+			return nil, err
+		}
 		if c.ID == "" || contexts[c.ID] {
 			return nil, errors.New("missing or duplicate context ID")
 		}

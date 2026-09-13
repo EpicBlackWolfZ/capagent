@@ -46,6 +46,7 @@ func TestHostReportHasNoDeploymentVerdict(t *testing.T) {
 		t.Fatal("invented runtime or capability")
 	}
 	report.Host.Completeness = string(model.Complete)
+	report.Context.Completeness = string(model.Complete)
 	if hostExit(report) != ExitSatisfied {
 		t.Fatal("complete host collection failed")
 	}

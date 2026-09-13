@@ -27,6 +27,8 @@ TARGETS = {
     'FuzzPodmanInputs': ('tests/contract', 65536),
     'FuzzOSRelease': ('tests/contract', 65536),
     'FuzzHostNetwork': ('tests/contract', 65536),
+    'FuzzTargetRequest': ('internal/platform', 65536),
+    'FuzzLocalIdentity': ('tests/contract', 65536),
 }
 
 

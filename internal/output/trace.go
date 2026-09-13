@@ -40,14 +40,16 @@ type FactRecord struct {
 type HostObservation model.HostObservation
 
 type ObservationRecord struct {
-	Host         *HostObservation `json:"host,omitempty"`
-	ID           string           `json:"id"`
-	ProbeID      string           `json:"probe_id"`
-	Scope        Scope            `json:"scope"`
-	Timestamp    time.Time        `json:"timestamp"`
-	Completeness string           `json:"completeness"`
-	Facts        []FactRecord     `json:"facts"`
-	Diagnostics  []Diagnostic     `json:"diagnostics"`
+	Authority    string                     `json:"authority,omitempty"`
+	Identity     *model.IdentityObservation `json:"identity,omitempty"`
+	Host         *HostObservation           `json:"host,omitempty"`
+	ID           string                     `json:"id"`
+	ProbeID      string                     `json:"probe_id"`
+	Scope        Scope                      `json:"scope"`
+	Timestamp    time.Time                  `json:"timestamp"`
+	Completeness string                     `json:"completeness"`
+	Facts        []FactRecord               `json:"facts"`
+	Diagnostics  []Diagnostic               `json:"diagnostics"`
 }
 type EvidenceRecord struct {
 	ID           string    `json:"id"`
@@ -70,6 +72,8 @@ type RequirementResult struct {
 	Children    []RequirementResult `json:"children"`
 }
 type EvaluationTrace struct {
+	Execution    *Identity           `json:"execution,omitempty"`
+	Selection    string              `json:"selection,omitempty"`
 	Collection   string              `json:"collection,omitempty"`
 	Mode         string              `json:"mode"`
 	Provenance   string              `json:"provenance"`

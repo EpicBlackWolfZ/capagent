@@ -22,6 +22,8 @@ type SubIDRange struct {
 // identity (Target) under which container capabilities should be evaluated, supporting
 // delegation modes such as root running checks on behalf of a non-root target user.
 type IdentityContext struct {
+	Execution      *UserIdentity `json:"execution,omitempty"`
+	Selection      string        `json:"selection,omitempty"`
 	Current        *UserIdentity `json:"current"`
 	Target         *UserIdentity `json:"target"`
 	IsRootless     *bool         `json:"is_rootless"`

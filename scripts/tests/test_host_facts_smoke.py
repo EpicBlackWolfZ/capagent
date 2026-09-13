@@ -11,7 +11,7 @@ SPEC.loader.exec_module(MODULE)
 
 class HostReportTests(unittest.TestCase):
     def report(self):
-        return {"schema_version": 1, "context": {"uid": 1000}, "host": {"kernel": "6.12", "completeness": "complete"},
+        return {"schema_version": 1, "context": {"uid": 1000, "completeness": "complete"}, "host": {"kernel": "6.12", "completeness": "complete"},
                 "runtimes": {}, "capabilities": {}, "evaluation": {"scope": {"runtime": "", "endpoint": ""},
                 "evidence": [], "mode": "live", "collection": "passive", "observations": [
                     {"probe_id": name, "host": {}} for name in MODULE.HOST_PROBES]}}

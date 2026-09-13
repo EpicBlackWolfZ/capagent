@@ -51,6 +51,8 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 	trace.Collection = input.Collection
 	trace.Current = projectIdentity(input.Context.Identity.Current)
 	trace.Target = projectIdentity(input.Context.Identity.Target)
+	trace.Execution = projectIdentity(input.Context.Identity.Execution)
+	trace.Selection = input.Context.Identity.Selection
 	for _, ns := range input.Context.Namespaces {
 		trace.Namespaces = append(trace.Namespaces, output.Namespace{Kind: ns.Kind, ID: ns.ID})
 	}
@@ -58,6 +60,7 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 	for _, obs := range observations {
 		record := output.ObservationRecord{ID: obs.ID, ProbeID: obs.ProbeID, Scope: output.ProjectScope(obs.Scope), Timestamp: obs.Timestamp,
 			Completeness: string(obs.Completeness), Facts: []output.FactRecord{}, Diagnostics: projectDiagnostics(obs.Diagnostics)}
+		projectIdentityObservation(&record, obs, input.Mode, report)
 		if obs.Host != nil {
 			payload := output.HostObservation(*obs.Host)
 			record.Host = &payload
@@ -143,6 +146,7 @@ func projectIdentity(input *model.UserIdentity) *output.Identity {
 func snapshotContext(input model.EvaluationContext) model.EvaluationContext {
 	out := input
 	out.Identity.Current = copyIdentity(input.Identity.Current)
+	out.Identity.Execution = copyIdentity(input.Identity.Execution)
 	out.Identity.Target = copyIdentity(input.Identity.Target)
 	out.Identity.IsRootless = copyValue(input.Identity.IsRootless)
 	out.Identity.HasUserSystemd = copyValue(input.Identity.HasUserSystemd)
@@ -168,4 +172,14 @@ func copyValue[T any](input *T) *T {
 	}
 	out := *input
 	return &out
+}
+
+func projectIdentityObservation(record *output.ObservationRecord, obs model.Observation, mode string, report *output.Report) {
+	record.Identity, record.Authority = copyValue(obs.Identity), obs.Authority
+	if mode == "live" && record.Authority == "" {
+		record.Authority = "execution"
+	}
+	if obs.Identity != nil {
+		report.Context.Completeness = string(obs.Completeness)
+	}
 }

@@ -19,6 +19,9 @@ func main() {
 }
 
 func run(args []string, stdout, stderr io.Writer) int {
+	if len(args) == 1 && args[0] == app.TargetWorkerArgument {
+		return app.ExecuteTargetWorker(context.Background(), stdout, stderr)
+	}
 	flags := flag.NewFlagSet("capagent", flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	var opts app.Options
@@ -29,7 +32,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	flags.BoolVar(&showHelp, "h", false, "Print help")
 	flags.StringVar(&opts.Fixture, "fixture", "", "Replay DIR/fixture.json using offline services")
 	flags.StringVar(&opts.Runtime, "runtime", "", "Discover local runtime (podman)")
-	flags.StringVar(&opts.Context, "context", "", "Evaluation identity (current)")
+	flags.StringVar(&opts.Context, "context", "", "Evaluation identity (current, user:NAME, uid:ID)")
 	flags.StringVar(&opts.PodmanPath, "podman-path", "", "Select an absolute Podman executable path")
 	flags.BoolVar(&asJSON, "json", false, "Print JSON (the default output format)")
 	flags.BoolVar(&opts.Pretty, "pretty", false, "Indent JSON output")

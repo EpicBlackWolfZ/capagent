@@ -205,6 +205,8 @@ func evaluateFixture(ctx context.Context, doc *fixture.Document) (*output.Report
 // Parser/command error strings may contain untrusted data and are not printed.
 // --debug emits structured codes and fixed application messages only.
 func Execute(ctx context.Context, opts Options, stdout, stderr io.Writer) int {
+	ctx, cancel := platform.TargetContext(ctx)
+	defer cancel()
 	if !validOptions(opts) {
 		return failure(stderr, ExitUsage, "use --json, --fixture DIR or --runtime podman; --active requires a runtime")
 	}

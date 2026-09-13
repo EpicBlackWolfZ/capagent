@@ -558,6 +558,39 @@
         },
         "host": {
           "$ref": "#/$defs/host_observation"
+        },
+        "authority": {
+          "enum": [
+            "current",
+            "execution"
+          ]
+        },
+        "identity": {
+          "type": "object",
+          "properties": {
+            "selection": {
+              "type": "string"
+            },
+            "account_source": {
+              "const": "local-files"
+            },
+            "groups_source": {
+              "enum": [
+                "kernel",
+                "local-files"
+              ]
+            },
+            "resolved": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "selection",
+            "account_source",
+            "groups_source",
+            "resolved"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -758,6 +791,12 @@
             "active"
           ],
           "description": "Explicit live collection policy. Active permits reviewed Podman startup/inspection effects."
+        },
+        "execution": {
+          "$ref": "#/$defs/identity"
+        },
+        "selection": {
+          "type": "string"
         }
       },
       "required": [

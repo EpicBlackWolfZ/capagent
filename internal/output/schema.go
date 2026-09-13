@@ -121,7 +121,7 @@ func NewReportFromModel(evalCtx model.EvaluationContext, runtimes map[string]Run
 
 	// Only nil means no explicit target. A target with UID zero remains root.
 	target := evalCtx.Identity.Target
-	if target == nil {
+	if target == nil && (evalCtx.Identity.Selection == "" || evalCtx.Identity.Selection == "current") {
 		target = evalCtx.Identity.Current
 	}
 
