@@ -12,7 +12,7 @@ import (
 func TestCombinedInspectionReplay(t *testing.T) {
 	t.Parallel()
 	for _, name := range []string{testSupported, "info-failed", "version-failed", "truncated",
-		"missing-field", "version-conflict", "helper-missing"} {
+		"missing-field", "version-conflict", "helper-missing", "version-drain", "info-drain"} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			var stdout, stderr bytes.Buffer
@@ -31,18 +31,22 @@ func TestCombinedInspectionReplay(t *testing.T) {
 			if r.Evaluation.Mode != "fixture" || r.Evaluation.Collection != "" || strings.Contains(stdout.String()+stderr.String(), "PRIVATE") {
 				t.Fatal("fixture provenance or sanitization violated")
 			}
-			if name != "version-failed" && r.Capabilities["runtime.podman"].State != testSupported {
+			if name != "version-failed" && name != "version-drain" && r.Capabilities["runtime.podman"].State != testSupported {
 				t.Fatal("CLI version was erased")
 			}
 			if name == "helper-missing" && r.Capabilities["runtime.podman.netavark"].State != "misconfigured" {
 				t.Fatal("helper failure erased engine info")
 			}
-			if name == "version-failed" {
+			if name == "version-failed" || name == "version-drain" {
 				for _, obs := range r.Evaluation.Observations {
 					if obs.ProbeID == "podman.info" {
 						t.Fatal("info ran after version failure")
 					}
 				}
+			}
+			if name == "version-drain" && r.Runtimes["podman"].CLIRunnable != nil ||
+				name == "info-drain" && r.Runtimes["podman"].Accessible != nil {
+				t.Fatal("incomplete replay asserted availability")
 			}
 		})
 	}

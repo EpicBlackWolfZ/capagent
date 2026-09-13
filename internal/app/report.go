@@ -3,6 +3,7 @@ package app
 import (
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/EpicBlackWolfZ/capagent/internal/capability"
 	"github.com/EpicBlackWolfZ/capagent/internal/model"
@@ -100,7 +101,7 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 		}
 	}
 	trace.Diagnostics = append(trace.Diagnostics, runtimeDiagnostics...)
-	projectContextCompleteness(report, observations)
+	projectContextCompleteness(report, observations, results)
 	report.Evaluation = trace
 	return report
 }
@@ -187,13 +188,20 @@ func projectIdentityObservation(record *output.ObservationRecord, obs model.Obse
 	}
 }
 
-func projectContextCompleteness(report *output.Report, observations []model.Observation) {
+func projectContextCompleteness(report *output.Report, observations []model.Observation, results []probe.ProbeResult) {
 	seen := false
 	complete := true
 	for _, obs := range observations {
 		if obs.Identity != nil || obs.SubIDs != nil || obs.UserContext != nil {
 			seen = true
 			complete = complete && obs.Completeness == model.Complete
+		}
+	}
+	// Registered context probes are required collection work. Unrequested probes
+	// have no result; intentionally deferred active queries return observations.
+	for _, result := range results {
+		if strings.HasPrefix(result.ProbeID, "context.") && result.Status != probe.ProbeSucceeded {
+			seen, complete = true, false
 		}
 	}
 	if seen {

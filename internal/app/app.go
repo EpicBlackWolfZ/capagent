@@ -218,7 +218,8 @@ func Execute(ctx context.Context, opts Options, stdout, stderr io.Writer) int {
 	ctx, cancel := platform.TargetContext(ctx)
 	defer cancel()
 	if !validOptions(opts) {
-		return failure(stderr, ExitUsage, "use --json, --fixture DIR or --runtime podman; --active requires a runtime")
+		return failure(stderr, ExitUsage, "use --json for host facts, --runtime podman or --fixture DIR; "+
+			"--active permits live user-manager queries and local runtime inspection")
 	}
 	var report *output.Report
 	var err error

@@ -67,7 +67,9 @@ Active reports add:
 - `runtime.podman.info`, supported with runtime evidence and derived confidence only when all requested field groups and a recognizable version are present. Partial measurements remain unknown. Historical 3.x captures can therefore parse successfully while lacking fields needed to satisfy this predicate.
 - `runtime.podman.netavark`, a separate prerequisite combining a selected backend and executable helper metadata. Missing/unreadable helper metadata cannot erase otherwise successful engine inspection. It does not establish network or DNS operation.
 
-Runtime cgroups are reported under `runtimes.podman`; they are not direct host measurements. Collection completeness describes the observation transport, while each capability retains its own missing-field semantics. The active requirement is `all(runtime.podman, runtime.podman.info)`:
+Runtime cgroups are reported under `runtimes.podman`; they are not direct host measurements. Output-drain and unclassified transport failures retain partial collection and unknown availability, even if the child exited with code 0 or a nonzero code. Typed startup failures and fully collected nonzero exits establish command unavailability. Every failed or incomplete version collection prevents dependent info dispatch.
+
+Collection completeness describes the observation transport, while each capability retains its own missing-field semantics. The active requirement is `all(runtime.podman, runtime.podman.info)`:
 
 | Active result | Requirement / exit |
 |---|---|

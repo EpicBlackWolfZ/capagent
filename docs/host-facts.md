@@ -91,3 +91,5 @@ inspect the complete passive trace. Go's anonymous-memory mapping labels are an
 allowed private-process operation; security-policy setters and network operations
 are rejected. The supported-host checks run as actual user and root processes in
 CI. Captures and trace reports are development evidence, not a complete OS matrix.
+
+Systemctl discovery checks `/usr/bin/systemctl` then `/bin/systemctl`. A denied or indeterminate fallback retains unknown utility presence and a partial source diagnostic, even if an earlier candidate was absent. Only a completely inspected unsuccessful search establishes absence; a candidate with failed metadata inspection is never executed.

@@ -306,6 +306,7 @@ func (p SystemdProbe) Run(ctx context.Context, env platform.Environment) (model.
 		fi, e := env.Files().Stat(candidate)
 		recordSource(&obs, candidate, missingIsKnown(e))
 		if e != nil && !errors.Is(e, fs.ErrNotExist) {
+			state.UtilityInstalled = nil
 			break
 		}
 		if e == nil && fi.Mode().IsRegular() {

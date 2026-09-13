@@ -249,6 +249,9 @@ func runResourceSupervisor(t *testing.T, scenario, root string) {
 	if got.result.StdoutTruncated || got.result.StderrTruncated {
 		t.Error("pipe drain failure must not masquerade as byte-cap overflow")
 	}
+	if !got.result.OutputIncomplete || CommandCompleted(got.result, got.err) {
+		t.Error("retained pipe holder did not preserve incomplete output")
+	}
 	if got.result.TimedOut != (scenario == "timeout") {
 		t.Errorf("TimedOut=%v for %s", got.result.TimedOut, scenario)
 	}

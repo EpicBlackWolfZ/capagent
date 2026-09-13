@@ -44,7 +44,8 @@ func TestInfoProbePreservesFailures(t *testing.T) {
 		partial bool
 	}{
 		{"success", platform.ExecResult{Stdout: []byte(infoJSON)}, nil, false},
-		{"exit", platform.ExecResult{ExitCode: 125}, errors.New("SECRET error"), false},
+		{"exit", platform.ExecResult{ExitCode: 125}, nil, false},
+		{"transport", platform.ExecResult{ExitCode: 125}, errors.New("SECRET error"), true},
 		{"timeout", platform.ExecResult{Stdout: []byte(infoJSON), TimedOut: true}, context.DeadlineExceeded, true},
 		{"truncated", platform.ExecResult{Stdout: []byte(infoJSON), StdoutTruncated: true}, nil, true},
 		{"missing field", platform.ExecResult{Stdout: []byte(`{}`)}, nil, true},

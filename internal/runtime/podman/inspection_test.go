@@ -114,7 +114,8 @@ func TestInfoFailureCannotAssertAccess(t *testing.T) {
 		{name: "timeout", raw: completeInfo, result: platform.ExecResult{TimedOut: true}, err: context.DeadlineExceeded},
 		{name: "cancel", raw: completeInfo, err: context.Canceled},
 		{name: "nonzero", raw: completeInfo, result: platform.ExecResult{ExitCode: 125}, absent: true},
-		{name: "start", err: errors.New("PRIVATE raw command error"), absent: true},
+		{name: "start", err: &fs.PathError{Op: "fork/exec", Path: "PRIVATE", Err: fs.ErrPermission}, absent: true},
+		{name: "transport", err: errors.New("PRIVATE raw command error")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

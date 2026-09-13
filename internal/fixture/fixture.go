@@ -42,17 +42,18 @@ type File struct {
 	Failure           string                        `json:"failure,omitempty"`
 }
 type Command struct {
-	Path            string            `json:"path"`
-	Args            []string          `json:"args"`
-	Environment     map[string]string `json:"environment,omitempty"`
-	Directory       string            `json:"directory,omitempty"`
-	TimeoutMillis   uint32            `json:"timeout_ms,omitempty"`
-	Stdout          string            `json:"stdout"`
-	Stderr          string            `json:"stderr,omitempty"`
-	ExitCode        int               `json:"exit_code,omitempty"`
-	Failure         string            `json:"failure,omitempty"`
-	StdoutTruncated bool              `json:"stdout_truncated,omitempty"`
-	StderrTruncated bool              `json:"stderr_truncated,omitempty"`
+	Path             string            `json:"path"`
+	Args             []string          `json:"args"`
+	Environment      map[string]string `json:"environment,omitempty"`
+	Directory        string            `json:"directory,omitempty"`
+	TimeoutMillis    uint32            `json:"timeout_ms,omitempty"`
+	Stdout           string            `json:"stdout"`
+	Stderr           string            `json:"stderr,omitempty"`
+	ExitCode         int               `json:"exit_code,omitempty"`
+	Failure          string            `json:"failure,omitempty"`
+	StdoutTruncated  bool              `json:"stdout_truncated,omitempty"`
+	StderrTruncated  bool              `json:"stderr_truncated,omitempty"`
+	OutputIncomplete bool              `json:"output_incomplete,omitempty"`
 }
 type Document struct {
 	UserQuery     bool                    `json:"user_query,omitempty"`
@@ -318,7 +319,8 @@ func registerCommand(runner *platform.FakeCommandRunner, command Command) (platf
 		return platform.CommandSpec{}, err
 	}
 	result := platform.ExecResult{Stdout: []byte(command.Stdout), Stderr: []byte(command.Stderr), ExitCode: command.ExitCode,
-		StdoutTruncated: command.StdoutTruncated, StderrTruncated: command.StderrTruncated, TimedOut: command.Failure == "timeout"}
+		OutputIncomplete: command.OutputIncomplete,
+		StdoutTruncated:  command.StdoutTruncated, StderrTruncated: command.StderrTruncated, TimedOut: command.Failure == "timeout"}
 	if err := runner.RegisterWithError(spec, result, commandErr); err != nil {
 		return platform.CommandSpec{}, err
 	}
