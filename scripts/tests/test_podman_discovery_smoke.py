@@ -22,6 +22,16 @@ class PassiveTraceTests(unittest.TestCase):
             '1 clone(child_stack=NULL, flags=SIGCHLD) = 2\n'
             '2 execve("/usr/bin/systemctl", ["/usr/bin/systemctl", "--version"], 0x123) = 0\n', Path("/capagent"))
 
+    def test_launcher_probe_exit_notification_is_not_a_syscall(self):
+        trace = ('1 execve("/capagent", [], 0x123) = 0\n'
+                 '1 clone(child_stack=NULL, flags=CLONE_VM|CLONE_VFORK|CLONE_PIDFD) = 2\n'
+                 '2 exit_group(0) = ?\n2 +++ exited with 0 +++\n'
+                 '1 clone(child_stack=NULL, flags=SIGCHLD) = 3\n'
+                 '3 execve("/usr/bin/systemctl", ["/usr/bin/systemctl", "--version"], 0x123) = 0\n')
+        MODULE.verify_trace(trace, Path('/capagent'))
+        with self.assertRaises(RuntimeError):
+            MODULE.verify_trace(trace.replace('2 exit_group', '2 getpid() = 2\n2 exit_group'), Path('/capagent'))
+
     def test_side_effects_cannot_hide_behind_success_or_failure(self):
         for operation in (
             'execve("/usr/bin/podman", ["podman", "--version"], 0x123) = 0',

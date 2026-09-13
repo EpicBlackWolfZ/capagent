@@ -67,7 +67,8 @@ def verify_trace(text, binary):
     for flags, child in launch_probes:
         if "CLONE_PIDFD" not in flags or "SIGCHLD" in flags:
             continue
-        calls = re.findall(r'^' + child + r' (.*)$', text, re.M)
+        calls = [call for call in re.findall(r'^' + child + r' (.*)$', text, re.M)
+                 if call != '+++ exited with 0 +++']
         if len(calls) != 1 or not re.fullmatch(r'exit_group\(0\)\s+= \?', calls[0]):
             raise RuntimeError("unexpected launcher probe activity")
         verified_probes += 1
