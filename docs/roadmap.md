@@ -1,136 +1,112 @@
 # Container Capability Engine Roadmap
 
-This roadmap separates delivered scaffolding from usable product behavior. GitHub milestones and their linked issues are the delivery record; milestone numbers are stable identifiers, not a requirement to delay shared infrastructure until its original number.
+Podman probes and configuration are the next priority. The first assessment focuses on rootless Quadlet with user systemd, with rootful coverage alongside it. Ansible integration follows a qualified Podman assessment. GitHub issues own actionable acceptance; milestone numbers remain stable identifiers rather than a mandatory execution sequence.
 
 ## Current availability
 
-M0/M1 and M1.1 foundation hardening are implemented. The M1.2 fixture slice now runs typed observations through scoped evidence, capabilities, requirements and JSON, with an executable consumer. The CLI supports `--fixture DIR`, `--json`, `--pretty`, `--debug`, help and version. See [fixture evaluation](fixture-evaluation.md) for its narrow Netavark configuration semantics. It does not yet evaluate the live host or invoke Podman. Schema v1 remains pre-release.
+The foundation, fixture evaluation path, passive host facts and execution contexts are delivered: M0, M1, M1.1, M1.2, M2 and M3 are closed. The shared pipeline supports typed observations, scoped evidence, five-state capabilities, bounded JSON requirements and reports. Schema v1 remains prerelease.
 
-The [permanent hardening gate](testing.md#complete-m11-gate) still applies to every extension. M1.2 supplies a reusable application path; subsequent work adds actual host/context discovery and reviewed runtime collection.
+The CLI provides:
 
-Execution support targets **Linux 5.6+ with functioning `openat2` confinement**, on amd64 and arm64. A kernel version alone does not prove the syscall is permitted. Unsupported kernels or policies must produce explicit diagnostics; there is no insecure fallback. Historical RHEL 8 data may be used for parser fixtures, but stock pre-5.6 execution is not a supported target. A broader compatibility policy requires a separate secure implementation and real-host tests.
+- [Passive host facts](host-facts.md) and [local target identities](execution-context.md), including root delegation, subordinate allocations, helper metadata, runtime-directory and user-session observations.
+- [Passive local Podman executable discovery](podman-discovery.md) with explicit path and target selection.
+- Explicit `--runtime podman --active` version and local effective-info inspection. Podman startup may write state; successful inspection does not establish workload readiness.
+- An explicitly active bounded user-manager query, including host-only collection.
+- [Offline fixture evaluation](fixture-evaluation.md), the existing JSON requirement AST and an executable report consumer.
+
+Live Podman inspection currently evaluates `all(runtime.podman, runtime.podman.info)`. User-supplied live requirements and basic evidence explanations are planned in [#112](https://github.com/EpicBlackWolfZ/capagent/issues/112). Configuration-family discovery, broader helper/lifecycle mappings and workload verification remain planned. The [baseline follow-up milestone](https://github.com/EpicBlackWolfZ/capagent/milestone/25) tracks known correctness and validation defects in the shipped behavior.
+
+Execution targets **Linux 5.6+ with functioning `openat2` confinement**, on amd64 and arm64. A version string does not prove that the syscall is permitted; unsupported kernels or policies receive explicit diagnostics without an insecure fallback. Historical pre-5.6 distribution data can support parser fixtures without establishing execution support. See the [security and support contract](security.md).
 
 ## Delivery sequence
 
-```text
-M0/M1 initial foundation
-  → M1.1 hardening gate
-  → M1.2 context + evidence + requirements + JSON fixture slice
-  → M2 host facts → M3 target context → M4 discovery → M5 Podman
-  → M6 configuration → M7 mappings → M8 catalog → M9 language
-  → M10 Ansible → M11 diagnostics
-  → M12 Docker / M13 containerd baseline
-  → M14 knowledge → M15 broader corpus → M16 wider real matrix
-  → M18 final hardening → M19 API freeze → M20 guides → M21 release
+Each feature batch includes its observations/parsing, affected capability mappings, explanations, fixtures, relevant native validation and user documentation. Configuration discovery, mappings and catalog milestones progress together. Wider corpus and matrix milestones expand testing that already accompanies features.
 
-M17 workload verification is an optional experimental track after its prerequisites. The early phase 3 `--active` slice permits only local Podman version/info inspection and its startup effects.
-```
-
-Pure parser, fixture and domain work may proceed before the hardening gate closes. Integration that executes platform or runtime operations must use the completed M1.1 contracts. Each capability gets fixtures and real validation when introduced; M15/M16 expand coverage rather than introducing testing for the first time.
-
-| Milestone | Status | Deliverable |
+| Order | User-visible outcome | Delivery issues |
 |---|---|---|
-| [M0 — Architecture & Contract](https://github.com/EpicBlackWolfZ/capagent/milestone/1) | Initial skeleton delivered | Initial models, state algebra and schema skeleton; remaining semantics have explicit follow-ups. |
-| [M1 — Probe Core](https://github.com/EpicBlackWolfZ/capagent/milestone/2) | Initial foundation delivered | Static payload, OS abstractions and scheduler scaffolding; host-report CLI is not delivered. |
-| [M1.1 — Hardening, Security & Performance](https://github.com/EpicBlackWolfZ/capagent/milestone/23) | Implemented; closure requires passing gate | Confinement, descriptor ownership, bounded I/O, parser fidelity, execution/build policy and regression gate. |
-| [M1.2 — Context & Evaluation Slice](https://github.com/EpicBlackWolfZ/capagent/milestone/24) | Implemented fixture slice | Typed context/evidence, minimal evaluator/requirements, reusable fixtures, application lifecycle and JSON consumer smoke. |
-| [M2 — Host Facts](https://github.com/EpicBlackWolfZ/capagent/milestone/3) | Passive host facts implemented | Scoped host observations, mockable syscall adapters, complete fixture replay and supported-host JSON/passivity checks. |
-| [M3 — Execution Context](https://github.com/EpicBlackWolfZ/capagent/milestone/4) | Implemented; review pending | Target identity validation, groups, subordinate ranges, helper metadata, XDG and user systemd. |
-| [M4 — Runtime Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/5) | Queued | Explicit binary/endpoint/identity policy and runtime availability. |
-| [M5 — Podman Core](https://github.com/EpicBlackWolfZ/capagent/milestone/6) | Queued | Version discovery and explicitly gated effective-info observations and first real rootless fixture. |
-| [M6 — Configuration Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/7) | Queued | Effective configuration and provenance across source/user scopes. |
-| [M7 — Configuration Capabilities](https://github.com/EpicBlackWolfZ/capagent/milestone/8) | Queued | Use the M1.2 evaluator for registry/storage/network mappings. |
-| [M8 — Capability Catalog Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/9) | Queued | Expand lifecycle and dependency mappings; engine infrastructure already exists. |
-| [M9 — Requirement Language & Explanations](https://github.com/EpicBlackWolfZ/capagent/milestone/10) | Queued | Extend the minimal AST and consumer-driven language/explanation features. |
-| [M10 — Ansible Integration](https://github.com/EpicBlackWolfZ/capagent/milestone/11) | Queued | Full role and real-host gating/fallback examples; initial consumer smoke occurs in M1.2. |
-| [M11 — Diagnostics](https://github.com/EpicBlackWolfZ/capagent/milestone/12) | Queued | Doctor, runtime/config inspection and evidence explanations. |
-| [M12 — Docker](https://github.com/EpicBlackWolfZ/capagent/milestone/13) | Queued | Useful Docker baseline with real fixtures and target-scoped mappings. |
-| [M13 — containerd & CRI](https://github.com/EpicBlackWolfZ/capagent/milestone/14) | Queued | Baseline CRI support; CRI-O/nerdctl remain optional experimental scope. |
-| [M14 — Historical Knowledge](https://github.com/EpicBlackWolfZ/capagent/milestone/15) | Queued | Sourced high-impact rules that never override direct evidence. |
-| [M15 — Compatibility Corpus Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/16) | Queued | Broaden the M1.2 harness and captured regression corpus. |
-| [M16 — Real Compatibility Matrix](https://github.com/EpicBlackWolfZ/capagent/milestone/17) | Queued | Automate a wider supported OS/runtime matrix; first real tests occur earlier. |
-| [M17 — Active Validation](https://github.com/EpicBlackWolfZ/capagent/milestone/18) | Queued; experimental | Explicit opt-in, bounded disposable verification and documented cleanup limits. |
-| [M18 — Production Hardening](https://github.com/EpicBlackWolfZ/capagent/milestone/19) | Queued | Final integrated fleet checks and broader benchmark/scalability work. |
-| [M19 — API Stabilization](https://github.com/EpicBlackWolfZ/capagent/milestone/20) | Queued | Freeze validated schema, evidence, requirement and ID compatibility contracts. |
-| [M20 — Documentation](https://github.com/EpicBlackWolfZ/capagent/milestone/21) | Queued | Complete installation, operation, integration and troubleshooting guides. |
-| [M21 — v1.0](https://github.com/EpicBlackWolfZ/capagent/milestone/22) | Queued | Release verified stable scope; optional experimental features do not block it. |
+| 0 | Correct incomplete-result reporting and strengthen delegated passive validation | [#102](https://github.com/EpicBlackWolfZ/capagent/issues/102)–[#107](https://github.com/EpicBlackWolfZ/capagent/issues/107); roadmap alignment [#116](https://github.com/EpicBlackWolfZ/capagent/issues/116) |
+| 1 | Explain selected OCI/helper and target-scoped Quadlet prerequisites | [#82](https://github.com/EpicBlackWolfZ/capagent/issues/82), [#108](https://github.com/EpicBlackWolfZ/capagent/issues/108) |
+| 2 | Explain engine, storage and rootless networking configuration with source provenance | [#109](https://github.com/EpicBlackWolfZ/capagent/issues/109), [#110](https://github.com/EpicBlackWolfZ/capagent/issues/110), [#111](https://github.com/EpicBlackWolfZ/capagent/issues/111) |
+| 3 | Evaluate existing JSON requirements against live Podman evidence and show useful explanations | [#112](https://github.com/EpicBlackWolfZ/capagent/issues/112), the early shared slice of M9/M11 |
+| 4 | Add registry/image-policy configuration and remaining lifecycle metadata | [#113](https://github.com/EpicBlackWolfZ/capagent/issues/113), [#114](https://github.com/EpicBlackWolfZ/capagent/issues/114); specific sourced rules from [#74](https://github.com/EpicBlackWolfZ/capagent/issues/74) when needed |
+| 5 | Qualify the Podman assessment on a documented rootless/rootful support envelope | [#115](https://github.com/EpicBlackWolfZ/capagent/issues/115), bringing forward Podman portions of M15/M16/M18 |
+| 6 | Deliver Ansible integration and useful Docker/containerd baselines | [#70](https://github.com/EpicBlackWolfZ/capagent/issues/70), remaining shared discovery [#23](https://github.com/EpicBlackWolfZ/capagent/issues/23), [#72](https://github.com/EpicBlackWolfZ/capagent/issues/72), [#73](https://github.com/EpicBlackWolfZ/capagent/issues/73) |
+| 7 | Expand fleet qualification, finish consumer-driven UX, freeze the contract and complete stable v1.0 | Remaining M9/M11/M14–M16/M18 scope, then [#79](https://github.com/EpicBlackWolfZ/capagent/issues/79)–[#81](https://github.com/EpicBlackWolfZ/capagent/issues/81) |
 
+The remaining generic discovery issue does not block local Podman probes or configuration. Optional YAML, named profiles and a complete doctor command suite do not block the first live assessment. Within a phase, independently testable parser or domain work may proceed together; issue dependencies define the integration order.
 
-## Foundation exit gates
+[M17 workload verification](https://github.com/EpicBlackWolfZ/capagent/issues/77) is an optional experimental track after the Podman checkpoint and the specific prerequisites its checks consume. It does not wait for every runtime/distribution matrix entry. Existing active inspection remains a separate, already delivered operation; selecting it will not implicitly authorize future container/DNS/registry/storage experiments.
 
-### M1.1 — harden the execution foundation
+## First Podman assessment checkpoint
 
-| Phase | Issues | Exit evidence |
-|---|---|---|
-| Filesystem correctness and resource ownership | [#30](https://github.com/EpicBlackWolfZ/capagent/issues/30), [#33](https://github.com/EpicBlackWolfZ/capagent/issues/33), [#42](https://github.com/EpicBlackWolfZ/capagent/issues/42), [#56](https://github.com/EpicBlackWolfZ/capagent/issues/56), [#57](https://github.com/EpicBlackWolfZ/capagent/issues/57), [#58](https://github.com/EpicBlackWolfZ/capagent/issues/58) | Correct path/root semantics, faithful metadata, close-on-exec, bounded reads, explicit incomplete results and OS/memory conformance. |
-| Execution and lifecycle | [#36](https://github.com/EpicBlackWolfZ/capagent/issues/36), [#37](https://github.com/EpicBlackWolfZ/capagent/issues/37), [#39](https://github.com/EpicBlackWolfZ/capagent/issues/39), [#40](https://github.com/EpicBlackWolfZ/capagent/issues/40), [#43](https://github.com/EpicBlackWolfZ/capagent/issues/43) | Explicit executable/environment authority, bounded pipe drain, immutable DAG, retained failure observations and terminal resolution errors. |
-| Build trust and public contracts | [#31](https://github.com/EpicBlackWolfZ/capagent/issues/31), [#38](https://github.com/EpicBlackWolfZ/capagent/issues/38), [#47](https://github.com/EpicBlackWolfZ/capagent/issues/47), [#48](https://github.com/EpicBlackWolfZ/capagent/issues/48) | Verified launcher inputs/cache, provisioned release tools, precise architecture checks and documented supported behavior. |
-| Permanent regression gate | [#44](https://github.com/EpicBlackWolfZ/capagent/issues/44), [#45](https://github.com/EpicBlackWolfZ/capagent/issues/45), [#46](https://github.com/EpicBlackWolfZ/capagent/issues/46), [#49](https://github.com/EpicBlackWolfZ/capagent/issues/49) | Deterministic fuzz corpus/fault/resource regressions, full lint/race/contracts and packaged-artifact verification. |
+The initial useful workflow answers which prerequisites a selected target user has for rootless Quadlet deployment and which engine, storage, network or image-policy settings are missing, conflicting or unobserved. It includes a rootful comparison and uses only delivered capability definitions in its requirement examples.
 
-The gate requires no unresolved high-priority defect in the shipped foundation. Model and requirement coverage are checked independently above 95%, alongside the repository threshold. Small benchmark checks accompany relevant changes; broader benchmark/scalability issue [#41](https://github.com/EpicBlackWolfZ/capagent/issues/41) belongs to M18. Expensive stochastic campaigns run separately from the bounded PR gate.
+The checkpoint requires the baseline fixes, helper/Quadlet observations, configuration batches, live JSON requirement input and integrated qualification in [#115](https://github.com/EpicBlackWolfZ/capagent/issues/115). Each result must identify its evidence level: file presence, configured intent, runtime-effective state or directly verified operation. A generator/helper file or successful `podman info` cannot establish a functioning workload.
 
-### M1.2 — prove the evaluation path before expanding capabilities
+This is a prerelease readiness checkpoint. It neither freezes schema v1 nor replaces the broader stable v1.0 scope. Publishing a prerelease is a separate release action.
 
-| Deliverable | Issue |
+## Configuration delivery contract
+
+Configuration batches share source provenance and explicit target/environment selection, while keeping family-specific semantics:
+
+- `containers.conf` uses layered fields and version-applicable drop-in/array rules. Modules and overrides require explicit selection. See the [upstream engine configuration contract](https://github.com/containers/common/blob/main/docs/containers.conf.5.md).
+- `storage.conf` uses its own selected-file/replacement rules; a universal field-by-field TOML overlay would be incorrect. See the [upstream storage configuration contract](https://github.com/containers/storage/blob/main/storage.conf).
+- `registries.conf` and `policy.json` need their own source-selection and override rules, covered by version-specific fixtures in #113.
+
+Source applicability is pinned when a feature is implemented; current upstream documentation is not proof that every historical Podman release behaves identically. Parsed configuration and runtime inspection must use compatible declared source/environment policy. Ambient config-selection overrides and remote endpoints cannot silently change one side of the assessment.
+
+Runtime-effective state outranks configuration within the same target/runtime scope. Missing, denied, malformed and unsupported inputs remain distinguishable. Configuration can establish selected settings and prerequisites; registry reachability, authentication, image pulls, network/DNS operation and storage writes require separately authorized direct evidence.
+
+## Milestone ownership
+
+Existing milestone URLs and numbers are preserved. The table describes delivery ownership; it does not impose an all-or-nothing gate between neighboring rows.
+
+| Milestone | Current status and remaining ownership |
 |---|---|
-| Typed facts, partial observations and explicit context/runtime scope | [#59](https://github.com/EpicBlackWolfZ/capagent/issues/59) |
-| Reusable offline fixtures with provenance | [#60](https://github.com/EpicBlackWolfZ/capagent/issues/60) |
-| Application lifecycle, report CLI and executable consumer example | [#61](https://github.com/EpicBlackWolfZ/capagent/issues/61) |
-| Scoped precedence, equal-rank conflicts and explanations | [#6](https://github.com/EpicBlackWolfZ/capagent/issues/6) |
-| Minimal evidence graph and capability registry/evaluator | [#62](https://github.com/EpicBlackWolfZ/capagent/issues/62) |
-| Minimal bounded JSON requirement AST using existing three-valued algebra | [#63](https://github.com/EpicBlackWolfZ/capagent/issues/63) |
-| Catalog, numeric schema bounds and unknown/completeness alignment | [#64](https://github.com/EpicBlackWolfZ/capagent/issues/64) |
+| [M0 — Architecture & Contract](https://github.com/EpicBlackWolfZ/capagent/milestone/1) | Closed historical domain/schema foundation. |
+| [M1 — Probe Core](https://github.com/EpicBlackWolfZ/capagent/milestone/2) | Closed platform/scheduler foundation. |
+| [M1.1 — Hardening, Security & Performance](https://github.com/EpicBlackWolfZ/capagent/milestone/23) | Closed foundation; the permanent gate continues to apply. |
+| [M1.2 — Context & Evaluation Slice](https://github.com/EpicBlackWolfZ/capagent/milestone/24) | Closed fixture-to-consumer pipeline, now reused by live collection. |
+| [M2 — Host Facts](https://github.com/EpicBlackWolfZ/capagent/milestone/3) | Closed passive host observation baseline. |
+| [M3 — Execution Context](https://github.com/EpicBlackWolfZ/capagent/milestone/4) | Closed target/delegation/subordinate-ID/user-session baseline. |
+| [Baseline correctness follow-up](https://github.com/EpicBlackWolfZ/capagent/milestone/25) | Phase 0: #102–#107 repairs and #116 public alignment. |
+| [M4 — Runtime Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/5) | Local Podman discovery delivered; #23 shared discovery follows the Podman checkpoint. |
+| [M5 — Podman Core](https://github.com/EpicBlackWolfZ/capagent/milestone/6) | Active version/info delivered; #82/#108 next, #114 later. |
+| [M6 — Configuration Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/7) | #66 roll-up; #109/#110/#113 own family discovery with mappings. |
+| [M7 — Configuration Capabilities](https://github.com/EpicBlackWolfZ/capagent/milestone/8) | Narrow runtime mappings delivered; #67 roll-up and #111 network batch progress with M6. |
+| [M8 — Capability Catalog Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/9) | #68 definitions and dependency explanations ship with each producing batch. |
+| [M9 — Requirement Language & Explanations](https://github.com/EpicBlackWolfZ/capagent/milestone/10) | #112 live JSON first; #69 broader consumer-driven language later. |
+| [M10 — Ansible Integration](https://github.com/EpicBlackWolfZ/capagent/milestone/11) | #70 follows #115; retain the existing consumer smoke now. |
+| [M11 — Diagnostics](https://github.com/EpicBlackWolfZ/capagent/milestone/12) | Basic explanations in #112; #71 full inspection/doctor UX later. |
+| [M12 — Docker](https://github.com/EpicBlackWolfZ/capagent/milestone/13) | #72 baseline after the Podman checkpoint. |
+| [M13 — containerd & CRI](https://github.com/EpicBlackWolfZ/capagent/milestone/14) | #73 baseline after the checkpoint; CRI-O/nerdctl optional. |
+| [M14 — Historical Knowledge](https://github.com/EpicBlackWolfZ/capagent/milestone/15) | #74 specific sourced rules with features, broader coverage later. |
+| [M15 — Compatibility Corpus Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/16) | Feature fixtures now; #115 Podman corpus, #75 wider coverage later. |
+| [M16 — Real Compatibility Matrix](https://github.com/EpicBlackWolfZ/capagent/milestone/17) | #115 Podman qualification first; #76 wider runtime/OS matrix later. |
+| [M17 — Active Validation](https://github.com/EpicBlackWolfZ/capagent/milestone/18) | Inspection gate delivered; #77 optional bounded workload experiments later. |
+| [M18 — Production Hardening](https://github.com/EpicBlackWolfZ/capagent/milestone/19) | Small checks with features/#115; #78 final fleet qualification and #41 broader benchmarks. |
+| [M19 — API Stabilization](https://github.com/EpicBlackWolfZ/capagent/milestone/20) | #79 freeze after stable runtime/consumer/matrix validation. |
+| [M20 — Documentation](https://github.com/EpicBlackWolfZ/capagent/milestone/21) | Docs ship with features; #80 completes stable-scope guides. |
+| [M21 — v1.0](https://github.com/EpicBlackWolfZ/capagent/milestone/22) | #81 release acceptance for the full stable scope. |
 
-Exit: one deterministic fixture can pass through facts, observations, evidence, capabilities, requirements and validated CLI JSON into a consumer. Positive, negative and indeterminate results are covered. A workload cannot combine incompatible runtime or target-user evidence. The CLI does not claim live support before live probes are implemented.
+## Validation and stable release scope
 
-## Live observation milestones
+The [permanent hardening gate](testing.md#complete-m11-gate) applies to every extension: confinement, explicit command authority, bounded I/O, retained partial observations, race/lint/contracts and artifact validation. Model and requirement coverage remain independently above 95%. Small deterministic checks accompany changes; deeper stochastic, matrix and benchmark campaigns remain separately replayable.
 
-| Milestone | Tracked implementation | Exit evidence |
-|---|---|---|
-| M2 | [#15](https://github.com/EpicBlackWolfZ/capagent/issues/15) os-release; [#16](https://github.com/EpicBlackWolfZ/capagent/issues/16) kernel; [#17](https://github.com/EpicBlackWolfZ/capagent/issues/17) systemd; [#18](https://github.com/EpicBlackWolfZ/capagent/issues/18) cgroups; [#19](https://github.com/EpicBlackWolfZ/capagent/issues/19) namespaces/security; [#65](https://github.com/EpicBlackWolfZ/capagent/issues/65) platform syscall adapters; [#83](https://github.com/EpicBlackWolfZ/capagent/issues/83) filesystem/network prerequisites | Accurate scoped observations, unknown/error preservation and a real supported-host fact-to-JSON test. Version strings and namespace-file presence do not by themselves prove capability usability. |
-| M3 | [#3](https://github.com/EpicBlackWolfZ/capagent/issues/3) model validation; [#20](https://github.com/EpicBlackWolfZ/capagent/issues/20) identities; [#21](https://github.com/EpicBlackWolfZ/capagent/issues/21) subordinate IDs/helpers; [#22](https://github.com/EpicBlackWolfZ/capagent/issues/22) XDG/user systemd | Explicit current/target credentials and groups, validated ranges/ownership, and real supported rootless checks. Required subordinate range size is workload-specific. |
-| M4 | [#23](https://github.com/EpicBlackWolfZ/capagent/issues/23) runtime discovery | Explicit executable and endpoint policy; binary existence, service availability and target accessibility stay distinct. |
-| M5 | [#24](https://github.com/EpicBlackWolfZ/capagent/issues/24) versions; [#25](https://github.com/EpicBlackWolfZ/capagent/issues/25) effective info; [#82](https://github.com/EpicBlackWolfZ/capagent/issues/82) lifecycle/helper observations | Real Podman fixtures and bounded target-scoped observations whose command behavior and opt-in boundary are verified. |
+The stable v1.0 scope remains supported Linux host evaluation, explicit target contexts, Podman/Docker/containerd baseline, canonical capabilities, requirements, diagnostics, Ansible integration and a stable machine-readable contract. CRI-O, nerdctl and workload experiments may remain experimental. Every shipped capability follows the [Definition of Done](philosophy.md#4-definitions-of-done).
 
-The phase 2 current-user slices of #65/#20/#3 and local Podman discovery from #23 are implemented. Phase 3 adds live opt-in version/info collection for #24/#25, a complete inspection predicate and authentic 3.x/4.x/5.x parser captures. The narrow #67/#68/#77 slices reuse runtime evidence and explicit dispatch; their broader acceptance remains open. Version and info require `--active` because Podman startup can write state. M3 adds local alternate identities, isolated root delegation, subordinate-ID observations and user-manager context; see [execution contexts](execution-context.md). Configuration merging, lifecycle helpers and workload verification remain deferred. See [local Podman discovery](podman-discovery.md).
-
-
-Read-only system metadata interrogation such as `systemctl --version` must use the explicit command policy. It is not permission for arbitrary shell utilities. Active namespace creation, storage writes, network reachability tests and container execution remain outside default observation.
-
-## Expansion and release ownership
-
-| Milestone | Tracking issue | Scope |
-|---|---|---|
-| M6 | [#66](https://github.com/EpicBlackWolfZ/capagent/issues/66) | containers.conf, storage.conf, registries.conf, policy.json and drop-ins across vendor/system/user scopes; prefer runtime effective state; preserve source precedence, permissions and parse diagnostics; explicit environment policy and redaction; table-driven conflicting-source fixtures. |
-| M7 | [#67](https://github.com/EpicBlackWolfZ/capagent/issues/67) | registry, storage, DNS and rootless-networking mappings using the existing evaluator; all five operational states; confidence reflects passive evidence; no network reachability or storage-write claim without direct authorized evidence. |
-| M8 | [#68](https://github.com/EpicBlackWolfZ/capagent/issues/68) | systemd-native/generated lifecycle, networking/storage/image dependencies and evidence explanations; canonical IDs and per-capability Definition of Done; do not duplicate the M1.2 engine. |
-| M9 | [#69](https://github.com/EpicBlackWolfZ/capagent/issues/69) | documented JSON language and optional YAML parsing adapter; robust diagnostics and bounded nesting/input; compound predicates and named requirements only with concrete consumers; reuse #5 truth tables. |
-| M10 | [#70](https://github.com/EpicBlackWolfZ/capagent/issues/70) | capagent_probe role, flat-key capability gating, requirement documents, fail-closed policy, lifecycle fallback; real supported host and target-user validation. |
-| M11 | [#71](https://github.com/EpicBlackWolfZ/capagent/issues/71) | doctor, runtime, config and explain commands; terminal evidence trees; versioned additive JSON diagnostics; secret redaction. |
-| M12 | [#72](https://github.com/EpicBlackWolfZ/capagent/issues/72) | binary/socket discovery, version/info, daemon.json, rootless/remote endpoint policy and canonical mappings; minimum useful Docker baseline with real fixtures. |
-| M13 | [#73](https://github.com/EpicBlackWolfZ/capagent/issues/73) | containerd discovery, config.toml and bounded read-only socket/CRI inspection; explicit transport dependency decision; scope results to endpoint/namespace; CRI-O and nerdctl remain experimental follow-ups. |
-| M14 | [#74](https://github.com/EpicBlackWolfZ/capagent/issues/74) | high-impact version rules with official provenance, validity ranges, timestamps/confidence, and conflict fixtures; supplement missing evidence only. |
-| M15 | [#75](https://github.com/EpicBlackWolfZ/capagent/issues/75) | broaden OS/runtime/config/rootless and broken-environment permutations using the existing M1.2 harness; capture provenance and redact secrets; regression corpus from real failures. |
-| M16 | [#76](https://github.com/EpicBlackWolfZ/capagent/issues/76) | RHEL 9/10, Fedora, Debian and minimal supported Linux; rootful/rootless, cgroups and security modes; explicit kernel/syscall support checks; baseline real-host tests start with M2/M3 rather than waiting here. |
-| M17 | [#77](https://github.com/EpicBlackWolfZ/capagent/issues/77) | separate active registry and explicit --active gate; bounded disposable container/DNS/registry/storage checks; resource ownership ledger and cleanup diagnostics; experimental until validated. |
-| M18 | [#78](https://github.com/EpicBlackWolfZ/capagent/issues/78) | benchmark and resource regression budgets, stripped/read-only hosts, restricted procfs/sysfs, artifact static checks and launcher provenance; final security review of integrated feature set. |
-| M19 | [#79](https://github.com/EpicBlackWolfZ/capagent/issues/79) | publish final schema, evidence and requirement contracts; ID lifecycle status and generated catalog; cross-version compatibility tests and explicit version negotiation where needed. |
-| M20 | [#80](https://github.com/EpicBlackWolfZ/capagent/issues/80) | installation/build requirements, supported kernels/runtimes, CLI, requirement language, Ansible, troubleshooting and verification instructions; executable examples. |
-| M21 | [#81](https://github.com/EpicBlackWolfZ/capagent/issues/81) | release checklist for supported Linux, Podman, Docker and containerd baseline; target-user contexts, evidence/requirements, diagnostics and Ansible; optional CRI-O/nerdctl/active probes remain experimental. |
-
-### Stable v1.0 scope
-
-Supported Linux host evaluation, explicit target contexts, Podman/Docker/containerd baseline, canonical capabilities, requirements, diagnostics, Ansible integration and a stable machine-readable contract form the release scope. CRI-O, nerdctl and active probes may remain experimental. Every shipped capability follows the [Definition of Done](philosophy.md#4-definitions-of-done).
-
-Public documentation and executable examples are updated alongside features. M20 completes the guides; it does not postpone documentation until the end. Internal implementation plans, audits and machine-specific evidence belong in git-ignored `.work/` and are not published under `docs/`.
+Public docs and executable examples ship with each feature. M20 completes coverage; internal implementation plans, audits and machine-specific evidence stay in git-ignored `.work/`.
 
 ---
 
 ## Planned capability catalog
 
-These IDs describe intended scope. `runtime.podman.netavark` is emitted by info fixtures. `runtime.podman` describes CLI availability: live discovery can establish absence or unsuitable metadata, while a supported version result is currently available only through fixture replay. The `context` namespace is accepted, and a contract test validates every catalog ID. Each shipped capability must satisfy the Definition of Done in [philosophy.md](philosophy.md).
+This is a design inventory, not a list of fully implemented or operationally verified features. The shipped Podman definitions are `runtime.podman`, `runtime.podman.info` and the narrow `runtime.podman.netavark` prerequisite. Host/context observations do not automatically imply corresponding capability mappings. The `context` namespace and bounded nullable identity contract are implemented; schema v1 remains prerelease.
+
+The roadmap retains intended IDs while #68 defines each shipped predicate's exact evidence threshold. Entries that describe working deployment, storage, networking, DNS or image access require evidence appropriate to that operation. A passive implementation must expose only its measured prerequisites, or leave the operational result unknown. It cannot silently redefine operational support as file presence.
 
 ### 1 Host Capabilities
+
 - `host.os`: Host distribution identification.
 - `host.kernel`: Kernel version and capabilities.
 - `host.architecture`: CPU architecture (`amd64`, `arm64`).
@@ -156,6 +132,7 @@ These IDs describe intended scope. `runtime.podman.netavark` is emitted by info 
 - `host.firewall`: Host firewall presence (`nftables`, `iptables`, `firewalld`).
 
 ### 2 Execution Context Capabilities
+
 - `context.root`: Process running as root.
 - `context.rootless`: Process running unprivileged.
 - `context.user`: Valid target user resolution.
@@ -166,6 +143,7 @@ These IDs describe intended scope. `runtime.podman.netavark` is emitted by info 
 - `context.subgid`: Target user has allocated subordinate GID range.
 
 ### 3 Lifecycle Capabilities
+
 - `container.lifecycle.systemd_native`: Native systemd unit generation / Quadlet.
 - `container.lifecycle.systemd_generated`: Generated unit deployment (`podman generate systemd`).
 - `container.lifecycle.daemon_managed`: Traditional daemon restart policy management (Docker).
@@ -173,15 +151,16 @@ These IDs describe intended scope. `runtime.podman.netavark` is emitted by info 
 - `container.lifecycle.kubernetes`: `podman kube apply` manifest execution.
 
 ### 4 Runtime Specific Capabilities
+
 - `runtime.podman`: Selected Podman CLI returned a recognizable version; engine access remains unverified.
-- `runtime.podman.quadlet`: Podman Quadlet generator present and functional.
+- `runtime.podman.quadlet`: Quadlet support under a defined target-scoped evidence contract; generator presence and functional generation remain distinct.
 - `runtime.podman.kube_apply`: Podman `kube play`/`apply` support.
 - `runtime.podman.generate_systemd`: Podman legacy systemd unit generation.
 - `runtime.podman.info`: Selected local engine returned complete effective inspection fields; runtime evidence with derived confidence, no workload claim.
 - `runtime.podman.netavark`: Netavark network backend configured.
 - `runtime.podman.cni`: Legacy CNI network backend configured.
-- `runtime.podman.aardvark`: Aardvark container DNS service active.
-- `runtime.podman.rootless`: Podman rootless operation usable by target user.
+- `runtime.podman.aardvark`: Aardvark DNS support; configured helper prerequisites and verified DNS operation remain distinct.
+- `runtime.podman.rootless`: Rootless Podman operation for the selected target; prerequisites alone cannot establish usability.
 - `runtime.podman.pasta`: Pasta rootless networking backend.
 - `runtime.podman.infra_image`: Infra/pause image configured for pods.
 - `runtime.docker`: Docker daemon running and accessible.
@@ -191,6 +170,7 @@ These IDs describe intended scope. `runtime.podman.netavark` is emitted by info 
 - `runtime.containerd.cri`: containerd CRI plugin active.
 
 ### 5 Storage Capabilities
+
 - `container.storage.overlay`: Native kernel OverlayFS storage driver.
 - `container.storage.fuse_overlayfs`: FUSE-overlayfs storage driver (unprivileged).
 - `container.storage.vfs`: Fallback VFS storage driver.
@@ -200,6 +180,7 @@ These IDs describe intended scope. `runtime.podman.netavark` is emitted by info 
 - `container.storage.rootless`: Storage configured properly for unprivileged user.
 
 ### 6 Networking Capabilities
+
 - `container.network`: General container network creation.
 - `container.network.ipv4`: IPv4 container addressing.
 - `container.network.ipv6`: IPv6 container addressing.
@@ -213,14 +194,15 @@ These IDs describe intended scope. `runtime.podman.netavark` is emitted by info 
 - `container.network.port_forwarding`: Host-to-container port mapping.
 
 ### 7 Image & Registry Capabilities
+
 - `image.pull`: Image pull functionality.
 - `image.registry`: Unauthenticated public registry access.
 - `image.registry.private`: Authenticated private registry access.
 - `image.registry.custom`: Custom registry hostname resolution.
-- `image.registry.auth`: Auth credentials present for target registry.
+- `image.registry.auth`: Target registry authentication prerequisites; credential-source metadata does not establish successful authentication.
 - `image.registry.mirror`: Pull-through registry mirror configured.
 - `image.registry.insecure`: Insecure (HTTP / non-TLS) registry permitted.
 - `image.registry.custom_ca`: Custom TLS root certificate authority configured.
-- `image.registry.signature_policy`: Cryptographic image signature verification enabled.
+- `image.registry.signature_policy`: Selected image signature policy; configured policy and successful verification remain distinct.
 - `image.registry.offline`: Air-gapped / offline image store operation.
 - `image.pause`: Pause / infra image available locally.
