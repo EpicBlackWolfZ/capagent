@@ -96,7 +96,7 @@ These produce SATISFIED/0, UNSATISFIED/1 and INDETERMINATE/2 respectively. Gener
 
 ## Native capture and replay
 
-`testdata/podman/prerequisites` contains sanitized native typed measurements. Their provenance identifies the host, Podman version and execution mode. The capture exporter reconstructs an info JSON subset from published typed fields and restores shared fact scope; it does not preserve arbitrary command output or executable contents. Contract tests re-run the info parser and compare all helper/Quadlet prerequisite states with the native sample. Synthetic `assessment-*` fixtures separately exercise collection, source selection, failures, report schema and requirement exits.
+`testdata/podman/prerequisites` contains sanitized native typed measurements. Their provenance identifies the host, Podman version and execution mode. The capture exporter reconstructs an info JSON subset from published typed fields and restores shared fact scope; it does not preserve arbitrary command output or executable contents. Replay tests re-run the info parser and compare all helper/Quadlet prerequisite states with the native sample. Synthetic `assessment-*` fixtures separately exercise collection, source selection, failures, report schema and requirement exits.
 
 ```sh
 capagent --runtime podman --active --json > .work/prerequisites-report.json
@@ -106,3 +106,13 @@ python3 -B scripts/capture-podman-prerequisites.py \
 ```
 
 Review capture provenance and redaction before committing. Home account names are anonymized automatically; custom installation paths, scope selectors and other identifiers may require additional review. Passive traces, native delegated checks and packaged-artifact validation are described in [testing](testing.md). A static build for an architecture is not native execution evidence.
+
+The prerequisite sample matrix currently contains native amd64 execution:
+
+| OS / Podman | Target and observed result |
+|---|---|
+| Nobara/Fedora / 5.8.4 | UID 1000 rootless: selected OCI/conmon and generator access, cgroup v2, runtime directory and user manager supported; linger disabled. |
+| Ubuntu 24.04 / 4.9.3 | UID 0 rootful: selected OCI/conmon and generator access, cgroup v2 and system manager supported. |
+| Ubuntu 24.04 / 4.9.3 | UID 1001 rootless with fresh isolated runtime directory: helper/generator metadata supported; user manager unavailable in that directory despite a linger marker. |
+
+The Ubuntu samples come from [native CI run 34762163053](https://github.com/EpicBlackWolfZ/capagent/actions/runs/34762163053). That run also passed delegated username/numeric-UID context traces, bounded user-manager queries, and full/minimal packaged launchers. These samples qualify the documented prerequisite meanings, not unit generation, networking, storage, image pulls or the complete assessment checkpoint. The v5.8.4 candidate input-root reference does not claim that the 4.9.3 generator consumes identical roots. Other architectures receive separate static checks until native evidence is recorded.

@@ -13,7 +13,7 @@ import (
 
 func TestCapturedPodmanPrerequisiteReplay(t *testing.T) {
 	t.Parallel()
-	for _, name := range []string{"nobara-5.8.4-rootless.json"} {
+	for _, name := range []string{"nobara-5.8.4-rootless.json", "ubuntu-4.9.3-rootful.json", "ubuntu-4.9.3-rootless.json"} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			const maxCaptureBytes = 2 << 20
