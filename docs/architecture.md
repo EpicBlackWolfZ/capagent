@@ -647,7 +647,7 @@ Local Podman inspection does not require a Podman service socket. Future endpoin
 
 ### 8.3 Planned deployment assessments
 
-The first [Podman assessment checkpoint](roadmap.md#first-podman-assessment-checkpoint) adds target-scoped Quadlet prerequisites and configuration explanations. Requirement examples will use only delivered predicates with explicit proof levels. Generator or helper presence alone cannot produce verified operational lifecycle/DNS support. General live JSON requirement input and basic explanations are tracked in [#112](https://github.com/EpicBlackWolfZ/capagent/issues/112); optional YAML and broader language conveniences follow later.
+The first [Podman assessment checkpoint](roadmap.md#first-podman-assessment-checkpoint) integrates target-scoped Quadlet prerequisites and configuration explanations. [Live JSON requirements](podman-assessment.md) use the existing bounded parser/evaluator; the caller reads the document once and the credential-dropped worker revalidates the transported document. Explanations preserve JSON and distinguish the chosen verdict from other configuration findings. Examples use only delivered predicates with explicit proof levels. Generator or helper presence alone cannot produce verified operational lifecycle/DNS support. Optional YAML and broader language conveniences follow later.
 
 ### 8.4 Current local Podman inspection
 

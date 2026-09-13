@@ -266,3 +266,22 @@ arguments. The negative corpus covers syscall variants and resumed records; the
 positive delegated trace records its capture source and sanitization in
 `scripts/tests/fixtures/context-trace/provenance.json`. CI supplies fresh native
 root-to-target execution evidence; static architecture builds are a separate check.
+
+## Live requirement and explanation checks
+
+`python3 -B scripts/requirement-smoke.py --binary PATH --output DIRECTORY`
+replays SATISFIED, UNSATISFIED and INDETERMINATE against an explicitly absent
+Podman executable, without running Podman. Add `--strace /usr/bin/strace` for
+current-user passive trace validation. The hosted test job repeats these cases
+as root and through a root-to-user worker using caller-only requirement files.
+Delegated requirement reports are checked for caller, target and execution
+identity; the separate credential harness validates delegated syscall authority.
+The active inspection harness also evaluates all three outcomes for both users
+while retaining its local version/info command and connection checks.
+
+Native full and minimal packaged launchers run the same three passive requirement
+cases during artifact verification. Non-native architectures receive static ELF
+and integrity validation only. Worker-bootstrap regressions cover valid documents
+at the language's maximum depth and node count, including diagnostic aggregation
+that previously exceeded the response limit. Explanations are checked for bounded
+output, terminal escaping, selected/superseded evidence and configuration details.

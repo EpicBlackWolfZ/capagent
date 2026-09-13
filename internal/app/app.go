@@ -4,6 +4,7 @@ package app
 
 import (
 	"context"
+	"encoding/json/jsontext"
 	"errors"
 	"fmt"
 	"io"
@@ -30,13 +31,17 @@ const (
 )
 
 type Options struct {
-	Fixture    string
-	Pretty     bool
-	Debug      bool
-	Active     bool
-	Runtime    string
-	Context    string
-	PodmanPath string
+	Requirement     string
+	Explain         bool
+	requirementJSON jsontext.Value
+	requirementNode *requirement.Node
+	Fixture         string
+	Pretty          bool
+	Debug           bool
+	Active          bool
+	Runtime         string
+	Context         string
+	PodmanPath      string
 }
 
 // Input is a single explicit deployment candidate. All data is borrowed during
@@ -240,13 +245,20 @@ func Execute(ctx context.Context, opts Options, stdout, stderr io.Writer) int {
 		return failure(stderr, ExitUsage, "use --json for host facts, --runtime podman or --fixture DIR; "+
 			"--active permits live user-manager queries and local runtime inspection")
 	}
+	if opts.Requirement != "" {
+		var code int
+		opts, code = readLiveRequirement(ctx, opts, stderr)
+		if code != 0 {
+			return code
+		}
+	}
 	var report *output.Report
 	var err error
 	if opts.Fixture == "" {
 		report, err = evaluateLive(ctx, opts)
 	} else {
 		var code int
-		report, code = readFixture(ctx, opts, stderr)
+		report, code = readFixture(ctx, &opts, stderr)
 		if code != 0 {
 			return code
 		}
@@ -257,7 +269,7 @@ func Execute(ctx context.Context, opts Options, stdout, stderr io.Writer) int {
 	return writeReport(report, opts, stdout, stderr)
 }
 
-func readFixture(ctx context.Context, opts Options, stderr io.Writer) (*output.Report, int) {
+func readFixture(ctx context.Context, opts *Options, stderr io.Writer) (*output.Report, int) {
 	data, err := platform.ReadDocument(ctx, opts.Fixture, "fixture.json", fixture.MaxBytes)
 	if err != nil {
 		return nil, failure(stderr, ExitExecution, "cannot read fixture document")
@@ -265,6 +277,11 @@ func readFixture(ctx context.Context, opts Options, stderr io.Writer) (*output.R
 	doc, err := fixture.Parse(data)
 	if err != nil {
 		return nil, failure(stderr, ExitUsage, "invalid fixture document")
+	}
+	if opts.Explain {
+		if err := fixtureExplanationRequirement(opts, doc.Requirement); err != nil {
+			return nil, failure(stderr, ExitUsage, "invalid fixture requirement")
+		}
 	}
 	report, err := evaluateFixture(ctx, doc)
 	if err != nil {
@@ -287,6 +304,11 @@ func writeReport(report *output.Report, opts Options, stdout, stderr io.Writer) 
 			if _, err := fmt.Fprintf(stderr, "capagent: %s\n", diagnostic.Code); err != nil {
 				return ExitExecution
 			}
+		}
+	}
+	if opts.Explain {
+		if err := writeExplanation(report, opts, stderr); err != nil {
+			return failure(stderr, ExitExecution, "cannot write explanation")
 		}
 	}
 	if _, err := stdout.Write(data); err != nil {

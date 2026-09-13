@@ -84,7 +84,7 @@ The existing JSON requirement language can express the initial rootless prerequi
 
 For rootful services, omit `runtime.podman.quadlet.runtime_directory`. For rootless startup without login, additionally require `runtime.podman.quadlet.linger`. These examples assess only delivered prerequisites; they do not include all storage, network, image-policy, controller-delegation or workload conditions. No operational Quadlet capability is published from these prerequisites.
 
-The `assessment-rootless` and `assessment-rootful` v1 fixtures embed these requirements. Live custom requirement input is delivered separately; the current default live requirement still checks CLI version and, with `--active`, effective info.
+The `assessment-rootless` and `assessment-rootful` v1 fixtures embed these requirements. [Live assessment](podman-assessment.md) accepts `--requirement FILE` and `--explain`, with expanded rootless/rootful examples covering the delivered configuration families. The default live requirement still checks CLI version and, with `--active`, effective info.
 
 ```sh
 capagent --fixture testdata/fixtures/v1/assessment-rootless --json

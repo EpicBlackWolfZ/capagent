@@ -16,6 +16,13 @@ The JSON trace separates `current` (launcher), `target` (requested local credent
 
 Current-identity metadata, groups and namespace completeness remain separate. Subordinate ID lists retain original order; validation rejects zero-length, overflow and overlapping ranges without mutating their source. Host-only collection exits 0 when host and context collection are complete, 2 for incomplete observations, 64 for invalid options and 70 for a failed worker or report transport. A planned context probe that fails, is cancelled before dispatch or is skipped after a dependency failure keeps context collection partial, even when it returns no observation. Retained observations remain in the report. Unrequested probes and intentionally deferred active queries do not count as missing required work. These are collection outcomes, not deployment approval.
 
+With `--runtime=podman --requirement FILE`, the launcher reads and validates the
+bounded requirement before delegation. The worker receives those owned JSON
+bytes and validates them again; it never reopens the caller's file. Requirement
+outcomes describe the selected target's evidence. `--explain` formats the returned
+report in the launcher without running additional probes or commands. See
+[Podman assessment](podman-assessment.md) for input bounds, examples and exits.
+
 The private worker protocol binds bounded JSON to a run, target credentials and namespace scope. It uses a pinned executable descriptor, including for sealed memfd and deleted-cache payloads, then closes that descriptor before dropping privilege. It does not change ordinary command-runner authority. Cancellation reaches the worker and its owned command groups; a bounded fallback terminates an unresponsive worker. Processes deliberately escaping command ownership are outside the cleanup guarantee.
 
 ## Subordinate IDs and mapping helpers

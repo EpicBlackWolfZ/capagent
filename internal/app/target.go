@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"encoding/json/jsontext"
 	json "encoding/json/v2"
 	"errors"
 	"io"
@@ -19,10 +20,11 @@ const TargetWorkerArgument = platform.TargetWorkerArgument
 const targetNamespaceCount = 7
 
 type targetPayload struct {
-	Options  Options               `json:"options"`
-	Scope    model.EvaluationScope `json:"scope"`
-	Launcher *model.UserIdentity   `json:"launcher"`
-	Target   *model.UserIdentity   `json:"target"`
+	Requirement jsontext.Value        `json:"requirement,omitempty"`
+	Options     Options               `json:"options"`
+	Scope       model.EvaluationScope `json:"scope"`
+	Launcher    *model.UserIdentity   `json:"launcher"`
+	Target      *model.UserIdentity   `json:"target"`
 }
 
 func selectLiveTarget(ctx context.Context, selector string, files platform.ScopedView,
@@ -52,7 +54,8 @@ func sameCredentials(a, b *model.UserIdentity) bool {
 func evaluateTarget(ctx context.Context, opts Options, services currentServices, scope model.EvaluationScope,
 	current model.EvaluationContext,
 ) (*output.Report, error) {
-	payload := targetPayload{Options: opts, Scope: scope, Launcher: current.Identity.Current, Target: current.Identity.Target}
+	payload := targetPayload{Options: opts, Scope: scope, Launcher: current.Identity.Current, Target: current.Identity.Target,
+		Requirement: opts.requirementJSON}
 	data, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
@@ -142,6 +145,9 @@ func executeTargetWorker(ctx context.Context, stdout, stderr io.Writer,
 		payload.Options.Fixture != "" || payload.Scope.RunID != request.RunID || payload.Scope.ContextID != request.ContextID ||
 		payload.Launcher == nil || payload.Launcher.IsValid() != nil || !sameCredentials(payload.Target, &request.Target) {
 		return failure(stderr, ExitExecution, "invalid target request")
+	}
+	if err := bindTargetRequirement(&payload); err != nil {
+		return failure(stderr, ExitExecution, "invalid target requirement")
 	}
 	files, err := platform.NewScopedOSReader("/")
 	if err != nil {

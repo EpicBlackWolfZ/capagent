@@ -82,6 +82,14 @@ jobs:
           dpkg-query -W podman > .work/gate/podman/package.txt
           python3 -B scripts/podman-discovery-smoke.py --binary .work/gate/podman/capagent --output .work/gate/podman/user
           python3 -B scripts/podman-discovery-smoke.py --binary .work/gate/podman/capagent --output .work/gate/podman/root --sudo
+      - name: Verify live requirements for current, rootful and delegated targets
+        run: |
+          python3 -B scripts/requirement-smoke.py --binary .work/gate/podman/capagent \
+            --output .work/gate/requirements/user --strace /usr/bin/strace
+          sudo -n python3 -B scripts/requirement-smoke.py --binary .work/gate/podman/capagent \
+            --output .work/gate/requirements/root --strace /usr/bin/strace
+          sudo -n python3 -B scripts/requirement-smoke.py --binary .work/gate/podman/capagent \
+            --output .work/gate/requirements/delegated --target-uid "$(id -u)"
       - name: Verify passive host facts as user and root
         run: |
           python3 -B scripts/host-facts-smoke.py --binary .work/gate/podman/capagent --output .work/gate/host/user

@@ -128,6 +128,8 @@ def verify_bundles(mode):
             if arch == host_arch():
                 subprocess.run([str(bundle), "--help"], check=True, timeout=20, stdout=subprocess.DEVNULL)
                 print(command(str(bundle), "--version"))
+                print(command(sys.executable, "-B", str(ROOT / "scripts/requirement-smoke.py"),
+                              "--binary", str(bundle), "--output", str(DIST / f"requirements-{mode}-{arch}")))
             results[arch] = {"sha256": digest(bundle), "launcher_sha256": row["sha256"],
                              "launcher_archive_sha256": row["archive_sha256"], "variants": expected}
     metadata = json.loads((DIST / "metadata.json").read_bytes())
