@@ -3,6 +3,9 @@ package app
 import (
 	"bytes"
 	json "encoding/json/v2"
+	"github.com/EpicBlackWolfZ/capagent/internal/output"
+	"github.com/EpicBlackWolfZ/capagent/internal/requirement"
+	"io/fs"
 	"testing"
 	"time"
 
@@ -48,5 +51,33 @@ func TestHostReportHasNoDeploymentVerdict(t *testing.T) {
 	}
 	if report.Host.OS != "debian" {
 		t.Fatal("lost collected OS")
+	}
+}
+
+func TestHostCollectionRejectsRequirementsAndScopeLeakage(t *testing.T) {
+	t.Parallel()
+	scope := model.EvaluationScope{RunID: "host-test", ContextID: "current"}
+	input := Input{Scope: scope, Context: model.EvaluationContext{ID: "current"}, At: time.Unix(1, 0), Mode: "live", Provenance: "live"}
+	env := platform.NewEnvironment(nil, nil, nil, nil).WithScope(scope)
+	input.Requirement = &requirement.Node{Capability: "runtime.podman"}
+	if _, err := Evaluate(t.Context(), input, env, nil); err == nil {
+		t.Fatal("host collector accepted deployment evaluation")
+	}
+	input.Requirement = nil
+	report, err := Evaluate(t.Context(), input, env, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	report.Runtimes["podman"] = output.RuntimeInfo{}
+	if report.Validate() == nil {
+		t.Fatal("host scope accepted runtime data")
+	}
+	report.Runtimes = map[string]output.RuntimeInfo{}
+	report.Evaluation.Requirement = output.RequirementResult{State: "SATISFIED"}
+	if report.Validate() == nil {
+		t.Fatal("host scope accepted requirement verdict")
+	}
+	if executionMessage(platform.ErrSymlinkUnsupported) == executionMessage(fs.ErrPermission) {
+		t.Fatal("confinement failures collapsed")
 	}
 }

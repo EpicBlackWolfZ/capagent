@@ -3,12 +3,15 @@ package model
 // HostObservation contains only typed measurements, never capability verdicts.
 // Missing pointer fields are unobserved; false and empty observed values survive JSON.
 type HostObservation struct {
-	Cgroups    *CgroupObservation    `json:"cgroups,omitempty"`
-	Namespaces *NamespaceObservation `json:"namespaces,omitempty"`
-	Security   *SecurityObservation  `json:"security,omitempty"`
-	OS         *OSObservation        `json:"os,omitempty"`
-	Kernel     *KernelObservation    `json:"kernel,omitempty"`
-	Systemd    *SystemdObservation   `json:"systemd,omitempty"`
+	Filesystems *FilesystemObservation `json:"filesystems,omitempty"`
+	Network     *NetworkObservation    `json:"network,omitempty"`
+	Resolver    *ResolverObservation   `json:"resolver,omitempty"`
+	Cgroups     *CgroupObservation     `json:"cgroups,omitempty"`
+	Namespaces  *NamespaceObservation  `json:"namespaces,omitempty"`
+	Security    *SecurityObservation   `json:"security,omitempty"`
+	OS          *OSObservation         `json:"os,omitempty"`
+	Kernel      *KernelObservation     `json:"kernel,omitempty"`
+	Systemd     *SystemdObservation    `json:"systemd,omitempty"`
 }
 
 type OSObservation struct {
@@ -79,4 +82,30 @@ type SecurityObservation struct {
 type AppArmorProfile struct {
 	Name string `json:"name"`
 	Mode string `json:"mode"`
+}
+
+type FilesystemObservation struct {
+	Registered        []FilesystemRegistration `json:"registered"`
+	OverlayRegistered *bool                    `json:"overlay_registered"`
+	FUSERegistered    *bool                    `json:"fuse_registered"`
+}
+type FilesystemRegistration struct {
+	Name  string `json:"name"`
+	Nodev bool   `json:"nodev"`
+}
+type NetworkObservation struct {
+	Protocols           []string `json:"protocols"`
+	IPv4TCP             *bool    `json:"ipv4_tcp"`
+	IPv4UDP             *bool    `json:"ipv4_udp"`
+	IPv6TCP             *bool    `json:"ipv6_tcp"`
+	IPv6UDP             *bool    `json:"ipv6_udp"`
+	IPv6AllDisabled     *bool    `json:"ipv6_all_disabled"`
+	IPv6DefaultDisabled *bool    `json:"ipv6_default_disabled"`
+}
+type ResolverObservation struct {
+	Present     *bool    `json:"present"`
+	Nameservers []string `json:"nameservers"`
+	Domain      string   `json:"domain"`
+	Search      []string `json:"search"`
+	Options     []string `json:"options"`
 }

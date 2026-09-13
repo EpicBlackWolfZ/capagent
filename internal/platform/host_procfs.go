@@ -2,6 +2,7 @@ package platform
 
 import (
 	"context"
+	"errors"
 	"strings"
 )
 
@@ -41,4 +42,47 @@ func DecodeMountPath(raw string) (string, error) {
 }
 func ParseControllerList(ctx context.Context, data []byte, err error) ([]string, error) {
 	return parseControllers(ctx, data, err)
+}
+
+// ProtocolEntry records registration in the current network namespace, not socket permission or reachability.
+type ProtocolEntry struct{ Name string }
+
+func (p *ProcfsReader) Protocols(ctx context.Context) ([]ProtocolEntry, error) {
+	data, err := p.ReadSelf(ctx, "net/protocols")
+	entries, parseErr := parseRecords(ctx, data, err, "protocols", p.limits, parseProtocolLine)
+	out := make([]ProtocolEntry, 0, len(entries))
+	header := false
+	for _, entry := range entries {
+		if entry.Name == "protocol" {
+			header = true
+			continue
+		}
+		out = append(out, entry)
+	}
+	if !header {
+		parseErr = errors.Join(parseErr, ErrIncomplete)
+	}
+	return out, parseErr
+}
+func parseProtocolLine(line string) (ProtocolEntry, error) {
+	const protocolFields = 8
+	fields := strings.Fields(line)
+	if len(fields) < protocolFields {
+		return ProtocolEntry{}, ErrMalformed
+	}
+	if fields[0] == "protocol" {
+		if strings.Join(fields[:protocolFields], " ") != "protocol size sockets memory press maxhdr slab module" {
+			return ProtocolEntry{}, ErrMalformed
+		}
+		return ProtocolEntry{Name: "protocol"}, nil
+	}
+	for _, ch := range fields[0] {
+		if (ch < 'a' || ch > 'z') && (ch < 'A' || ch > 'Z') && (ch < '0' || ch > '9') && ch != '_' && ch != '-' {
+			return ProtocolEntry{}, ErrMalformed
+		}
+	}
+	if !decimal(fields[1]) || !decimal(fields[2]) {
+		return ProtocolEntry{}, ErrMalformed
+	}
+	return ProtocolEntry{Name: fields[0]}, nil
 }

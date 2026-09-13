@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("nameserver 192.0.2.53\nsearch example.test\noptions ndots:2\n")
