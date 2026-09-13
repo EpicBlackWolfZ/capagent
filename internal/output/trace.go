@@ -37,14 +37,17 @@ type FactRecord struct {
 	Timestamp    time.Time `json:"timestamp"`
 	Completeness string    `json:"completeness"`
 }
+type HostObservation model.HostObservation
+
 type ObservationRecord struct {
-	ID           string       `json:"id"`
-	ProbeID      string       `json:"probe_id"`
-	Scope        Scope        `json:"scope"`
-	Timestamp    time.Time    `json:"timestamp"`
-	Completeness string       `json:"completeness"`
-	Facts        []FactRecord `json:"facts"`
-	Diagnostics  []Diagnostic `json:"diagnostics"`
+	Host         *HostObservation `json:"host,omitempty"`
+	ID           string           `json:"id"`
+	ProbeID      string           `json:"probe_id"`
+	Scope        Scope            `json:"scope"`
+	Timestamp    time.Time        `json:"timestamp"`
+	Completeness string           `json:"completeness"`
+	Facts        []FactRecord     `json:"facts"`
+	Diagnostics  []Diagnostic     `json:"diagnostics"`
 }
 type EvidenceRecord struct {
 	ID           string    `json:"id"`
@@ -77,7 +80,7 @@ type EvaluationTrace struct {
 	Namespaces   []Namespace         `json:"namespaces"`
 	Observations []ObservationRecord `json:"observations"`
 	Evidence     []EvidenceRecord    `json:"evidence"`
-	Requirement  RequirementResult   `json:"requirement"`
+	Requirement  RequirementResult   `json:"requirement,omitzero"`
 	Diagnostics  []Diagnostic        `json:"diagnostics"`
 }
 
@@ -103,6 +106,13 @@ func (e *EvaluationTrace) Validate() error {
 	}
 	if err := e.Scope.Validate(); err != nil {
 		return err
+	}
+	if e.Scope.Runtime == "" {
+		if e.Requirement.State != "" || e.Requirement.Reason != "" || e.Requirement.Scope != nil ||
+			len(e.Requirement.Children) > 0 || len(e.Requirement.Diagnostics) > 0 {
+			return errors.New("host collection has a requirement")
+		}
+		return nil
 	}
 	count := 0
 	return validateRequirement(e.Requirement, 1, &count)

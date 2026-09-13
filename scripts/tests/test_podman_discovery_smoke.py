@@ -16,6 +16,12 @@ class PassiveTraceTests(unittest.TestCase):
             '1 openat2(3, "usr/bin/podman", {flags=O_PATH|O_CLOEXEC}, 24) = 4\n'
             '1 clone3({flags=CLONE_VM|CLONE_THREAD}, 88) = 2\n', Path("/capagent"))
 
+    def test_allowlisted_host_metadata(self):
+        MODULE.verify_trace(
+            '1 execve("/capagent", [], 0x123) = 0\n'
+            '1 clone(child_stack=NULL, flags=SIGCHLD) = 2\n'
+            '2 execve("/usr/bin/systemctl", ["/usr/bin/systemctl", "--version"], 0x123) = 0\n', Path("/capagent"))
+
     def test_side_effects_cannot_hide_behind_success_or_failure(self):
         for operation in (
             'execve("/usr/bin/podman", ["podman", "--version"], 0x123) = 0',

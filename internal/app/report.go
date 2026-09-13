@@ -14,7 +14,12 @@ import (
 func projectReport(input Input, observations []model.Observation, evaluation capability.Evaluation,
 	decision requirement.Result, results []probe.ProbeResult) *output.Report {
 	runtime, runtimeDiagnostics := projectRuntime(observations, input.Scope)
-	runtimes := map[string]output.RuntimeInfo{input.Scope.Runtime: runtime}
+	runtimes := map[string]output.RuntimeInfo{}
+	if input.Scope.Runtime != "" {
+		runtimes[input.Scope.Runtime] = runtime
+	} else {
+		runtimeDiagnostics = nil
+	}
 	report := output.NewReportFromModel(input.Context, runtimes, evaluation.Candidate.Capabilities)
 	report.Context.Completeness = string(model.Unobserved)
 	if input.Context.Identity.Current != nil || input.Context.Identity.Target != nil {
@@ -30,6 +35,15 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 	if report.Host.CgroupVersion == "" {
 		report.Host.CgroupVersion = "unknown"
 	}
+	_, completeness := projectHost(input.Context.Host, observations)
+	if completeness != model.Unobserved {
+		report.Host.Completeness = string(completeness)
+	}
+	for _, result := range results {
+		if result.Status != probe.ProbeSucceeded && len(result.ProbeID) > 5 && result.ProbeID[:5] == "host." {
+			report.Host.Completeness = string(model.Partial)
+		}
+	}
 	trace := output.NewEvaluationTrace(input.Scope, input.At, input.Provenance)
 	if input.Mode != "" {
 		trace.Mode = input.Mode
@@ -44,6 +58,10 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 	for _, obs := range observations {
 		record := output.ObservationRecord{ID: obs.ID, ProbeID: obs.ProbeID, Scope: output.ProjectScope(obs.Scope), Timestamp: obs.Timestamp,
 			Completeness: string(obs.Completeness), Facts: []output.FactRecord{}, Diagnostics: projectDiagnostics(obs.Diagnostics)}
+		if obs.Host != nil {
+			payload := output.HostObservation(*obs.Host)
+			record.Host = &payload
+		}
 		for _, fact := range obs.Facts {
 			record.Facts = append(record.Facts, output.FactRecord{ID: fact.ID, Source: fact.Source,
 				Timestamp: fact.Timestamp, Completeness: string(fact.Completeness)})
@@ -65,7 +83,9 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 		}
 		report.Capabilities[key] = capReport
 	}
-	trace.Requirement = projectRequirement(decision)
+	if input.Scope.Runtime != "" {
+		trace.Requirement = projectRequirement(decision)
+	}
 	trace.Diagnostics = append(trace.Diagnostics, projectDiagnostics(evaluation.Diagnostics)...)
 	trace.Diagnostics = append(trace.Diagnostics, trace.Requirement.Diagnostics...)
 	for _, result := range results {

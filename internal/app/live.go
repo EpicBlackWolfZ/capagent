@@ -19,6 +19,9 @@ func validOptions(opts Options) bool {
 	if opts.Fixture != "" {
 		return !opts.Active && opts.Runtime == "" && opts.Context == "" && opts.PodmanPath == ""
 	}
+	if opts.Runtime == "" {
+		return !opts.Active && opts.PodmanPath == "" && (opts.Context == "" || opts.Context == "current")
+	}
 	return opts.Runtime == "podman" && (opts.Context == "" || opts.Context == "current") &&
 		podman.ValidateExecutablePath(opts.PodmanPath) == nil
 }
@@ -29,7 +32,11 @@ func evaluateLive(ctx context.Context, opts Options) (*output.Report, error) {
 		return nil, err
 	}
 	credentials, groupErr := platform.CurrentCredentials()
-	report, evalErr := evaluateCurrent(ctx, opts, files, credentials, groupErr, time.Now)
+	services := currentServices{files: files, credentials: credentials, groupErr: groupErr, now: time.Now,
+		capture: func() (platform.EnvPolicy, error) { return platform.NewEnvPolicy(podman.InspectionEnvNames(), nil) },
+		runner:  func() platform.CommandRunner { return platform.NewOSCommandRunner(podman.InfoTimeout) },
+		host:    platform.LinuxHostQueries{}, metadata: platform.NewHostMetadata(platform.NewOSCommandRunner(platform.HostVersionTimeout))}
+	report, evalErr := evaluateCurrentServices(ctx, opts, services)
 	return report, errors.Join(evalErr, files.Close())
 }
 
@@ -43,6 +50,8 @@ func evaluateCurrent(ctx context.Context, opts Options, files platform.ScopedRea
 }
 
 type currentServices struct {
+	host        platform.HostQueries
+	metadata    platform.HostMetadata
 	files       platform.ScopedReader
 	credentials model.CurrentCredentials
 	groupErr    error
@@ -57,21 +66,31 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 		ctx, cancel = context.WithTimeout(ctx, podman.InspectionTimeout)
 		defer cancel()
 	}
-	scope := model.EvaluationScope{RunID: platform.NewRunID(), ContextID: "current", Runtime: "podman", Endpoint: "local"}
+	scope := model.EvaluationScope{RunID: platform.NewRunID(), ContextID: "current", Runtime: opts.Runtime, Endpoint: "local"}
+	if opts.Runtime == "" {
+		scope.Endpoint = ""
+	}
 	at := services.now()
 	current, identity := host.ObserveCurrent(ctx, scope, services.files, services.credentials, services.groupErr, at)
 	input := Input{Scope: scope, Context: current, At: at, Mode: "live", Provenance: "live", Now: services.now, Collection: "passive",
 		Requirement: &requirement.Node{Capability: capability.PodmanID}, Observations: []model.Observation{identity},
 		Definitions: []capability.Definition{capability.PodmanDefinition()}}
+	if opts.Runtime == "" {
+		input.Requirement = nil
+		input.Definitions = []capability.Definition{}
+	}
 	if opts.Active {
 		input.Collection = "active"
 		input.Requirement = &requirement.Node{All: []*requirement.Node{{Capability: capability.PodmanID}, {Capability: capability.PodmanInfoID}}}
 		input.Definitions = append(input.Definitions, capability.PodmanInfoDefinition(), capability.NetavarkDefinition())
 	}
-	env := platform.NewEnvironment(nil, nil, nil, nil).WithFiles(services.files).WithScope(scope)
-	var probes []probe.Probe
+	env := platform.NewEnvironment(nil, nil, nil, nil).WithFiles(services.files).WithScope(scope).WithHost(services.host, services.metadata)
+	probes := host.Probes(services.now)
+	if services.credentials.IsValid() != nil {
+		probes = nil
+	}
 	var diagnostics []output.Diagnostic
-	if services.credentials.IsValid() == nil && ctx.Err() == nil {
+	if opts.Runtime != "" && services.credentials.IsValid() == nil && ctx.Err() == nil {
 		discovery, discoveryErr := (podman.DiscoveryProbe{Path: opts.PodmanPath, Now: services.now}).Run(ctx, env)
 		input.Observations = append(input.Observations, discovery)
 		if discoveryErr != nil {
@@ -81,7 +100,9 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 		if d != nil && d.File != nil && d.File.Regular && d.File.ExecutableBits {
 			if opts.Active {
 				var setupErr error
-				env, probes, setupErr = activeProbes(ctx, services, current, env, d.Path)
+				var runtimeProbes []probe.Probe
+				env, runtimeProbes, setupErr = activeProbes(ctx, services, current, env, d.Path)
+				probes = append(probes, runtimeProbes...)
 				if setupErr != nil {
 					diagnostics = append(diagnostics, liveDiagnostic("inspection_environment_unavailable"))
 				}
@@ -112,7 +133,8 @@ func activeProbes(ctx context.Context, services currentServices, current model.E
 	if err != nil {
 		return env, nil, err
 	}
-	activeEnv := platform.NewEnvironment(nil, nil, nil, services.runner()).WithFiles(services.files).WithScope(env.Scope())
+	activeEnv := platform.NewEnvironment(nil, nil, nil, services.runner()).WithFiles(services.files).WithScope(env.Scope()).
+		WithHost(services.host, services.metadata)
 	probes := []probe.Probe{podman.VersionProbe{Command: commands.Version, Now: services.now},
 		podman.InfoProbe{Command: commands.Info, Now: services.now, AfterVersion: true}}
 	return activeEnv, probes, nil

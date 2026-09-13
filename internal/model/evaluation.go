@@ -14,8 +14,8 @@ type EvaluationScope struct {
 }
 
 func (s EvaluationScope) IsValid() error {
-	if s.RunID == "" || s.ContextID == "" || s.Runtime == "" || s.Endpoint == "" {
-		return fmt.Errorf("evaluation scope requires run, context, runtime and endpoint")
+	if s.RunID == "" || s.ContextID == "" || (s.Runtime == "") != (s.Endpoint == "") {
+		return fmt.Errorf("evaluation scope requires run, context and a paired runtime/endpoint")
 	}
 	return nil
 }

@@ -98,7 +98,7 @@
         },
         "architecture": {
           "type": "string",
-          "description": "Host hardware architecture (e.g. x86_64, aarch64, arm64)."
+          "description": "Observed machine normalized to amd64/arm64 where recognized; original value is retained in kernel observation."
         },
         "cgroup_version": {
           "type": "string",
@@ -382,12 +382,10 @@
           "minLength": 1
         },
         "runtime": {
-          "type": "string",
-          "minLength": 1
+          "type": "string"
         },
         "endpoint": {
-          "type": "string",
-          "minLength": 1
+          "type": "string"
         }
       },
       "required": [
@@ -395,6 +393,28 @@
         "context_id",
         "runtime",
         "endpoint"
+      ],
+      "oneOf": [
+        {
+          "properties": {
+            "runtime": {
+              "const": ""
+            },
+            "endpoint": {
+              "const": ""
+            }
+          }
+        },
+        {
+          "properties": {
+            "runtime": {
+              "minLength": 1
+            },
+            "endpoint": {
+              "minLength": 1
+            }
+          }
+        }
       ]
     },
     "identity": {
@@ -535,6 +555,9 @@
           "items": {
             "$ref": "#/$defs/diagnostic"
           }
+        },
+        "host": {
+          "$ref": "#/$defs/host_observation"
         }
       },
       "required": [
@@ -747,7 +770,6 @@
         "namespaces",
         "observations",
         "evidence",
-        "requirement",
         "diagnostics"
       ],
       "allOf": [
@@ -790,8 +812,159 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "scope": {
+                "properties": {
+                  "runtime": {
+                    "const": ""
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "requirement"
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "requirement"
+            ]
+          }
         }
       ]
+    },
+    "host_observation": {
+      "type": "object",
+      "properties": {
+        "os": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "version_id": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "name": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "pretty_name": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "variant": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "id_like": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 4096
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "kernel": {
+          "type": "object",
+          "properties": {
+            "release": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "version": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "machine": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "architecture": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "parts": {
+              "type": "object",
+              "properties": {
+                "major": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "minor": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                },
+                "patch": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4294967295
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "systemd": {
+          "type": "object",
+          "properties": {
+            "installed": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "utility_installed": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "running": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "runtime_directory": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "accessible": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "version": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "utility_path": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

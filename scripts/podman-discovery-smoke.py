@@ -8,13 +8,45 @@ import re
 import subprocess
 
 
+def joined_trace(text):
+    pending, lines = {}, []
+    for line in text.splitlines():
+        match = re.match(r"(\d+) (.*) <unfinished \.\.\.>", line)
+        if match:
+            pending[match[1]] = match[2]
+            continue
+        resumed = re.match(r"(\d+) <\.\.\. \w+ resumed>(.*)", line)
+        if resumed:
+            if resumed[1] not in pending:
+                raise RuntimeError("unmatched syscall completion")
+            line = resumed[1] + " " + pending.pop(resumed[1]) + resumed[2]
+        lines.append(line)
+    if pending:
+        raise RuntimeError("incomplete passive trace")
+    return "\n".join(lines)
+
+
 def verify_trace(text, binary):
+    text = joined_trace(text)
     executions = re.findall(r'execve\("([^"\n]+)"', text)
-    if executions != [str(binary)] or re.search(r"\b(?:execveat|fork|vfork)\(", text):
+    metadata = re.findall(r'execve\("(/(?:usr/)?bin/systemctl)", \["[^"\n]+", "--version"\]', text)
+    if executions != [str(binary), *metadata] or len(metadata) > 1 or "execveat(" in text:
         raise RuntimeError("discovery executed an unexpected subprocess")
-    for clone in re.findall(r"\bclone3?\([^\n]+", text):
-        if "CLONE_THREAD" not in clone:
-            raise RuntimeError("discovery created a non-thread child")
+    children = sum("CLONE_THREAD" not in clone for clone in re.findall(r"\bclone3?\([^\n]+", text)
+                   if not re.search(r"= -1\b", clone))
+    children += len(re.findall(r"\b(?:fork|vfork)\(", text))
+    # Go probes PIDFD support with one vfork child that only exits, before exec.
+    launch_probes = re.findall(r'clone\([^\n]*flags=([^\n]*CLONE_VFORK[^\n]*)\) = (\d+)', text)
+    verified_probes = 0
+    for flags, child in launch_probes:
+        if "CLONE_PIDFD" not in flags or "SIGCHLD" in flags:
+            continue
+        calls = re.findall(r'^' + child + r' (.*)$', text, re.M)
+        if len(calls) != 1 or not re.fullmatch(r'exit_group\(0\)\s+= \?', calls[0]):
+            raise RuntimeError("unexpected launcher probe activity")
+        verified_probes += 1
+    if verified_probes > min(1, len(metadata)) or children != len(metadata) + verified_probes:
+        raise RuntimeError("discovery created an unexpected non-thread child")
     mutations = (
         r"\b(?:mkdir(?:at)?|rmdir|unlink(?:at)?|rename(?:at2?)?|link(?:at)?|symlink(?:at)?|"
         r"chmod|fchmod(?:at2?)?|chown|fchown(?:at)?|lchown|truncate|ftruncate|"

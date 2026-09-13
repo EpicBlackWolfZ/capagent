@@ -15,17 +15,20 @@ import (
 // synchronized command-call recording may still change. Custom providers must
 // honor the same ownership and concurrency contract.
 type Environment struct {
-	reader PlatformReader
-	procfs ProcfsView
-	sysfs  SysfsView
-	runner CommandRunner
-	scope  model.EvaluationScope
-	files  ScopedView
+	host     HostQueries
+	metadata HostMetadata
+	reader   PlatformReader
+	procfs   ProcfsView
+	sysfs    SysfsView
+	runner   CommandRunner
+	scope    model.EvaluationScope
+	files    ScopedView
 }
 
 // ScopedView retains the kernel/memory containment boundary without exposing
 // the owner's Close method to probes.
 type ScopedView interface {
+	StatFS(context.Context, string) (FilesystemInfo, error)
 	ReadFile(context.Context, string) ([]byte, error)
 	Stat(string) (os.FileInfo, error)
 	ReadDir(context.Context, string) ([]os.DirEntry, error)

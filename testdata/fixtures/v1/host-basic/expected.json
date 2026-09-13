@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "context": {
+    "completeness": "unobserved",
+    "uid": null,
+    "gid": null,
+    "target_user": "",
+    "is_rootless": null,
+    "in_container": null
+  },
+  "host": {
+    "completeness": "complete",
+    "os": "debian",
+    "os_version": "12",
+    "kernel": "6.12.0-test",
+    "architecture": "amd64",
+    "cgroup_version": "unknown",
+    "systemd": false
+  },
+  "runtimes": {},
+  "capabilities": {},
+  "evaluation": {
+    "mode": "fixture",
+    "provenance": "synthetic",
+    "scope": {
+      "run_id": "host-basic",
+      "context_id": "current",
+      "runtime": "",
+      "endpoint": ""
+    },
+    "timestamp": "2026-09-13T00:00:00Z",
+    "current": null,
+    "target": null,
+    "namespaces": [],
+    "observations": [
+      {
+        "host": {
+          "kernel": {
+            "release": "6.12.0-test",
+            "version": "test kernel",
+            "machine": "x86_64",
+            "architecture": "amd64",
+            "parts": {
+              "major": 6,
+              "minor": 12,
+              "patch": 0
+            }
+          }
+        },
+        "id": "host.kernel",
+        "probe_id": "host.kernel",
+        "scope": {
+          "run_id": "host-basic",
+          "context_id": "current",
+          "runtime": "",
+          "endpoint": ""
+        },
+        "timestamp": "2026-09-13T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.kernel.0",
+            "source": "syscall.uname",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "os": {
+            "id": "debian",
+            "version_id": "12",
+            "name": "",
+            "pretty_name": "",
+            "variant": "",
+            "id_like": []
+          }
+        },
+        "id": "host.os",
+        "probe_id": "host.os",
+        "scope": {
+          "run_id": "host-basic",
+          "context_id": "current",
+          "runtime": "",
+          "endpoint": ""
+        },
+        "timestamp": "2026-09-13T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.os.0",
+            "source": "etc/os-release",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "host": {
+          "systemd": {
+            "installed": false,
+            "utility_installed": false,
+            "running": false,
+            "runtime_directory": false,
+            "accessible": null,
+            "version": "",
+            "utility_path": ""
+          }
+        },
+        "id": "host.systemd",
+        "probe_id": "host.systemd",
+        "scope": {
+          "run_id": "host-basic",
+          "context_id": "current",
+          "runtime": "",
+          "endpoint": ""
+        },
+        "timestamp": "2026-09-13T00:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "host.systemd.0",
+            "source": "proc/1/comm",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.systemd.1",
+            "source": "run/systemd/system",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.systemd.2",
+            "source": "usr/lib/systemd/systemd",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.systemd.3",
+            "source": "lib/systemd/systemd",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.systemd.4",
+            "source": "usr/bin/systemctl",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          },
+          {
+            "id": "host.systemd.5",
+            "source": "bin/systemctl",
+            "timestamp": "2026-09-13T00:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      }
+    ],
+    "evidence": [],
+    "diagnostics": []
+  }
+}

@@ -689,3 +689,8 @@ The shipped `--runtime podman --active` path bootstraps identity and static disc
 Typed info observations retain backend, driver, cgroups, rootless and graph/run roots, plus a normalized info version. Report projection selects observations deterministically by timestamp/ID, preserves CLI version details when info fails and diagnoses version conflict. New nullable fields are copied at observation/report ownership transfers and validated with the Schema v1 additions. Raw command facts and arbitrary JSON members remain internal.
 
 The active requirement uses the existing AST: `all(runtime.podman, runtime.podman.info)`. The second predicate requires recognizable complete local effective information. It uses runtime-precedence evidence with derived confidence; helper metadata uncertainty remains separate. See [inspection behavior and limits](podman-discovery.md#active-inspection) and [combined fixture replay](fixture-evaluation.md#fixture-document). Earlier deployment examples in this section describe the target architecture and do not imply those workload capabilities are already shipped.
+
+## Passive host collection
+
+[Host facts](host-facts.md) use the shared scoped observation scheduler. Host-only scope has paired empty runtime/endpoint values,
+empty capability/runtime maps and an omitted requirement. Collection exit status describes completeness, never deployment readiness.
