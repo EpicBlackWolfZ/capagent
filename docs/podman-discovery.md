@@ -7,7 +7,7 @@ capagent --runtime podman --json --pretty
 capagent --runtime podman --context=current --podman-path /usr/bin/podman --json
 ```
 
-Run capagent as the intended deployment user. Only `--context=current` is supported. Alternate users, other runtimes and remote endpoints are rejected. Add `--active` only when Podman startup writes are acceptable. Fixture and live selection are mutually exclusive. Linux 5.6+ with working `openat2` confinement is required; see [security](security.md).
+Run capagent as the intended deployment user, or select a local account with `--context=user:NAME` or `--context=uid:ID`. Root can delegate collection to an isolated process; see [execution contexts](execution-context.md). Other runtimes and remote endpoints are rejected. Add `--active` only when Podman startup writes are acceptable. Fixture and live selection are mutually exclusive. Linux 5.6+ with working `openat2` confinement is required; see [security](security.md).
 
 Without `--active`, the application reads credentials, local account metadata, namespace links, executable metadata and the [passive host facts](host-facts.md). Host metadata may invoke the bounded `systemctl --version` policy. Passive runtime discovery never launches Podman, including when capagent runs as root. It does not inspect Podman sockets or infer availability from them.
 
@@ -17,7 +17,7 @@ The fixed search order is `/usr/bin/podman`, `/usr/local/bin/podman`, then `/bin
 
 The report separates these facts:
 
-- `context` and `evaluation.current`/`target` contain the actual effective numeric identity. UID 0 is root. Current and target are separate snapshots of the same identity. Real/effective credential mismatch prevents runtime collection.
+- `context` describes the selected target. `evaluation.current`, `target` and `execution` distinguish the launcher, intended identity and actual measurement credentials. UID 0 is explicit root. Unresolved selection never falls back to the launcher. Real/effective credential mismatch prevents runtime collection.
 - Supplementary groups come from the kernel. Missing local passwd metadata does not erase a known UID/GID. Account lookup uses bounded local-file reads and does not provide arbitrary NSS directory-service lookup.
 - `evaluation.namespaces` contains observed `user`, `pid`, `net`, `mnt`, `ipc`, `uts` and `cgroup` namespace link identifiers. Missing identifiers stay unknown.
 - `runtimes.podman.installed` is true for a selected regular file, false for a complete unsuccessful search, or null when discovery is uncertain. `path` retains the selected candidate or explicit override.
@@ -30,7 +30,7 @@ The report separates these facts:
 
 Even `podman --version` can change runtime state during startup. A traced Podman 5.8.4 rootless invocation created runtime directories on a fresh setup and changed directory metadata on an initialized setup. Upstream's default-directory construction calls `mkdir`, then `chmod` when the directory already exists. Explicit HOME/XDG values do not eliminate this operation. [Podman v5.8.4 directory initialization](https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/pkg/config/default.go#L500-L521)
 
-Live discovery therefore emits `version_execution_deferred` when an executable candidate is present. It creates no replacement directories, changes no credentials and supplies no environment workaround. Version and effective-info collection require the explicit `--active` opt-in. This preserves passive discovery for both fresh and initialized accounts.
+Live discovery therefore emits `version_execution_deferred` when an executable candidate is present. It creates no replacement directories, changes no launcher credentials and supplies no environment workaround. Version and effective-info collection require the explicit `--active` opt-in. This preserves passive discovery for both fresh and initialized accounts.
 
 The default requirement is `runtime.podman`: the selected CLI returned a recognizable version. Presence alone cannot satisfy it:
 

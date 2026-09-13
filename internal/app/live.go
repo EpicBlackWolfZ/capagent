@@ -20,9 +20,9 @@ func validOptions(opts Options) bool {
 		return !opts.Active && opts.Runtime == "" && opts.Context == "" && opts.PodmanPath == ""
 	}
 	if opts.Runtime == "" {
-		return !opts.Active && opts.PodmanPath == "" && (opts.Context == "" || opts.Context == "current")
+		return !opts.Active && opts.PodmanPath == "" && (model.TargetSelector{Value: opts.Context}).IsValid() == nil
 	}
-	return opts.Runtime == "podman" && (opts.Context == "" || opts.Context == "current") &&
+	return opts.Runtime == "podman" && (model.TargetSelector{Value: opts.Context}).IsValid() == nil &&
 		podman.ValidateExecutablePath(opts.PodmanPath) == nil
 }
 
@@ -33,6 +33,7 @@ func evaluateLive(ctx context.Context, opts Options) (*output.Report, error) {
 	}
 	credentials, groupErr := platform.CurrentCredentials()
 	services := currentServices{files: files, credentials: credentials, groupErr: groupErr, now: time.Now,
+		target:  platform.RunTarget,
 		capture: func() (platform.EnvPolicy, error) { return platform.NewEnvPolicy(podman.InspectionEnvNames(), nil) },
 		runner:  func() platform.CommandRunner { return platform.NewOSCommandRunner(podman.InfoTimeout) },
 		host:    platform.LinuxHostQueries{}, metadata: platform.NewHostMetadata(platform.NewOSCommandRunner(platform.HostVersionTimeout))}
@@ -50,6 +51,8 @@ func evaluateCurrent(ctx context.Context, opts Options, files platform.ScopedRea
 }
 
 type currentServices struct {
+	target      func(context.Context, platform.TargetRequest) (platform.ExecResult, error)
+	worker      *targetPayload
 	host        platform.HostQueries
 	metadata    platform.HostMetadata
 	files       platform.ScopedReader
@@ -67,11 +70,26 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 		defer cancel()
 	}
 	scope := model.EvaluationScope{RunID: platform.NewRunID(), ContextID: "current", Runtime: opts.Runtime, Endpoint: "local"}
+	if opts.Context != "" {
+		scope.ContextID = opts.Context
+	}
+	if services.worker != nil {
+		scope = services.worker.Scope
+	}
 	if opts.Runtime == "" {
 		scope.Endpoint = ""
 	}
 	at := services.now()
 	current, identity := host.ObserveCurrent(ctx, scope, services.files, services.credentials, services.groupErr, at)
+	var delegate bool
+	current, identity, delegate, err := prepareLiveIdentity(ctx, opts, services, current, identity)
+	if err != nil {
+		return nil, err
+	}
+	if delegate {
+		return evaluateTarget(ctx, opts, services, scope, current)
+	}
+
 	input := Input{Scope: scope, Context: current, At: at, Mode: "live", Provenance: "live", Now: services.now, Collection: "passive",
 		Requirement: &requirement.Node{Capability: capability.PodmanID}, Observations: []model.Observation{identity},
 		Definitions: []capability.Definition{capability.PodmanDefinition()}}
@@ -86,11 +104,11 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 	}
 	env := platform.NewEnvironment(nil, nil, nil, nil).WithFiles(services.files).WithScope(scope).WithHost(services.host, services.metadata)
 	probes := host.Probes(services.now)
-	if services.credentials.IsValid() != nil {
+	if current.Identity.Execution == nil {
 		probes = nil
 	}
 	var diagnostics []output.Diagnostic
-	if opts.Runtime != "" && services.credentials.IsValid() == nil && ctx.Err() == nil {
+	if opts.Runtime != "" && current.Identity.Execution != nil && ctx.Err() == nil {
 		discovery, discoveryErr := (podman.DiscoveryProbe{Path: opts.PodmanPath, Now: services.now}).Run(ctx, env)
 		input.Observations = append(input.Observations, discovery)
 		if discoveryErr != nil {
@@ -129,7 +147,7 @@ func activeProbes(ctx context.Context, services currentServices, current model.E
 	if err != nil {
 		return env, nil, err
 	}
-	commands, err := podman.PrepareInspection(ctx, services.files, *current.Identity.Current, executable, captured)
+	commands, err := podman.PrepareInspection(ctx, services.files, *current.Identity.Execution, executable, captured)
 	if err != nil {
 		return env, nil, err
 	}

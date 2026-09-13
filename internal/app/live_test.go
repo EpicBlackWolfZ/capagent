@@ -72,7 +72,7 @@ func TestLiveDiscoveryPipeline(t *testing.T) {
 
 func TestLiveUsageRejectsUnsupportedSelection(t *testing.T) {
 	t.Parallel()
-	for _, opts := range []Options{{Runtime: "docker"}, {Runtime: testPodmanRuntime, Context: "uid:1"},
+	for _, opts := range []Options{{Runtime: "docker"}, {Runtime: testPodmanRuntime, Context: "uid:-1"},
 		{Runtime: testPodmanRuntime, Fixture: "ignored"},
 		{Runtime: testPodmanRuntime, PodmanPath: "relative"}, {PodmanPath: "/usr/bin/podman"}} {
 		var out, err bytes.Buffer

@@ -86,6 +86,10 @@ jobs:
         run: |
           python3 -B scripts/host-facts-smoke.py --binary .work/gate/podman/capagent --output .work/gate/host/user
           python3 -B scripts/host-facts-smoke.py --binary .work/gate/podman/capagent --output .work/gate/host/root --sudo
+      - name: Verify isolated target credentials and cancellation
+        run: |
+          sudo -n python3 -B scripts/context-smoke.py --binary .work/gate/podman/capagent \
+            --output .work/gate/context --user "$(id -un)"
       - name: Verify active local inspection and remote rejection as user and root
         run: |
           curl --fail --silent --show-error --location \
@@ -167,6 +171,12 @@ jobs:
           profile: build
       - name: Run shared build verification
         run: python3 -B scripts/gate.py stage --stage build
+      - name: Verify delegated identity through full and minimal launchers
+        run: |
+          for mode in full minimal; do
+            sudo -n python3 -B scripts/context-smoke.py --binary "dist/fat/$mode/amd64/capagent" \
+              --output ".work/gate/context-$mode" --user "$(id -un)" --packaged
+          done
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:

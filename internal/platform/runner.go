@@ -3,6 +3,7 @@ package platform
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 	"strconv"
@@ -147,6 +148,11 @@ func (b *boundedBuffer) Truncated() bool {
 // exit, subject to kernel/scheduling delays. A successful exit with expired
 // drain returns exec.ErrWaitDelay; a nonzero exit retains its ExitError.
 func (r *OSCommandRunner) Run(ctx context.Context, spec CommandSpec) (ExecResult, error) {
+	return r.run(ctx, spec, nil, nil)
+}
+
+// Only the fixed self-worker transport supplies input and an owned executable FD.
+func (r *OSCommandRunner) run(ctx context.Context, spec CommandSpec, input io.Reader, files []*os.File) (ExecResult, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -199,9 +205,13 @@ func (r *OSCommandRunner) Run(ctx context.Context, spec CommandSpec) (ExecResult
 
 	cmd := exec.CommandContext(internalCtx, spec.Path, spec.Args...) //nolint:gosec // G204: CommandRunner is a subprocess abstraction layer.
 	cmd.Env = spec.Env.Variables()
+	cmd.Stdin, cmd.ExtraFiles = input, files
 	cmd.Dir = spec.Dir
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.WaitDelay = runnerWaitDelay
+	if len(files) > 0 {
+		cmd.WaitDelay = time.Second
+	}
 	// Override the default Cancel to terminate the entire process group
 	// (not only the immediate child). Without this, a forked grand-child
 	// inheriting the runner's stdout/stderr pipes can keep them open,
@@ -210,6 +220,11 @@ func (r *OSCommandRunner) Run(ctx context.Context, spec CommandSpec) (ExecResult
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {
 			return os.ErrProcessDone
+		}
+		// The fixed target worker owns nested command groups. Give its signal
+		// handler time to cancel and join them before WaitDelay's kill fallback.
+		if len(files) > 0 {
+			return syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
 		}
 		// Best-effort signal to the entire process group. The error is
 		// intentionally ignored: ESRCH simply means the group is already

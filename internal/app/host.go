@@ -37,7 +37,8 @@ func projectHost(context model.HostContext, observations []model.Observation) (m
 }
 
 func hostExit(report *output.Report) int {
-	if report.Host.Completeness == string(model.Complete) {
+	if report.Host.Completeness == string(model.Complete) &&
+		(report.Evaluation.Mode != "live" || report.Context.Completeness == string(model.Complete)) {
 		return ExitSatisfied
 	}
 	return ExitIndeterminate

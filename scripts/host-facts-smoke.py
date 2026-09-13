@@ -29,7 +29,7 @@ def verify_report(report, uid, kernel):
     observed = {entry["probe_id"] for entry in trace["observations"] if "host" in entry}
     if observed != HOST_PROBES:
         raise ValueError("missing host observation")
-    return 0 if report["host"]["completeness"] == "complete" else 2
+    return 0 if report["host"]["completeness"] == "complete" and report["context"].get("completeness") == "complete" else 2
 
 
 def verify_host_trace(trace, binary):

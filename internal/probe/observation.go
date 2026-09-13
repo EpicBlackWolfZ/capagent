@@ -34,6 +34,7 @@ func retainObservation(obs model.Observation, scope model.EvaluationScope) (mode
 // SnapshotObservation copies all mutable payloads for transfer to a run owner.
 // The caller must not mutate inputs concurrently with the copy.
 func SnapshotObservation(obs model.Observation) model.Observation {
+	obs.Identity = copyValue(obs.Identity)
 	obs.Host = snapshotHost(obs.Host)
 	obs.Facts = slices.Clone(obs.Facts)
 	obs.Diagnostics = slices.Clone(obs.Diagnostics)
