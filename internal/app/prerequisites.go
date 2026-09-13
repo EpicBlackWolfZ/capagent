@@ -24,11 +24,12 @@ func addPrerequisites(input *Input, probes []probe.Probe, current model.Evaluati
 	if !input.AssessPodman {
 		return probes
 	}
+	rootless := current.Identity.Target != nil && current.Identity.Target.UID != 0
 	input.Definitions = append(input.Definitions, capability.HelperDefinitions()...)
 	input.Definitions = append(input.Definitions, capability.EngineDefinitions()...)
+	input.Definitions = append(input.Definitions, capability.NetworkDefinitions(rootless)...)
 	input.Definitions = append(input.Definitions, capability.StorageDefinitions()...)
 	input.PodmanEnvironment, input.PodmanEnvironmentError = policy, policyErr
-	rootless := current.Identity.Target != nil && current.Identity.Target.UID != 0
 	input.Definitions = append(input.Definitions, capability.QuadletDefinitions(rootless)...)
 	if current.Identity.Execution != nil {
 		probes = append(probes, prerequisiteProbes(*current.Identity.Target, policy, policyErr, now)...)

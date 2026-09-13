@@ -23,6 +23,7 @@ func evaluateAssessmentFixture(ctx context.Context, doc *fixture.Document, input
 		capability.PodmanInfoDefinition(), capability.NetavarkDefinition()}
 	input.Definitions = append(input.Definitions, capability.HelperDefinitions()...)
 	input.Definitions = append(input.Definitions, capability.EngineDefinitions()...)
+	input.Definitions = append(input.Definitions, capability.NetworkDefinitions(target.UID != 0)...)
 	input.Definitions = append(input.Definitions, capability.StorageDefinitions()...)
 	input.Definitions = append(input.Definitions, capability.QuadletDefinitions(target.UID != 0)...)
 	probes := host.Probes(now)

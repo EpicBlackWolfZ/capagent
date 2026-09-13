@@ -3,6 +3,10 @@ package capability
 import "github.com/EpicBlackWolfZ/capagent/internal/model"
 
 const conmonName = "conmon"
+const pastaName = "pasta"
+const aardvarkName = "aardvark_dns"
+const slirpName = "slirp4netns"
+const configurationSourceName = "configuration"
 
 const netavarkName = "netavark"
 
@@ -10,7 +14,7 @@ const netavarkName = "netavark"
 // from runtime-selected prerequisites. None establish successful execution.
 func HelperDefinitions() []Definition {
 	var definitions []Definition
-	for _, role := range []string{"crun", "runc", conmonName, netavarkName, "aardvark_dns", "pasta", "slirp4netns", "fuse_overlayfs"} {
+	for _, role := range []string{"crun", "runc", conmonName, netavarkName, aardvarkName, pastaName, slirpName, "fuse_overlayfs"} {
 		for _, access := range []bool{false, true} {
 			suffix := "installed"
 			if access {
@@ -24,7 +28,7 @@ func HelperDefinitions() []Definition {
 				}})
 		}
 	}
-	for _, role := range []string{"oci_runtime", conmonName, netavarkName, "aardvark_dns", "pasta", "slirp4netns"} {
+	for _, role := range []string{"oci_runtime", conmonName, netavarkName, aardvarkName, pastaName, slirpName} {
 		definitions = append(definitions, selectedExecutableDefinition(role))
 	}
 	return definitions
@@ -99,6 +103,7 @@ func selectedExecutableDefinition(role string) Definition {
 				return nil
 			}
 			evidence = append(evidence, configuredExecutableEvidence(scope, observations, role, id)...)
+			evidence = append(evidence, networkConfiguredExecutableEvidence(scope, observations, role, id)...)
 			for _, obs := range observations {
 				x := obs.Executable
 				if obs.Scope != scope || x == nil || x.Role != role || x.Source != "runtime" ||
@@ -138,11 +143,11 @@ func selectedHelperPath(p *model.PodmanInfo, role string) string {
 		if p.NetworkBackend != nil && *p.NetworkBackend == netavarkName {
 			return p.HelperPath
 		}
-	case "aardvark_dns":
+	case aardvarkName:
 		return p.AardvarkPath
-	case "pasta":
+	case pastaName:
 		return p.PastaPath
-	case "slirp4netns":
+	case slirpName:
 		return p.SlirpPath
 	}
 	return ""

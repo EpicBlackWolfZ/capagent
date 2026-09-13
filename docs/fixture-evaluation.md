@@ -121,3 +121,12 @@ leave access unmeasured. `directory_read_failure`/`directory_write_failure`
 retain bounded failure codes. Filesystem mount policies can declare `read_only`.
 See [storage prerequisites](podman-storage-config.md) for selection semantics,
 capability IDs and the limits of these measurements.
+
+Network assessment fixtures (`network-*`) cover configured Netavark/Aardvark,
+the qualified pasta/slirp defaults, DNS projection, helper absence and denied
+measurements, source failures, later CNI selection and contradictory runtime
+inspection. `network-rootless` and `network-rootful` satisfy their bounded
+prerequisite requirements; `network-helper-missing` is unsatisfied and
+`network-helper-denied` is indeterminate. Their exits are 0, 1 and 2 respectively.
+`network-opaque-pasta` retains redacted option cardinality and explicitly leaves
+helper flag compatibility unverified. See [network prerequisites](podman-network-config.md).

@@ -100,7 +100,7 @@ func TestStoragePathCancellationWithoutSelectedPathsIsIncomplete(t *testing.T) {
 
 func TestStorageMetadataBoundsAndAuthority(t *testing.T) {
 	t.Parallel()
-	for _, scenario := range []string{"additional layers", "path bound", "ancestor bound", "bad path", "missing source", "wrong scope",
+	for _, scenario := range []string{"additional layers", "path bound", "ancestor bound", "bad path", "missing source", networkTestWrongScope,
 		"incomplete source", "runtime source", "remote source", "unavailable runtime", "no runtime roots", "runtime additional"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
@@ -138,7 +138,7 @@ func TestStorageMetadataBoundsAndAuthority(t *testing.T) {
 				storage.GraphRoot.Value = storageRelativePath
 			case "missing source":
 				p.Source.Configuration = nil
-			case "wrong scope":
+			case networkTestWrongScope:
 				p.Source.Scope.ContextID = "other"
 			case "incomplete source":
 				p.Source.Completeness = model.Partial

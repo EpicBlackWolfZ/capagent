@@ -56,7 +56,8 @@ type Namespace struct {
 // missing versus explicit empty/false values. Helper metadata is a separate
 // observation, never inferred from networkBackend.
 type PodmanInfo struct {
-	StorageMountProgram string `json:"storage_mount_program,omitempty"`
+	RootlessNetworkCmd  *string `json:"rootless_network_cmd,omitempty"`
+	StorageMountProgram string  `json:"storage_mount_program,omitempty"`
 	OCIRuntime          *SelectedOCIRuntime
 	ConmonPath          string
 	AardvarkPath        string

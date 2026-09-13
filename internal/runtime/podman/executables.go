@@ -132,7 +132,7 @@ func boolPointer(value bool) *bool { return &value }
 // selection algorithm. Unlisted custom locations require info or configuration.
 func HelperProbes(now func() time.Time) []ExecutableProbe {
 	var probes []ExecutableProbe
-	for _, role := range []string{"crun", "runc", conmonName, "netavark", "aardvark-dns", "pasta", "slirp4netns", "fuse-overlayfs"} {
+	for _, role := range []string{"crun", "runc", conmonName, "netavark", "aardvark-dns", pastaName, slirpName, "fuse-overlayfs"} {
 		p := ExecutableProbe{Role: strings.ReplaceAll(role, "-", "_"), Source: "trusted_candidates", Now: now}
 		for _, dir := range []string{"/usr/local/bin", "/usr/bin", "/bin", "/usr/local/libexec/podman",
 			"/usr/libexec/podman", "/usr/local/lib/podman", "/usr/lib/podman"} {
@@ -154,7 +154,7 @@ func SelectedHelperProbes(info model.Observation, now func() time.Time) []Execut
 	}
 	var probes []ExecutableProbe
 	for _, helper := range []struct{ role, name string }{{"oci_runtime", ociPath}, {conmonName, p.ConmonPath},
-		{"netavark", p.HelperPath}, {"aardvark_dns", p.AardvarkPath}, {"pasta", p.PastaPath}, {"slirp4netns", p.SlirpPath}} {
+		{"netavark", p.HelperPath}, {"aardvark_dns", p.AardvarkPath}, {pastaName, p.PastaPath}, {slirpName, p.SlirpPath}} {
 		if helper.name != "" {
 			probes = append(probes, ExecutableProbe{Role: helper.role, Paths: []string{helper.name}, Source: sourceRuntime,
 				SourceID: info.ID, RuntimePath: p.Path, Now: now})

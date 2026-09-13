@@ -65,3 +65,12 @@ class PrerequisiteCaptureTests(unittest.TestCase):
         self.assertEqual(result['info']['store']['graphOptions']['overlay.mount_program'],
                          {'Executable': '/usr/bin/fuse-overlayfs'})
         self.assertNotIn('PRIVATE_CREDENTIAL', json.dumps(result))
+
+    def test_network_capture_preserves_effective_choice_and_prerequisites(self):
+        report = json.loads((ROOT / 'testdata/fixtures/v1/network-runtime-conflict/expected.json').read_text())
+        report['evaluation'].update(mode='live', collection='active', provenance='live')
+        result = CAPTURE.project(report, 'network projection test', configuration=True)
+        self.assertEqual(result['info']['host']['rootlessNetworkCmd'], 'slirp4netns')
+        self.assertEqual(result['states']['runtime.podman.network.backend.netavark'], 'unsupported')
+        self.assertIn('runtime.podman.config.dns.parsed', result['states'])
+        self.assertTrue(any(item.get('configuration', {}).get('family') == 'network' for item in result['observations']))

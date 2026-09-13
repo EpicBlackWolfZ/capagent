@@ -19,6 +19,8 @@ func TestCapturedPodmanPrerequisiteReplay(t *testing.T) {
 		{"engine", "ubuntu-4.9.3-rootful.json"}, {"engine", "ubuntu-4.9.3-rootless.json"},
 		{"storage", "nobara-5.8.4-rootless.json"}, {"storage", "ubuntu-4.9.3-rootless.json"},
 		{"storage", "ubuntu-4.9.3-rootful.json"},
+		{"network", "nobara-5.8.4-rootless.json"},
+		{"network", "ubuntu-4.9.3-rootless.json"}, {"network", "ubuntu-4.9.3-rootful.json"},
 	} {
 		t.Run(source.directory+"/"+source.name, func(t *testing.T) {
 			t.Parallel()
@@ -55,6 +57,9 @@ func TestCapturedPodmanPrerequisiteReplay(t *testing.T) {
 			}
 			if _, ok := capture.States[string(capability.StorageParsedID)]; ok {
 				definitions = append(definitions, capability.StorageDefinitions()...)
+			}
+			if _, ok := capture.States[string(capability.NetworkParsedID)]; ok {
+				definitions = append(definitions, capability.NetworkDefinitions(capture.Context.Identity.Target.UID != 0)...)
 			}
 			registry, err := capability.NewRegistry(definitions)
 			if err != nil {

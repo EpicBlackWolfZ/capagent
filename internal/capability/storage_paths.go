@@ -59,7 +59,7 @@ func storagePathEvidence(scope model.EvaluationScope, observations []model.Obser
 			state := model.StateUnknown
 			runtime := source.Podman != nil
 			matches := runtime && measured.Source == "runtime" && measured.RuntimePath == source.Podman.Path ||
-				!runtime && measured.Source == "configuration" && measured.RuntimePath == source.Configuration.RuntimePath
+				!runtime && measured.Source == configurationSourceName && measured.RuntimePath == source.Configuration.RuntimePath
 			if matches {
 				state = selectedStoragePathsState(expected, measured.Paths, id)
 			}

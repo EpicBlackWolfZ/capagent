@@ -14,7 +14,7 @@ const testUsrDirectory = "/usr"
 
 func TestHelperMetadataPreservesTargetAccessAndSearchFailures(t *testing.T) {
 	t.Parallel()
-	for _, scenario := range []string{"accessible candidate", "absent", "denied", "no access", "directory candidate",
+	for _, scenario := range []string{"accessible candidate", "absent", networkTestDenied, "no access", "directory candidate",
 		"unknown access", "linked candidate"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
@@ -34,7 +34,7 @@ func TestHelperMetadataPreservesTargetAccessAndSearchFailures(t *testing.T) {
 				}
 			}
 			switch scenario {
-			case "denied":
+			case networkTestDenied:
 				mem.AddError(name, fs.ErrPermission)
 			case "directory candidate":
 				mem.AddDir(name, 0o755)
@@ -51,13 +51,13 @@ func TestHelperMetadataPreservesTargetAccessAndSearchFailures(t *testing.T) {
 				t.Fatal("lost scoped metadata")
 			}
 			c := obs.Executable.Candidates[0]
-			if (obs.Completeness == model.Partial) != (scenario == "denied" || scenario == "unknown access") {
+			if (obs.Completeness == model.Partial) != (scenario == networkTestDenied || scenario == "unknown access") {
 				t.Fatal("lost uncertainty", obs)
 			}
 			if scenario == "absent" && (c.Present == nil || *c.Present) {
 				t.Fatal("absence unknown")
 			}
-			if scenario == "denied" && c.Present != nil {
+			if scenario == networkTestDenied && c.Present != nil {
 				t.Fatal("denial became absence")
 			}
 			if scenario == "no access" && (c.Executable == nil || *c.Executable) {

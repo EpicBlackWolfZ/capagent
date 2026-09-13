@@ -15,7 +15,8 @@ const storageTestSystemPath = "/etc/containers/storage.conf"
 
 func TestStorageIncompleteSourcesRetainUnknownAndRedactPartialBytes(t *testing.T) {
 	t.Parallel()
-	for _, scenario := range []string{storageCancelledCase, "environment error", "invalid environment", "no filesystem", "syntax", "limit",
+	for _, scenario := range []string{storageCancelledCase, "environment error", "invalid environment", "no filesystem",
+		"syntax", networkTestLimit,
 		"unsupported", "partial read", "denied read", "missing runtime directory", "parent traversal"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
@@ -25,7 +26,7 @@ func TestStorageIncompleteSourcesRetainUnknownAndRedactPartialBytes(t *testing.T
 			switch scenario {
 			case "syntax":
 				addEngineFile(mem, storageTestSystemPath, "secret = '")
-			case "limit":
+			case networkTestLimit:
 				addEngineFile(mem, storageTestSystemPath, strings.Repeat(" ", 65537))
 			case "unsupported":
 				addEngineFile(mem, storageTestSystemPath, "[storage]\ngraphroot='relative'")

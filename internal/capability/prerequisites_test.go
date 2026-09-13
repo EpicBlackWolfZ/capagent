@@ -18,7 +18,7 @@ func TestExecutablePrerequisiteStates(t *testing.T) {
 	}{
 		{"present", model.ExecutableCandidate{Present: &yes, File: regular, Executable: &yes}, model.StateSupported},
 		{"absent", model.ExecutableCandidate{Present: &no}, model.StateUnsupported},
-		{"denied", model.ExecutableCandidate{}, model.StateUnknown},
+		{networkTestDenied, model.ExecutableCandidate{}, model.StateUnknown},
 		{"blocked", model.ExecutableCandidate{Present: &yes, File: regular, Executable: &no}, model.StateMisconfigured},
 		{"unknown access", model.ExecutableCandidate{Present: &yes, File: regular}, model.StateUnknown},
 		{"mask", model.ExecutableCandidate{Present: &yes, Masked: true}, model.StateMisconfigured},
@@ -54,7 +54,7 @@ func TestRuntimeSelectionCannotBeReplacedByInstalledCandidate(t *testing.T) {
 			want := model.StateMisconfigured
 			switch scenario {
 			case "cross target":
-				observations[1].Scope.ContextID = "other"
+				observations[1].Scope.ContextID = storageOtherContext
 				want = model.StateUnknown
 			case "incomplete info":
 				observations[0].Completeness = model.Partial

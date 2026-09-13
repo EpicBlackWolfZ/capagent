@@ -81,7 +81,7 @@ func TestStorageSourceReplacementAndRootlessConversion(t *testing.T) {
 
 func TestStorageFailureStatesDoNotPromoteFallback(t *testing.T) {
 	t.Parallel()
-	for _, scenario := range []string{"malformed storage file", "denied storage file", "unqualified", "engine environment"} {
+	for _, scenario := range []string{"malformed storage file", "denied storage file", networkTestUnqualified, networkTestEngineEnvironment} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
 			mem := platform.NewMemPlatformReader()
@@ -92,9 +92,9 @@ func TestStorageFailureStatesDoNotPromoteFallback(t *testing.T) {
 				addEngineFile(mem, "/etc/containers/storage.conf", "[storage]\ndriver=3")
 			case "denied storage file":
 				mem.AddError("/etc/containers/storage.conf", fs.ErrPermission)
-			case "unqualified":
+			case networkTestUnqualified:
 				selection.Version.Version.Version.Canonical = "9.0.0"
-			case "engine environment":
+			case networkTestEngineEnvironment:
 				addEngineFile(mem, engineSystemPath, "[engine]\nenv=['STORAGE_DRIVER=overlay']")
 			}
 			engine := runEngine(t, mem, selection)

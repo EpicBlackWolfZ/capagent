@@ -89,12 +89,28 @@
         "host.cgroups.runtime.podman.cgroup_v2"
       ]
     },
+    "runtime.podman.config.dns.parsed": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete config evidence",
+      "evidence": [
+        "podman.configuration.network.runtime.podman.config.dns.parsed"
+      ]
+    },
     "runtime.podman.config.engine.parsed": {
       "state": "supported",
       "confidence": "derived",
       "reason": "selected complete config evidence",
       "evidence": [
         "podman.configuration.engine.runtime.podman.config.engine.parsed"
+      ]
+    },
+    "runtime.podman.config.network.parsed": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete config evidence",
+      "evidence": [
+        "podman.configuration.network.runtime.podman.config.network.parsed"
       ]
     },
     "runtime.podman.config.storage.parsed": {
@@ -253,6 +269,9 @@
       ]
     },
     "runtime.podman.netavark": {
+      "superseded": [
+        "podman.configuration.network.runtime.podman.netavark"
+      ],
       "state": "supported",
       "confidence": "derived",
       "reason": "selected complete runtime evidence",
@@ -266,6 +285,33 @@
       "reason": "selected complete runtime evidence",
       "evidence": [
         "podman.executable.runtime.netavark.runtime.podman.netavark.executable"
+      ]
+    },
+    "runtime.podman.network.backend.netavark": {
+      "superseded": [
+        "podman.configuration.network.runtime.podman.network.backend.netavark"
+      ],
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete runtime evidence",
+      "evidence": [
+        "podman.info.runtime.podman.network.backend.netavark"
+      ]
+    },
+    "runtime.podman.network.rootless.pasta": {
+      "state": "supported",
+      "confidence": "heuristic",
+      "reason": "selected complete knowledge evidence",
+      "evidence": [
+        "podman.configuration.network.runtime.podman.network.rootless.pasta"
+      ]
+    },
+    "runtime.podman.network.rootless.slirp4netns": {
+      "state": "unsupported",
+      "confidence": "heuristic",
+      "reason": "selected complete knowledge evidence",
+      "evidence": [
+        "podman.configuration.network.runtime.podman.network.rootless.slirp4netns"
       ]
     },
     "runtime.podman.oci_runtime.executable": {
@@ -1368,6 +1414,177 @@
       },
       {
         "configuration": {
+          "network": {
+            "strings": {
+              "network.default_rootless_network_cmd": {
+                "value": "pasta",
+                "source_id": "podman.version"
+              }
+            },
+            "lists": {
+              "containers.dns_options": {
+                "values": [],
+                "origins": [],
+                "source_id": "podman.version",
+                "append": null,
+                "inherited_default": false
+              },
+              "containers.dns_searches": {
+                "values": [],
+                "origins": [],
+                "source_id": "podman.version",
+                "append": null,
+                "inherited_default": false
+              },
+              "containers.dns_servers": {
+                "values": [],
+                "origins": [],
+                "source_id": "podman.version",
+                "append": null,
+                "inherited_default": false
+              },
+              "engine.network_cmd_options": {
+                "values": [],
+                "origins": [],
+                "source_id": "podman.version",
+                "append": null,
+                "inherited_default": false
+              }
+            },
+            "dns_bind_port": {
+              "value": 0,
+              "source_id": "podman.version"
+            },
+            "pasta_options": {
+              "count": 0,
+              "source_id": "podman.version",
+              "append": null,
+              "inherited_default": false
+            },
+            "engine_source_id": "podman.configuration.engine",
+            "unprojected_field_count": 0
+          },
+          "family": "network",
+          "runtime_path": "/usr/bin/podman",
+          "version_source_id": "podman.version",
+          "profile": "podman-5.8.4",
+          "references": [
+            "https://github.com/containers/podman/blob/v4.9.3/vendor/github.com/containers/common/pkg/config/new.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/pkg/config/new.go",
+            "https://github.com/containers/podman/blob/v4.9.3/vendor/github.com/containers/common/pkg/config/default.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/pkg/config/default.go",
+            "https://github.com/containers/podman/blob/v4.9.3/vendor/github.com/containers/common/pkg/config/config.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/pkg/config/config.go",
+            "https://github.com/containers/podman/blob/v4.9.3/pkg/specgen/generate/container_create.go",
+            "https://github.com/containers/podman/blob/v5.8.4/pkg/specgen/generate/container_create.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/libnetwork/slirp4netns/slirp4netns.go",
+            "https://github.com/containers/podman/blob/v5.8.4/libpod/container_internal_common.go"
+          ],
+          "selection_complete": true,
+          "parse_complete": true,
+          "sources": [
+            {
+              "id": "podman.configuration.network.source.0",
+              "path": "/usr/share/containers/containers.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 0,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "network": {
+                "strings": {},
+                "lists": {},
+                "unprojected_field_count": 0
+              },
+              "id": "podman.configuration.network.source.1",
+              "path": "/etc/containers/containers.conf",
+              "kind": "file",
+              "status": "parsed",
+              "order": 1,
+              "selected": true,
+              "applied": true,
+              "sha256": "7731531535f8f3cc1c115a5839dac79cc9d731fb0fae04bb585d9283f68f7bc2"
+            },
+            {
+              "id": "podman.configuration.network.source.2",
+              "path": "/etc/containers/containers.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 2,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.3",
+              "path": "/etc/containers/containers.rootless.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 3,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.4",
+              "path": "/etc/containers/containers.rootless.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 4,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.5",
+              "path": "/etc/containers/containers.rootless.conf.d/1000",
+              "kind": "directory",
+              "status": "absent",
+              "order": 5,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.6",
+              "path": "/home/alice/.config/containers/containers.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 6,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.network.source.7",
+              "path": "/home/alice/.config/containers/containers.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 7,
+              "selected": true,
+              "applied": false
+            }
+          ]
+        },
+        "id": "podman.configuration.network",
+        "probe_id": "podman.configuration.network",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.configuration.network.measurement",
+            "source": "podman.configuration.network",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
+        "configuration": {
           "storage": {
             "runroot": {
               "value": "/run/user/1000/containers",
@@ -1473,6 +1690,39 @@
       },
       {
         "executable": {
+          "role": "aardvark_dns",
+          "source": "configuration",
+          "source_id": "podman.configuration.network",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.aardvark_dns",
+        "probe_id": "podman.executable.configuration.aardvark_dns",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.aardvark_dns.measurement",
+            "source": "podman.executable.configuration.aardvark_dns",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_default_unobserved",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "executable": {
           "role": "conmon",
           "source": "configuration",
           "source_id": "podman.configuration.engine",
@@ -1518,6 +1768,39 @@
       },
       {
         "executable": {
+          "role": "netavark",
+          "source": "configuration",
+          "source_id": "podman.configuration.network",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.netavark",
+        "probe_id": "podman.executable.configuration.netavark",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.netavark.measurement",
+            "source": "podman.executable.configuration.netavark",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_default_unobserved",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "executable": {
           "role": "oci_runtime",
           "source": "configuration",
           "source_id": "podman.configuration.engine",
@@ -1560,6 +1843,72 @@
           }
         ],
         "diagnostics": []
+      },
+      {
+        "executable": {
+          "role": "pasta",
+          "source": "configuration",
+          "source_id": "podman.configuration.network",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.pasta",
+        "probe_id": "podman.executable.configuration.pasta",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.pasta.measurement",
+            "source": "podman.executable.configuration.pasta",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_default_unobserved",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "executable": {
+          "role": "slirp4netns",
+          "source": "configuration",
+          "source_id": "podman.configuration.network",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.slirp4netns",
+        "probe_id": "podman.executable.configuration.slirp4netns",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.slirp4netns.measurement",
+            "source": "podman.executable.configuration.slirp4netns",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_default_unobserved",
+            "message": "runtime observation is incomplete"
+          }
+        ]
       },
       {
         "executable": {
@@ -2905,6 +3254,132 @@
         "depends_on": []
       },
       {
+        "id": "podman.configuration.network.runtime.podman.config.dns.parsed",
+        "source": "selected network source projection; helper compatibility and workload networking remain unverified",
+        "claim": "runtime.podman.config.dns.parsed",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "config",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.network.runtime.podman.config.network.parsed",
+        "source": "selected network source projection; helper compatibility and workload networking remain unverified",
+        "claim": "runtime.podman.config.network.parsed",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "config",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.network.runtime.podman.netavark",
+        "source": "configured backend and selected helper file metadata; networking unverified",
+        "claim": "runtime.podman.netavark",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.network.runtime.podman.network.backend.netavark",
+        "source": "selected network source projection; helper compatibility and workload networking remain unverified",
+        "claim": "runtime.podman.network.backend.netavark",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.network.runtime.podman.network.rootless.pasta",
+        "source": "selected network source projection; helper compatibility and workload networking remain unverified",
+        "claim": "runtime.podman.network.rootless.pasta",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "knowledge",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.network.runtime.podman.network.rootless.slirp4netns",
+        "source": "selected network source projection; helper compatibility and workload networking remain unverified",
+        "claim": "runtime.podman.network.rootless.slirp4netns",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "knowledge",
+        "state": "unsupported",
+        "confidence": "derived",
+        "observations": [
+          "podman.configuration.network",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
         "id": "podman.configuration.storage.runtime.podman.config.storage.parsed",
         "source": "selected storage source phases and recognized fields; replacement and root defaults are version-specific",
         "claim": "runtime.podman.config.storage.parsed",
@@ -2989,6 +3464,29 @@
         "depends_on": []
       },
       {
+        "id": "podman.executable.configuration.aardvark_dns.runtime.podman.aardvark_dns.executable",
+        "source": "configured network helper search and target executable access; execution unverified",
+        "claim": "runtime.podman.aardvark_dns.executable",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.configuration.network",
+          "podman.executable.configuration.aardvark_dns",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
         "id": "podman.executable.configuration.conmon.runtime.podman.conmon.executable",
         "source": "configured helper selection and target metadata; execution and built-in default selection remain unverified",
         "claim": "runtime.podman.conmon.executable",
@@ -3011,6 +3509,29 @@
         "depends_on": []
       },
       {
+        "id": "podman.executable.configuration.netavark.runtime.podman.netavark.executable",
+        "source": "configured network helper search and target executable access; execution unverified",
+        "claim": "runtime.podman.netavark.executable",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.configuration.network",
+          "podman.executable.configuration.netavark",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
         "id": "podman.executable.configuration.oci_runtime.runtime.podman.oci_runtime.executable",
         "source": "configured helper selection and target metadata; execution and built-in default selection remain unverified",
         "claim": "runtime.podman.oci_runtime.executable",
@@ -3028,6 +3549,52 @@
         "observations": [
           "podman.configuration.engine",
           "podman.executable.configuration.oci_runtime",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.configuration.pasta.runtime.podman.pasta.executable",
+        "source": "configured network helper search and target executable access; execution unverified",
+        "claim": "runtime.podman.pasta.executable",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.configuration.network",
+          "podman.executable.configuration.pasta",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.configuration.slirp4netns.runtime.podman.slirp4netns.executable",
+        "source": "configured network helper search and target executable access; execution unverified",
+        "claim": "runtime.podman.slirp4netns.executable",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.configuration.network",
+          "podman.executable.configuration.slirp4netns",
           "podman.version"
         ],
         "depends_on": []
@@ -3518,6 +4085,26 @@
         "depends_on": []
       },
       {
+        "id": "podman.info.runtime.podman.network.backend.netavark",
+        "source": "Podman effective runtime observation",
+        "claim": "runtime.podman.network.backend.netavark",
+        "scope": {
+          "run_id": "engine-runtime-override",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "runtime",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.info"
+        ],
+        "depends_on": []
+      },
+      {
         "id": "podman.info.runtime.podman.storage.overlay",
         "source": "Podman effective runtime observation",
         "claim": "runtime.podman.storage.overlay",
@@ -3662,7 +4249,19 @@
         "reference": "https://github.com/podman-container-tools/podman/blob/v5.8.4/pkg/systemd/quadlet/unitdirs.go"
       },
       {
-        "code": "storage_path_metadata_incomplete",
+        "code": "configured_default_unobserved",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "configured_default_unobserved",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "configured_default_unobserved",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "configured_default_unobserved",
         "message": "runtime observation is incomplete"
       },
       {
@@ -3676,6 +4275,30 @@
       {
         "code": "storage_path_metadata_incomplete",
         "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "storage_path_metadata_incomplete",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.aardvark_dns.runtime.podman.aardvark_dns.executable"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.netavark.runtime.podman.netavark.executable"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.pasta.runtime.podman.pasta.executable"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.slirp4netns.runtime.podman.slirp4netns.executable"
       },
       {
         "code": "incomplete_evidence",

@@ -105,6 +105,9 @@ present, non-executable configured choice is not silently replaced by a later
 candidate. The reviewed `/usr/bin:/bin` PATH is the final fallback. At most 16
 metadata candidates are checked per configured helper; exhausted bounds leave
 selection unknown. No helper is executed by these checks.
+An executable special file in PATH also leaves selection unknown, because Go
+lookup can select it and the metadata check cannot establish program suitability.
+See the [network helper search contract](podman-network-config.md#helper-search-and-evidence).
 
 Runtime-effective evidence outranks configuration. For example, an effective
 `cgroupfs` report makes the systemd-choice capability `unsupported`, even if a

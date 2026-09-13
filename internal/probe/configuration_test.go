@@ -95,3 +95,32 @@ func TestStoragePathSnapshotOwnership(t *testing.T) {
 		t.Fatal("storage path snapshot retained shared pointers")
 	}
 }
+
+func TestNetworkConfigurationSnapshotOwnsProvenanceAndMarkers(t *testing.T) {
+	t.Parallel()
+	flag := true
+	list := model.ConfigList{Values: []string{""}, Origins: []string{snapshotSourceID},
+		InvalidIndices: []int{0}, UnmodeledIndices: []int{0}, Append: &flag}
+	network := &model.NetworkConfiguration{Strings: map[string]model.ConfigString{"field": {Value: originalConfigPath}},
+		Lists: map[string]model.ConfigList{"field": list}, HelperPaths: map[string]model.ConfigList{"helper": list},
+		DNSBindPort: &model.ConfigUint{Value: 53}, PastaOptions: &model.ConfigRedactedList{Count: 1, Append: &flag}}
+	obs := model.Observation{Configuration: &model.ConfigurationObservation{Network: network,
+		Sources: []model.ConfigurationSource{{Network: network}}}}
+	snapshot := probe.SnapshotObservation(obs)
+	for _, n := range []*model.NetworkConfiguration{snapshot.Configuration.Network, snapshot.Configuration.Sources[0].Network} {
+		n.Strings["field"] = model.ConfigString{Value: changedConfigValue}
+		for _, entry := range []model.ConfigList{n.Lists["field"], n.HelperPaths["helper"]} {
+			entry.Values[0], entry.Origins[0] = changedConfigValue, changedConfigValue
+			entry.InvalidIndices[0], entry.UnmodeledIndices[0] = 1, 1
+			*entry.Append = false
+		}
+		n.DNSBindPort.Value = 0
+		n.PastaOptions.Count = 0
+		*n.PastaOptions.Append = false
+	}
+	if network.Strings["field"].Value != originalConfigPath || list.Values[0] != "" || list.Origins[0] != snapshotSourceID ||
+		list.InvalidIndices[0] != 0 || list.UnmodeledIndices[0] != 0 || !flag ||
+		network.DNSBindPort.Value != 53 || network.PastaOptions.Count != 1 {
+		t.Fatal("network snapshot retained borrowed data")
+	}
+}

@@ -41,22 +41,23 @@ type Host struct {
 
 // RuntimeInfo models discovered container runtime state.
 type RuntimeInfo struct {
-	OCIRuntime     *model.SelectedOCIRuntime `json:"oci_runtime,omitempty"`
-	Rootless       *bool                     `json:"rootless,omitzero"`
-	CgroupVersion  *string                   `json:"cgroup_version,omitzero"`
-	CgroupManager  *string                   `json:"cgroup_manager,omitzero"`
-	GraphRoot      *string                   `json:"graph_root,omitzero"`
-	RunRoot        *string                   `json:"run_root,omitzero"`
-	Completeness   string                    `json:"completeness,omitempty"`
-	Installed      *bool                     `json:"installed"`
-	Version        string                    `json:"version,omitempty"`
-	Accessible     *bool                     `json:"accessible"`
-	NetworkBackend string                    `json:"network_backend,omitempty"`
-	StorageDriver  string                    `json:"storage_driver,omitempty"`
-	Path           string                    `json:"path,omitempty"`
-	CLIRunnable    *bool                     `json:"cli_runnable,omitempty"`
-	File           *ExecutableInfo           `json:"file,omitempty"`
-	VersionDetails *VersionInfo              `json:"version_details,omitempty"`
+	RootlessNetworkCmd *string                   `json:"rootless_network_cmd,omitzero"`
+	OCIRuntime         *model.SelectedOCIRuntime `json:"oci_runtime,omitempty"`
+	Rootless           *bool                     `json:"rootless,omitzero"`
+	CgroupVersion      *string                   `json:"cgroup_version,omitzero"`
+	CgroupManager      *string                   `json:"cgroup_manager,omitzero"`
+	GraphRoot          *string                   `json:"graph_root,omitzero"`
+	RunRoot            *string                   `json:"run_root,omitzero"`
+	Completeness       string                    `json:"completeness,omitempty"`
+	Installed          *bool                     `json:"installed"`
+	Version            string                    `json:"version,omitempty"`
+	Accessible         *bool                     `json:"accessible"`
+	NetworkBackend     string                    `json:"network_backend,omitempty"`
+	StorageDriver      string                    `json:"storage_driver,omitempty"`
+	Path               string                    `json:"path,omitempty"`
+	CLIRunnable        *bool                     `json:"cli_runnable,omitempty"`
+	File               *ExecutableInfo           `json:"file,omitempty"`
+	VersionDetails     *VersionInfo              `json:"version_details,omitempty"`
 }
 
 type ExecutableInfo struct {
@@ -148,6 +149,7 @@ func NewReportFromModel(evalCtx model.EvaluationContext, runtimes map[string]Run
 	for k, v := range runtimes {
 		v.Installed, v.Accessible = copyValue(v.Installed), copyValue(v.Accessible)
 		v.Rootless, v.CgroupVersion, v.CgroupManager = copyValue(v.Rootless), copyValue(v.CgroupVersion), copyValue(v.CgroupManager)
+		v.RootlessNetworkCmd = copyValue(v.RootlessNetworkCmd)
 		v.GraphRoot, v.RunRoot = copyValue(v.GraphRoot), copyValue(v.RunRoot)
 		v.CLIRunnable, v.File, v.VersionDetails = copyValue(v.CLIRunnable), copyValue(v.File), copyValue(v.VersionDetails)
 		if v.File != nil {

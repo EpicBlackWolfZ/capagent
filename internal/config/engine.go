@@ -33,8 +33,9 @@ type EngineLayer struct {
 }
 
 type ListLayer struct {
-	Values []string
-	Append *bool
+	InvalidIndices, UnmodeledIndices []int
+	Values                           []string
+	Append                           *bool
 }
 
 // FieldError adds only a recognized field identifier to a fixed diagnostic.
@@ -231,6 +232,7 @@ func mergeList(previous *model.ConfigList, layer *ListLayer, source string) *mod
 		out = *previous
 		out.Values, out.Origins = slices.Clone(previous.Values), slices.Clone(previous.Origins)
 		out.Append = copyFlag(previous.Append)
+		out.InvalidIndices, out.UnmodeledIndices = slices.Clone(previous.InvalidIndices), slices.Clone(previous.UnmodeledIndices)
 	}
 	if layer == nil {
 		return &out
@@ -240,6 +242,13 @@ func mergeList(previous *model.ConfigList, layer *ListLayer, source string) *mod
 	}
 	if out.Append == nil || !*out.Append {
 		out.Values, out.Origins, out.InheritedDefault = []string{}, []string{}, false
+		out.InvalidIndices, out.UnmodeledIndices = nil, nil
+	}
+	for _, index := range layer.InvalidIndices {
+		out.InvalidIndices = append(out.InvalidIndices, len(out.Values)+index)
+	}
+	for _, index := range layer.UnmodeledIndices {
+		out.UnmodeledIndices = append(out.UnmodeledIndices, len(out.Values)+index)
 	}
 	out.Values = append(out.Values, layer.Values...)
 	for range layer.Values {

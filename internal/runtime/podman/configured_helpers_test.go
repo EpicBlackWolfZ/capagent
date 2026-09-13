@@ -11,7 +11,8 @@ import (
 
 func TestConfiguredHelperSelection(t *testing.T) {
 	t.Parallel()
-	for _, scenario := range []string{"paths", "directory candidate skipped", "non executable first", "missing then fallback", "denied OCI",
+	for _, scenario := range []string{"paths", "special fallback", "directory candidate skipped",
+		networkTestNonExecutable, "missing then fallback", "denied OCI",
 		"denied conmon", "default unknown", "append default", "environment effect", "absolute runtime"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
@@ -22,9 +23,20 @@ func TestConfiguredHelperSelection(t *testing.T) {
 				mem.SetExecutableAccess(name, true, nil)
 			}
 			switch scenario {
+			case "special fallback":
+				text = "[engine]\nruntime='custom'\nconmon_path=['/absent']\n[engine.runtimes]\ncustom=['/absent']"
+				for _, name := range []string{"custom", "conmon"} {
+					if err := mem.AddSpecial("/usr/bin/"+name, fs.ModeNamedPipe|0o755); err != nil {
+						t.Fatal(err)
+					}
+					addEngineFile(mem, "/bin/"+name, "executable")
+					if err := mem.SetExecutableAccess("/bin/"+name, true, nil); err != nil {
+						t.Fatal(err)
+					}
+				}
 			case "directory candidate skipped":
 				mem.AddDir("/selected", 0o755)
-			case "non executable first":
+			case networkTestNonExecutable:
 				mem.SetExecutableAccess("/selected", false, nil)
 			case "missing then fallback":
 				text = "[engine]\nruntime='custom'\nconmon_path=['/absent']\n[engine.runtimes]\ncustom=['/absent']"
@@ -64,13 +76,13 @@ func TestConfiguredHelperSelection(t *testing.T) {
 					if x.Role == "oci_runtime" {
 						want = ""
 					}
-				case "default unknown", "append default", "environment effect":
+				case "special fallback", "default unknown", "append default", "environment effect":
 					partial, want = true, ""
 				}
 				if x.SelectedPath != want || (obs.Completeness == model.Partial) != partial {
 					t.Fatalf("role=%s selected=%s complete=%s; want %s partial=%v", x.Role, x.SelectedPath, obs.Completeness, want, partial)
 				}
-				if scenario == "non executable first" && (x.Candidates[0].Executable == nil || *x.Candidates[0].Executable) {
+				if scenario == networkTestNonExecutable && (x.Candidates[0].Executable == nil || *x.Candidates[0].Executable) {
 					t.Fatal("selection skipped a present non-executable configured helper")
 				}
 			}

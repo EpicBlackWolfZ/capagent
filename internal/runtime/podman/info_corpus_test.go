@@ -14,8 +14,8 @@ func TestAuthenticInfoCorpus(t *testing.T) {
 		rootless                       bool
 	}{
 		{"ubuntu-3.4.4.json", "3.4.4", "v1", "", false},
-		{"arch-4.4.4.json", "4.4.4", "v2", "netavark", true},
-		{"fedora-5.8.4.json", testVersion, "v2", "netavark", true},
+		{"arch-4.4.4.json", "4.4.4", "v2", networkTestBackend, true},
+		{"fedora-5.8.4.json", testVersion, "v2", networkTestBackend, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.file, func(t *testing.T) {

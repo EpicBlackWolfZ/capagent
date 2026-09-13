@@ -27,7 +27,7 @@ func normalizeInfo(p *model.PodmanInfo) bool {
 		(oci.Name != "" && !infoToken.MatchString(oci.Name) || oci.Path != "" && !safeInfoPath(oci.Path)) {
 		p.OCIRuntime, valid = nil, false
 	}
-	for _, field := range []**string{&p.NetworkBackend, &p.StorageDriver, &p.CgroupVersion, &p.CgroupManager} {
+	for _, field := range []**string{&p.RootlessNetworkCmd, &p.NetworkBackend, &p.StorageDriver, &p.CgroupVersion, &p.CgroupManager} {
 		if *field != nil && **field != "" && !infoToken.MatchString(**field) {
 			*field, valid = nil, false
 		}

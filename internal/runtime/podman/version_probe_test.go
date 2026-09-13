@@ -12,7 +12,8 @@ import (
 
 func TestVersionObservation(t *testing.T) {
 	t.Parallel()
-	for _, scenario := range []string{"success", "malformed", "nonzero", "start", "timeout", "cancelled", "truncated", "missing service"} {
+	for _, scenario := range []string{"success", "malformed", "nonzero", "start", "timeout", storageCancelledCase,
+		"truncated", "missing service"} {
 		t.Run(scenario, func(t *testing.T) {
 			t.Parallel()
 			spec := platform.CommandSpec{Path: testPodmanPath, Args: []string{"--version"}, Dir: "/", Timeout: time.Second}
@@ -28,7 +29,7 @@ func TestVersionObservation(t *testing.T) {
 			case "timeout":
 				runErr = context.DeadlineExceeded
 				result.TimedOut = true
-			case "cancelled":
+			case storageCancelledCase:
 				runErr = context.Canceled
 			case "truncated":
 				result.StdoutTruncated = true

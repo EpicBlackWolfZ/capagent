@@ -4,6 +4,7 @@ package model
 // atomic transaction with runtime inspection. Selected means membership in the
 // source plan; Applied additionally requires successful preceding inputs.
 type ConfigurationSource struct {
+	Network  *NetworkConfiguration `json:"network,omitempty"`
 	Phase    string                `json:"phase,omitempty"`
 	Storage  *StorageConfiguration `json:"storage,omitempty"`
 	ID       string                `json:"id"`
@@ -20,6 +21,7 @@ type ConfigurationSource struct {
 }
 
 type ConfigurationObservation struct {
+	Network           *NetworkConfiguration `json:"network,omitempty"`
 	Storage           *StorageConfiguration `json:"storage,omitempty"`
 	Family            string                `json:"family"`
 	RuntimePath       string                `json:"runtime_path,omitempty"`
@@ -43,6 +45,8 @@ type ConfigString struct {
 }
 
 type ConfigList struct {
+	InvalidIndices   []int    `json:"invalid_indices,omitempty"`
+	UnmodeledIndices []int    `json:"unmodeled_indices,omitempty"`
 	Values           []string `json:"values"`
 	Origins          []string `json:"origins"`
 	SourceID         string   `json:"source_id"`

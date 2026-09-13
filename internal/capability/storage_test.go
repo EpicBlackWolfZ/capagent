@@ -37,7 +37,8 @@ func TestStorageConfigurationMappingAndEffectivePrecedence(t *testing.T) {
 			scope := model.EvaluationScope{RunID: "storage", ContextID: storageTestTarget, Runtime: storageTestRuntime,
 				Endpoint: storageTestEndpoint}
 			version := model.Observation{ID: storageVersionID, ProbeID: storageVersionID, Scope: scope, Timestamp: at, Completeness: model.Complete,
-				Version: &model.PodmanVersionObservation{Path: configuredPodmanPath, Runnable: &yes, Version: &model.PodmanVersion{Canonical: "5.8.4"}}}
+				Version: &model.PodmanVersionObservation{Path: configuredPodmanPath, Runnable: &yes,
+					Version: &model.PodmanVersion{Canonical: networkTestVersion}}}
 			c := &model.ConfigurationObservation{Family: "storage",
 				RuntimePath:       configuredPodmanPath,
 				Profile:           "podman-5.8.4",
@@ -53,7 +54,7 @@ func TestStorageConfigurationMappingAndEffectivePrecedence(t *testing.T) {
 				Configuration: c}
 			helper := model.Observation{ID: "storage-helper", ProbeID: "storage-helper", Scope: scope, Timestamp: at, Completeness: model.Complete,
 				Executable: &model.ExecutableObservation{Role: "storage_mount_program",
-					Source:       "configuration",
+					Source:       configurationSourceName,
 					SourceID:     source.ID,
 					RuntimePath:  configuredPodmanPath,
 					SelectedPath: storageTestHelper, Candidates: []model.ExecutableCandidate{{Path: storageTestHelper, Present: &yes, Executable: &yes,
@@ -81,7 +82,7 @@ func TestStorageConfigurationMappingAndEffectivePrecedence(t *testing.T) {
 					model.StateUnknown
 			case "denied selected file":
 				c.ParseComplete = false
-				c.Sources[0].Status = "denied"
+				c.Sources[0].Status = networkTestDenied
 				source.Completeness = model.Partial
 				wanted[StorageParsedID],
 					wanted[StorageOverlayID],
@@ -144,7 +145,8 @@ func TestStorageRuntimeHelperBindingAndMissingDriver(t *testing.T) {
 				Endpoint:  storageTestEndpoint}
 			source := model.Observation{ID: storageSourceID, ProbeID: storageSourceID, Scope: scope, Timestamp: at, Completeness: model.Complete,
 				Podman: &model.PodmanInfo{Path: configuredPodmanPath, Available: &yes, StorageDriver: &driver, StorageMountProgram: storageTestHelper}}
-			helper := model.Observation{ID: "helper", ProbeID: "helper", Scope: scope, Timestamp: at, Completeness: model.Complete,
+			helper := model.Observation{ID: networkTestHelperID, ProbeID: networkTestHelperID, Scope: scope, Timestamp: at,
+				Completeness: model.Complete,
 				Executable: &model.ExecutableObservation{Role: "storage_mount_program", Source: storageRuntimeSource, SourceID: source.ID,
 					RuntimePath:  configuredPodmanPath,
 					SelectedPath: storageTestHelper,
