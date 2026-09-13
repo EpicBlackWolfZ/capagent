@@ -68,3 +68,21 @@ func TestIdentityAgreement(t *testing.T) {
 		}
 	}
 }
+
+func TestMaximumIdentityGroupsRemainOrderIndependent(t *testing.T) {
+	t.Parallel()
+	groups := make([]uint32, model.MaxIdentityGroups)
+	reverse := make([]uint32, len(groups))
+	for i := range groups {
+		groups[i] = uint32(i)
+		reverse[len(groups)-1-i] = uint32(i)
+	}
+	c := model.IdentityContext{Target: &model.UserIdentity{GroupsKnown: true, SupplementaryGroups: groups},
+		Execution: &model.UserIdentity{GroupsKnown: true, SupplementaryGroups: reverse}}
+	if err := c.IsValid(); err != nil {
+		t.Fatal(err)
+	}
+	if groups[0] != 0 || reverse[0] != model.MaxIdentityGroups-1 {
+		t.Fatal("group validation changed inputs")
+	}
+}

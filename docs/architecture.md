@@ -694,3 +694,11 @@ The active requirement uses the existing AST: `all(runtime.podman, runtime.podma
 
 [Host facts](host-facts.md) use the shared scoped observation scheduler. Host-only scope has paired empty runtime/endpoint values,
 empty capability/runtime maps and an omitted requirement. Collection exit status describes completeness, never deployment readiness.
+
+## Local deployment identities and user sessions
+
+The [execution context](execution-context.md) separates launcher `Current`, requested `Target` and verified `Execution` credentials. Root delegates through an isolated bootstrap; ordinary probes and command runners never change the parent credentials or enter namespaces. Current-process and target observations retain explicit authority and completeness.
+
+`internal/host` owns bounded subordinate-ID parsing and `UserContextProbe`. The latter combines exact-0700, target-owned runtime-directory metadata with private socket metadata and a separate linger marker. `/run/user/UID` is a candidate when the environment is unset; its name proves no session. Socket presence and lingering do not prove manager access. Only the explicit `--active` policy dispatches the fixed local systemctl property query through `internal/platform.UserManager`. Runtime adapters share the same private-directory validation policy.
+
+These are typed observations with source references. They do not establish a successful UID mapping, container deployment, Quadlet generation or workload readiness.

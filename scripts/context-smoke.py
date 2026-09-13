@@ -72,29 +72,7 @@ def verify_subids(report, account):
 
 
 def joined_context_trace(text):
-    # strace can print ??? for threads interrupted by a sibling's exit_group.
-    # Accept only terminal records tied to a known thread group and observed exit;
-    # real incomplete syscalls and unknown processes still fail closed.
-    interrupted = re.findall(r'^(\d+) \?\?\?\( <unfinished \.\.\.>$', text, re.M)
-    filtered = re.sub(r'^\d+ \?\?\?\( <unfinished \.\.\.>\n', '', text, flags=re.M)
-    joined = PASSIVE.joined_trace(filtered)
-    parents = dict((child, parent) for parent, child in re.findall(
-        r'^(\d+)\s+clone3?\(.*CLONE_THREAD.*\)\s+= (\d+)$', joined, re.M))
-    def group(pid):
-        seen = set()
-        while pid in parents:
-            if pid in seen:
-                raise ValueError('cyclic thread trace')
-            seen.add(pid)
-            pid = parents[pid]
-        return pid
-    exits = re.findall(r'^(\d+) exit_group\((\d+)\)', joined, re.M)
-    for pid in interrupted:
-        terminal = re.search(r'^' + pid + r' \+\+\+ exited with (\d+) \+\+\+$', joined, re.M)
-        if pid not in parents or terminal is None or not any(
-                group(owner) == group(pid) and code == terminal[1] for owner, code in exits):
-            raise ValueError('unexplained interrupted syscall trace')
-    return joined
+    return PASSIVE.joined_trace(text)
 
 
 def verify_trace(text, binary):

@@ -90,6 +90,11 @@ jobs:
         run: |
           sudo -n python3 -B scripts/context-smoke.py --binary .work/gate/podman/capagent \
             --output .work/gate/context --user "$(id -un)"
+      - name: Verify passive and opt-in user-manager access
+        run: |
+          sudo -n env GITHUB_ACTIONS=true python3 -B scripts/user-context-smoke.py \
+            --binary .work/gate/podman/capagent --output .work/gate/user-context \
+            --user "$(id -un)" --ephemeral-host
       - name: Verify active local inspection and remote rejection as user and root
         run: |
           curl --fail --silent --show-error --location \

@@ -35,10 +35,16 @@ func ParseMappingCapabilities(attribute platform.CapabilityAttribute) (*model.Ma
 	out.Revision = revision
 	out.Effective = magic&capabilityEffectiveFlag != 0
 	permitted := binary.LittleEndian.Uint32(data[4:])
+	inheritable := binary.LittleEndian.Uint32(data[8:])
+	out.InheritableSetUID = inheritable&capSetUID != 0
+	out.InheritableSetGID = inheritable&capSetGID != 0
 	out.SetUID = permitted&capSetUID != 0
 	out.SetGID = permitted&capSetGID != 0
 	if revision == namespacedCapabilityRevision {
 		id := binary.LittleEndian.Uint32(data[20:])
+		if id == ^uint32(0) {
+			return nil, platform.ErrMalformed
+		}
 		out.RootID = &id
 	}
 	return out, nil

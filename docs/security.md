@@ -85,9 +85,8 @@ runtime state must not be classified as passive. The live host systemd probe use
 their own reviewed execution policy.
 
 Credentials, supplementary groups, namespaces, umask and other process attributes
-still come from the executing process. Target-user switching belongs to the
-context/identity work, without changing global credentials inside concurrent
-probes. Explicit endpoint/config/proxy settings require an adapter policy and
+still come from the executing process. Target-user switching uses the isolated [context worker](execution-context.md),
+without changing launcher credentials or switching identity inside concurrent probes. Explicit endpoint/config/proxy settings require an adapter policy and
 matching evaluation scope; selecting a remote endpoint must never label its
 observations as local. Typed scope and target switching remain separate work.
 
@@ -238,3 +237,6 @@ The hardening gate combines race tests, full lint, architectural contracts, vuln
 ## Documentation and working material
 
 `docs/` contains durable documentation for readers. Internal audits, implementation plans, raw evidence, benchmark runs and reconciliation logs live in the git-ignored `.work/` directory or CI artifacts. GitHub issues retain actionable public acceptance criteria so implementation does not depend on access to a developer's local notes.
+
+
+User-manager access requires `--active`. Its two-second `systemctl --user --no-pager --no-ask-password show --property=Version --value` query uses a fixed executable search, target runtime directory and explicit local private-bus address. Ambient bus endpoints are excluded. The query does not start a manager, enable lingering or create a login session. Failed prerequisites suppress dispatch; timeout, truncation and malformed replies preserve unknown accessibility. Native CI prepares and restores an ephemeral user session outside the probe trace to test this boundary.

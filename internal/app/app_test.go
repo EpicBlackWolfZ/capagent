@@ -60,7 +60,7 @@ func TestFixtureCLIResults(t *testing.T) {
 
 func TestFixtureCLIRejectsLiveAndMissingInput(t *testing.T) {
 	t.Parallel()
-	for _, opts := range []app.Options{{Active: true}, {Active: true, Fixture: "ignored"}, {Fixture: "missing"}} {
+	for _, opts := range []app.Options{{Runtime: "docker"}, {Active: true, Fixture: "ignored"}, {Fixture: "missing"}} {
 		var stdout, stderr bytes.Buffer
 		if code := app.Execute(t.Context(), opts, &stdout, &stderr); code != app.ExitUsage && code != app.ExitExecution {
 			t.Fatal("unsupported invocation succeeded", code)

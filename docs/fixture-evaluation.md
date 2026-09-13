@@ -101,3 +101,6 @@ Schema v1 remains pre-release. This slice corrects UID/GID to nullable integers 
 Nullable runtime rootless/cgroup/storage-root fields preserve observed false/empty values. A `collection` marker is allowed only for live reports; fixture provenance remains separate.
 
 Version replay scenarios additionally cover successful output, a nonzero command, malformed output and timeout. Their descriptions identify captured command text and synthetic context or failure data; fixture replay never becomes live evidence. See [Podman discovery](podman-discovery.md#version-fixture-replay).
+
+
+The `context` fixture probe replays subordinate-ID and user-context observations. It requires explicit agreeing target and execution credentials and paired empty runtime/endpoint values. Files can include sockets, explicit `executable_access` results and raw bounded file-capability attributes; mount policies are separate explicit fixture facts. `user_query: true` permits exactly one replay of the fixed user-manager command and its target-bound environment. It never contacts the real user manager. See `context-rootless` and `context-user-active` for passive and successful-query fixtures.

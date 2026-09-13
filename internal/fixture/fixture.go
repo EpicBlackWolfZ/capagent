@@ -55,6 +55,7 @@ type Command struct {
 	StderrTruncated bool              `json:"stderr_truncated,omitempty"`
 }
 type Document struct {
+	UserQuery     bool                    `json:"user_query,omitempty"`
 	Host          *HostCalls              `json:"host,omitempty"`
 	SchemaVersion int                     `json:"schema_version"`
 	Probe         string                  `json:"probe,omitempty"`
@@ -120,6 +121,9 @@ func validate(d *Document) error {
 	}
 	if err := d.Context.Identity.IsValid(); err != nil {
 		return err
+	}
+	if d.UserQuery && d.Probe != contextProbe {
+		return errors.New("user query requires context fixture")
 	}
 	if !validFixtureRuntime(d) {
 		return errors.New("fixture runtime must be local Podman")
@@ -219,7 +223,7 @@ func Open(d *Document) (*Services, error) {
 	}
 	env := platform.NewEnvironment(nil, nil, nil, runner).WithFiles(files).WithScope(d.Scope())
 	if d.Probe == hostProbe || d.Probe == contextProbe {
-		env = env.WithHost(hostSnapshot(d), platform.NewHostMetadata(runner))
+		env = env.WithHost(hostSnapshot(d), platform.NewHostMetadata(runner)).WithUserManager(platform.NewUserManager(runner))
 	}
 	services := &Services{Environment: env, Requirement: node, files: files}
 	if len(specs) > 0 {
