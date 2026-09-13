@@ -40,6 +40,8 @@ type FactRecord struct {
 type HostObservation model.HostObservation
 
 type ObservationRecord struct {
+	Executable   *model.ExecutableObservation  `json:"executable,omitempty"`
+	Quadlet      *model.QuadletObservation     `json:"quadlet,omitempty"`
 	UserContext  *model.UserContextObservation `json:"user_context,omitempty"`
 	SubIDs       *model.SubIDObservation       `json:"subids,omitempty"`
 	Authority    string                        `json:"authority,omitempty"`

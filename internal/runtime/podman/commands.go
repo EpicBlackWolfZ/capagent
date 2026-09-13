@@ -37,23 +37,11 @@ func PrepareInspection(ctx context.Context, files platform.ScopedView, user mode
 	if files == nil || executable == "" || ValidateExecutablePath(executable) != nil {
 		return InspectionCommands{}, errors.New("invalid inspection services or executable")
 	}
-	values := make(map[string]string)
-	for _, entry := range captured.Variables() {
-		name, value, _ := strings.Cut(entry, "=")
-		switch name {
-		case "HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_RUNTIME_DIR":
-			if !safeInfoPath(value) {
-				return InspectionCommands{}, errors.New("invalid inspection directory")
-			}
-			values[name] = value
-		}
+	policy, err := TargetEnvironment(user, captured)
+	if err != nil {
+		return InspectionCommands{}, err
 	}
-	if _, present := values["HOME"]; !present {
-		if !safeInfoPath(user.HomeDir) {
-			return InspectionCommands{}, errors.New("current home directory is unavailable")
-		}
-		values["HOME"] = user.HomeDir
-	}
+	values := directoryValues(policy)
 	home, err := files.Stat(path.Clean(strings.TrimPrefix(values["HOME"], "/")))
 	if err != nil || !home.IsDir() {
 		return InspectionCommands{}, errors.New("current home directory is inaccessible")
@@ -67,12 +55,38 @@ func PrepareInspection(ctx context.Context, files platform.ScopedView, user mode
 			return InspectionCommands{}, err
 		}
 	}
-	policy, err := platform.NewEnvPolicy(nil, values)
-	if err != nil {
-		return InspectionCommands{}, err
-	}
 	return InspectionCommands{
 		Version: platform.CommandSpec{Path: executable, Args: []string{"--version"}, Env: policy, Dir: "/", Timeout: VersionTimeout},
 		Info:    platform.CommandSpec{Path: executable, Args: LocalInfoArgs(), Env: policy, Dir: "/", Timeout: InfoTimeout},
 	}, nil
+}
+
+// TargetEnvironment is shared by passive source selection and active inspection.
+// It never reads ambient state or invents a login session/runtime directory.
+func TargetEnvironment(user model.UserIdentity, captured platform.EnvPolicy) (platform.EnvPolicy, error) {
+	values := directoryValues(captured)
+	for _, value := range values {
+		if !safeInfoPath(value) {
+			return platform.EnvPolicy{}, errors.New("invalid inspection directory")
+		}
+	}
+	if _, present := values["HOME"]; !present {
+		if !safeInfoPath(user.HomeDir) {
+			return platform.EnvPolicy{}, errors.New("current home directory is unavailable")
+		}
+		values["HOME"] = user.HomeDir
+	}
+	return platform.NewEnvPolicy(nil, values)
+}
+
+func directoryValues(captured platform.EnvPolicy) map[string]string {
+	values := make(map[string]string)
+	for _, entry := range captured.Variables() {
+		name, value, _ := strings.Cut(entry, "=")
+		switch name {
+		case "HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_RUNTIME_DIR":
+			values[name] = value
+		}
+	}
+	return values
 }

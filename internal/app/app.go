@@ -42,6 +42,7 @@ type Options struct {
 // Input is a single explicit deployment candidate. All data is borrowed during
 // the call; Evaluate snapshots context metadata before starting workers.
 type Input struct {
+	AssessPodman bool
 	Scope        model.EvaluationScope
 	Context      model.EvaluationContext
 	At           time.Time
@@ -147,6 +148,9 @@ func validateRuntimeSelection(scope model.EvaluationScope, observations []model.
 		if obs.PodmanHelper != nil {
 			paths = append(paths, obs.PodmanHelper.Path)
 		}
+		if obs.Executable != nil {
+			paths = append(paths, obs.Executable.RuntimePath)
+		}
 		for _, path := range paths {
 			if path == "" {
 				continue
@@ -175,6 +179,9 @@ func evaluateFixture(ctx context.Context, doc *fixture.Document) (*output.Report
 	}
 	input := Input{Scope: doc.Scope(), Context: doc.Context, At: doc.Timestamp, Provenance: doc.Provenance.Kind,
 		Requirement: services.Requirement}
+	if doc.Probe == "assessment" {
+		return evaluateAssessmentFixture(ctx, doc, input, services)
+	}
 	if doc.Probe == "context" {
 		now := func() time.Time { return doc.Timestamp }
 		user := host.UserContextProbe{Target: *doc.Context.Identity.Target, Now: now, Active: doc.UserQuery}
@@ -299,6 +306,15 @@ func collectHelpers(ctx context.Context, env platform.Environment, observations 
 	count := len(observations)
 	for i := range count {
 		obs := observations[i]
+		if input.AssessPodman {
+			for _, p := range podman.SelectedHelperProbes(obs, input.Now) {
+				if p.Now == nil {
+					p.Now = func() time.Time { return input.At }
+				}
+				helper, _ := p.Run(ctx, env) // Failure remains in the partial observation and fixed diagnostics.
+				observations = append(observations, helper)
+			}
+		}
 		p := obs.Podman
 		if p == nil || p.Available == nil || !*p.Available || p.NetworkBackend == nil || *p.NetworkBackend != "netavark" {
 			continue

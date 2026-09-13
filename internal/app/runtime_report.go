@@ -48,6 +48,7 @@ func projectRuntime(observations []model.Observation, scope model.EvaluationScop
 		}
 	}
 	if info != nil {
+		runtime.OCIRuntime = copyValue(info.OCIRuntime)
 		runtime.Accessible, runtime.Version, runtime.Path = copyValue(info.Available), info.Version, info.Path
 		runtime.Rootless, runtime.CgroupVersion = copyValue(info.Rootless), copyValue(info.CgroupVersion)
 		runtime.CgroupManager = copyValue(info.CgroupManager)

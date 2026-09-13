@@ -34,6 +34,15 @@ func retainObservation(obs model.Observation, scope model.EvaluationScope) (mode
 // SnapshotObservation copies all mutable payloads for transfer to a run owner.
 // The caller must not mutate inputs concurrently with the copy.
 func SnapshotObservation(obs model.Observation) model.Observation {
+	obs.Executable = snapshotExecutable(obs.Executable)
+	obs.Quadlet = copyValue(obs.Quadlet)
+	if q := obs.Quadlet; q != nil {
+		q.Locations = slices.Clone(q.Locations)
+		for i := range q.Locations {
+			q.Locations[i].Present = copyValue(q.Locations[i].Present)
+			q.Locations[i].Directory = copyValue(q.Locations[i].Directory)
+		}
+	}
 	obs.Identity = copyValue(obs.Identity)
 	obs.SubIDs = snapshotSubIDs(obs.SubIDs)
 	obs.UserContext = snapshotUserContext(obs.UserContext)
@@ -42,6 +51,7 @@ func SnapshotObservation(obs model.Observation) model.Observation {
 	obs.Diagnostics = slices.Clone(obs.Diagnostics)
 	obs.Podman = copyValue(obs.Podman)
 	if p := obs.Podman; p != nil {
+		p.OCIRuntime = copyValue(p.OCIRuntime)
 		p.VersionParts = copyValue(p.VersionParts)
 		p.GraphRoot, p.RunRoot = copyValue(p.GraphRoot), copyValue(p.RunRoot)
 		p.ServiceIsRemote = copyValue(p.ServiceIsRemote)
@@ -72,6 +82,24 @@ func SnapshotObservation(obs model.Observation) model.Observation {
 		obs.Facts[i].RawData = slices.Clone(obs.Facts[i].RawData)
 	}
 	return obs
+}
+
+func snapshotExecutable(input *model.ExecutableObservation) *model.ExecutableObservation {
+	out := copyValue(input)
+	if out == nil {
+		return nil
+	}
+	out.Candidates = slices.Clone(out.Candidates)
+	for i := range out.Candidates {
+		c := &out.Candidates[i]
+		c.Present, c.Executable = copyValue(c.Present), copyValue(c.Executable)
+		c.Device, c.Inode = copyValue(c.Device), copyValue(c.Inode)
+		c.File = copyValue(c.File)
+		if c.File != nil {
+			c.File.UID, c.File.GID = copyValue(c.File.UID), copyValue(c.File.GID)
+		}
+	}
+	return out
 }
 
 func copyValue[T any](value *T) *T {

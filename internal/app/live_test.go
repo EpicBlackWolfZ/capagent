@@ -63,8 +63,15 @@ func TestLiveDiscoveryPipeline(t *testing.T) {
 			if report.Evaluation.Requirement.State != want {
 				t.Fatal("wrong decision", report.Evaluation.Requirement)
 			}
-			if len(report.Evaluation.Observations) != 13 {
-				t.Fatal("missing identity or discovery provenance")
+			seen := make(map[string]bool)
+			for _, obs := range report.Evaluation.Observations {
+				seen[obs.ProbeID] = true
+			}
+			for _, id := range []string{"host.identity", "podman.discovery", "podman.quadlet.locations",
+				"podman.executable.trusted_candidates.crun"} {
+				if !seen[id] {
+					t.Fatal("missing scoped provenance", id)
+				}
 			}
 		})
 	}

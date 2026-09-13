@@ -10,7 +10,7 @@ func PodmanInfoDefinition() Definition {
 }
 
 func podmanInfoEvidence(scope model.EvaluationScope, observations []model.Observation) []model.Evidence {
-	if scope.Runtime != "podman" || scope.Endpoint != "local" {
+	if !localPodman(scope) {
 		return nil
 	}
 	var evidence []model.Evidence

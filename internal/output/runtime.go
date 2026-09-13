@@ -13,12 +13,16 @@ const maxRuntimePath = 4096
 var runtimeName = regexp.MustCompile(`^[a-zA-Z0-9_.+-]{0,128}$`)
 
 func (r RuntimeInfo) Validate() error {
+	if oci := r.OCIRuntime; oci != nil {
+		if !runtimeName.MatchString(oci.Name) || (oci.Path != "" && !validRuntimePath(oci.Path)) {
+			return errors.New("invalid OCI runtime selection")
+		}
+	}
 	for _, value := range []*string{r.GraphRoot, r.RunRoot} {
 		if value == nil || *value == "" {
 			continue
 		}
-		if len(*value) > maxRuntimePath || !path.IsAbs(*value) || path.Clean(*value) != *value ||
-			strings.IndexFunc(*value, unicode.IsControl) >= 0 {
+		if !validRuntimePath(*value) {
 			return errors.New("invalid runtime storage path")
 		}
 	}
@@ -28,4 +32,8 @@ func (r RuntimeInfo) Validate() error {
 		}
 	}
 	return nil
+}
+
+func validRuntimePath(value string) bool {
+	return len(value) <= maxRuntimePath && path.IsAbs(value) && path.Clean(value) == value && strings.IndexFunc(value, unicode.IsControl) < 0
 }

@@ -13,8 +13,45 @@ import (
 type FileOwnership struct{ UID, GID uint32 }
 
 type fileMetadata struct {
-	Ownership FileOwnership
-	Known     bool
+	Ownership     FileOwnership
+	Known         bool
+	Identity      FileIdentity
+	IdentityKnown bool
+	DeviceNumber  uint64
+}
+
+// FileIdentity names the inode measured by Stat, not a future execution lease.
+type FileIdentity struct{ Device, Inode uint64 }
+
+func IdentityOf(info fs.FileInfo) (FileIdentity, bool) {
+	if info == nil {
+		return FileIdentity{}, false
+	}
+	switch meta := info.Sys().(type) {
+	case fileMetadata:
+		return meta.Identity, meta.IdentityKnown
+	case *syscall.Stat_t:
+		return FileIdentity{Device: meta.Dev, Inode: meta.Ino}, true
+	default:
+		return FileIdentity{}, false
+	}
+}
+
+// IsNullDevice recognizes the Linux null-device identity after kernel-confined
+// symlink resolution. Path spelling alone does not describe a symlink chain.
+func IsNullDevice(info fs.FileInfo) bool {
+	const nullMajor, nullMinor = 1, 3
+	if info == nil || info.Mode().Type() != os.ModeDevice|os.ModeCharDevice {
+		return false
+	}
+	switch meta := info.Sys().(type) {
+	case fileMetadata:
+		return meta.IdentityKnown && meta.DeviceNumber == unix.Mkdev(nullMajor, nullMinor)
+	case *syscall.Stat_t:
+		return meta.Rdev == unix.Mkdev(nullMajor, nullMinor)
+	default:
+		return false
+	}
 }
 
 // OwnershipOf returns a value copy. Unknown fixture ownership is distinct from root.
@@ -69,7 +106,8 @@ func statInfo(name string, st *unix.Stat_t) os.FileInfo {
 	return &scopedFileInfo{
 		name: name, size: st.Size, mode: scopedStatMode(st.Mode),
 		modTime: time.Unix(st.Mtim.Sec, st.Mtim.Nsec), isDir: st.Mode&unix.S_IFMT == unix.S_IFDIR,
-		metadata: fileMetadata{Ownership: FileOwnership{UID: st.Uid, GID: st.Gid}, Known: true},
+		metadata: fileMetadata{Ownership: FileOwnership{UID: st.Uid, GID: st.Gid}, Known: true,
+			Identity: FileIdentity{Device: st.Dev, Inode: st.Ino}, IdentityKnown: true, DeviceNumber: st.Rdev},
 	}
 }
 

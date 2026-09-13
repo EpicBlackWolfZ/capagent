@@ -56,6 +56,11 @@ type Namespace struct {
 // missing versus explicit empty/false values. Helper metadata is a separate
 // observation, never inferred from networkBackend.
 type PodmanInfo struct {
+	OCIRuntime      *SelectedOCIRuntime
+	ConmonPath      string
+	AardvarkPath    string
+	PastaPath       string
+	SlirpPath       string
 	VersionParts    *PodmanVersion `json:"version_parts,omitempty"`
 	Path            string         `json:"path,omitempty"`
 	GraphRoot       *string        `json:"graph_root,omitempty"`

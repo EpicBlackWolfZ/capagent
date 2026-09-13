@@ -18,6 +18,15 @@ var infoToken = regexp.MustCompile(`^[a-zA-Z0-9_.+-]{1,128}$`)
 // remains internal. Unrecognized but well-formed names remain available as data.
 func normalizeInfo(p *model.PodmanInfo) bool {
 	valid := true
+	for _, field := range []*string{&p.ConmonPath, &p.AardvarkPath, &p.PastaPath, &p.SlirpPath} {
+		if *field != "" && !safeInfoPath(*field) {
+			*field, valid = "", false
+		}
+	}
+	if oci := p.OCIRuntime; oci != nil &&
+		(oci.Name != "" && !infoToken.MatchString(oci.Name) || oci.Path != "" && !safeInfoPath(oci.Path)) {
+		p.OCIRuntime, valid = nil, false
+	}
 	for _, field := range []**string{&p.NetworkBackend, &p.StorageDriver, &p.CgroupVersion, &p.CgroupManager} {
 		if *field != nil && **field != "" && !infoToken.MatchString(**field) {
 			*field, valid = nil, false
