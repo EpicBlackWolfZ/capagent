@@ -43,14 +43,14 @@ def main_exit(text, binary):
     return None
 
 
-def verify_report(report, uid, expected_exit):
+def verify_report(report, uid, expected_exit, require_inspection=False):
     evaluation = report.get("evaluation", {})
     if report.get("context", {}).get("uid") != uid or evaluation.get("mode") != "live" or evaluation.get("collection") != "active":
         raise RuntimeError("incorrect execution identity or collection policy")
-    expected_state = "SATISFIED" if expected_exit == 0 else "INDETERMINATE"
+    expected_state = {0: "SATISFIED", 1: "UNSATISFIED", 2: "INDETERMINATE"}[expected_exit]
     if evaluation.get("requirement", {}).get("state") != expected_state:
         raise RuntimeError("incorrect inspection verdict")
-    if expected_exit == 0:
+    if expected_exit == 0 or require_inspection:
         for key in ("runtime.podman", "runtime.podman.info"):
             if report.get("capabilities", {}).get(key, {}).get("state") != "supported":
                 raise RuntimeError("successful report lacks complete inspection predicates")
@@ -85,12 +85,17 @@ def environment_for(directory, account):
     return result
 
 
-def trace_case(binary, executable, tracer, destination, account, environment, scenario):
+def trace_case(binary, executable, tracer, destination, account, environment, scenario, requirement=None):
     trace = destination / f"{scenario}.trace"
     stdout, stderr = destination / f"{scenario}.json", destination / f"{scenario}.stderr"
     rejected, cancelled = scenario.startswith("remote"), scenario == "cancelled"
-    expected_exit = 2 if rejected or cancelled else 0
+    expected_exit = requirement[1] if requirement else 2 if rejected or cancelled else 0
     argv = [str(binary), "--runtime", "podman", "--active", "--podman-path", str(executable), "--json"]
+    if requirement:
+        document = destination / (scenario + ".requirement.json")
+        document.write_text(json.dumps(requirement[0]) + "\n")
+        document.chmod(0o644)
+        argv += ["--requirement", str(document), "--explain"]
     # A root tracer with -u preserves the real account's credentials, groups and
     # setuid newuidmap semantics. Namespace UID 0 is not host-root evidence.
     # With -o, strace defaults to ignoring fatal signals. Permit SIGINT so the
@@ -124,7 +129,7 @@ def trace_case(binary, executable, tracer, destination, account, environment, sc
     if actual_exit != expected_exit:
         raise RuntimeError(f"{scenario}: capagent exit {actual_exit}, expected {expected_exit}; see {stdout}")
     report = json.loads(stdout.read_bytes())
-    verify_report(report, account.pw_uid, expected_exit)
+    verify_report(report, account.pw_uid, expected_exit, requirement is not None)
     verify_connections(captured, rejected, account.pw_uid, environment["XDG_RUNTIME_DIR"])
     codes = [item["code"] for item in report["evaluation"]["diagnostics"]]
     if cancelled and "version_timeout" not in codes:
@@ -182,6 +187,12 @@ def main():
                 for scenario in ("fresh", "initialized", "cancelled"):
                     summary["cases"].append(trace_case(binary, Path("/usr/bin/podman"), Path("/usr/bin/strace"),
                                                       directory, account, environment, scenario))
+                for label, node, code in (
+                        ("satisfied", {"capability": "runtime.podman.info"}, 0),
+                        ("unsatisfied", {"not": {"capability": "runtime.podman.info"}}, 1),
+                        ("indeterminate", {"capability": "runtime.podman.undelivered_requirement_test"}, 2)):
+                    summary["cases"].append(trace_case(binary, Path("/usr/bin/podman"), Path("/usr/bin/strace"),
+                                                      directory, account, environment, "requirement-" + label, (node, code)))
                 for executable, scenario in ((remote, "remote-only"), (Path("/usr/bin/podman"), "remote-config")):
                     mode = "false" if scenario == "remote-only" else "true"
                     with owned_config(Path("/etc/containers/containers.conf"), '[engine]\nremote=' + mode + '\n'):

@@ -15,7 +15,7 @@ The CLI provides:
 - An explicitly active bounded user-manager query, including host-only collection.
 - [Offline fixture evaluation](fixture-evaluation.md), the existing JSON requirement AST and an executable report consumer.
 
-Live Podman inspection currently evaluates `all(runtime.podman, runtime.podman.info)`. User-supplied live requirements and basic evidence explanations are planned in [#112](https://github.com/EpicBlackWolfZ/capagent/issues/112). Registry/image-policy configuration, remaining lifecycle metadata and workload verification remain planned. The [baseline follow-up milestone](https://github.com/EpicBlackWolfZ/capagent/milestone/25) records correctness and validation repairs.
+Live Podman inspection defaults to `all(runtime.podman, runtime.podman.info)`. [User-supplied JSON requirements and bounded evidence explanations](podman-assessment.md) are delivered by #112, with rootless Quadlet and rootful examples. Registry/image-policy configuration, remaining lifecycle metadata and workload verification remain planned. The [baseline follow-up milestone](https://github.com/EpicBlackWolfZ/capagent/milestone/25) records correctness and validation repairs.
 
 Execution targets **Linux 5.6+ with functioning `openat2` confinement**, on amd64 and arm64. A version string does not prove that the syscall is permitted; unsupported kernels or policies receive explicit diagnostics without an insecure fallback. Historical pre-5.6 distribution data can support parser fixtures without establishing execution support. See the [security and support contract](security.md).
 
@@ -76,9 +76,9 @@ Existing milestone URLs and numbers are preserved. The table describes delivery 
 | [M6 — Configuration Discovery](https://github.com/EpicBlackWolfZ/capagent/milestone/7) | Engine, storage and network sources delivered; #66 roll-up retains #113 registry/image-policy discovery. |
 | [M7 — Configuration Capabilities](https://github.com/EpicBlackWolfZ/capagent/milestone/8) | Engine, storage and network prerequisites delivered; #67 roll-up retains remaining lifecycle and registry/image-policy mappings. |
 | [M8 — Capability Catalog Expansion](https://github.com/EpicBlackWolfZ/capagent/milestone/9) | #68 definitions and dependency explanations ship with each producing batch. |
-| [M9 — Requirement Language & Explanations](https://github.com/EpicBlackWolfZ/capagent/milestone/10) | #112 live JSON first; #69 broader consumer-driven language later. |
+| [M9 — Requirement Language & Explanations](https://github.com/EpicBlackWolfZ/capagent/milestone/10) | #112 live JSON and basic explanations delivered; #69 broader consumer-driven language remains. |
 | [M10 — Ansible Integration](https://github.com/EpicBlackWolfZ/capagent/milestone/11) | #70 follows #115; retain the existing consumer smoke now. |
-| [M11 — Diagnostics](https://github.com/EpicBlackWolfZ/capagent/milestone/12) | Basic explanations in #112; #71 full inspection/doctor UX later. |
+| [M11 — Diagnostics](https://github.com/EpicBlackWolfZ/capagent/milestone/12) | Basic requirement/evidence explanations delivered by #112; #71 full inspection/doctor UX remains. |
 | [M12 — Docker](https://github.com/EpicBlackWolfZ/capagent/milestone/13) | #72 baseline after the Podman checkpoint. |
 | [M13 — containerd & CRI](https://github.com/EpicBlackWolfZ/capagent/milestone/14) | #73 baseline after the checkpoint; CRI-O/nerdctl optional. |
 | [M14 — Historical Knowledge](https://github.com/EpicBlackWolfZ/capagent/milestone/15) | #74 specific sourced rules with features, broader coverage later. |

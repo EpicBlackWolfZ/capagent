@@ -1,0 +1,52 @@
+{
+  "all": [
+    {
+      "capability": "runtime.podman"
+    },
+    {
+      "capability": "runtime.podman.info"
+    },
+    {
+      "capability": "runtime.podman.oci_runtime.executable"
+    },
+    {
+      "capability": "runtime.podman.conmon.executable"
+    },
+    {
+      "capability": "runtime.podman.quadlet.generator"
+    },
+    {
+      "capability": "runtime.podman.cgroup_v2"
+    },
+    {
+      "capability": "runtime.podman.quadlet.manager"
+    },
+    {
+      "capability": "runtime.podman.config.engine.parsed"
+    },
+    {
+      "capability": "runtime.podman.cgroup_manager.systemd"
+    },
+    {
+      "capability": "runtime.podman.config.storage.parsed"
+    },
+    {
+      "capability": "runtime.podman.storage.roots.accessible"
+    },
+    {
+      "capability": "runtime.podman.config.network.parsed"
+    },
+    {
+      "capability": "runtime.podman.config.dns.parsed"
+    },
+    {
+      "capability": "runtime.podman.network.backend.netavark"
+    },
+    {
+      "capability": "runtime.podman.netavark.executable"
+    },
+    {
+      "capability": "runtime.podman.aardvark_dns.executable"
+    }
+  ]
+}

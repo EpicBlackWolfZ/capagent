@@ -12,6 +12,8 @@ import (
 	"github.com/EpicBlackWolfZ/capagent/internal/requirement"
 )
 
+const unknownValue = "unknown"
+
 func projectReport(input Input, observations []model.Observation, evaluation capability.Evaluation,
 	decision requirement.Result, results []probe.ProbeResult) *output.Report {
 	runtime, runtimeDiagnostics := projectRuntime(observations, input.Scope)
@@ -31,10 +33,10 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 		report.Host.Completeness = string(model.Partial)
 	}
 	if report.Host.OS == "" {
-		report.Host.OS = "unknown"
+		report.Host.OS = unknownValue
 	}
 	if report.Host.CgroupVersion == "" {
-		report.Host.CgroupVersion = "unknown"
+		report.Host.CgroupVersion = unknownValue
 	}
 	_, completeness := projectHost(input.Context.Host, observations)
 	if completeness != model.Unobserved {
@@ -105,6 +107,7 @@ func projectReport(input Input, observations []model.Observation, evaluation cap
 	}
 	trace.Diagnostics = append(trace.Diagnostics, runtimeDiagnostics...)
 	projectContextCompleteness(report, observations, results)
+	compactRequirementDiagnostics(trace)
 	report.Evaluation = trace
 	return report
 }

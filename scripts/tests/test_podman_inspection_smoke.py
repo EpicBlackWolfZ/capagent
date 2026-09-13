@@ -56,6 +56,16 @@ class InspectionEvidenceTests(unittest.TestCase):
         self.assertIsNone(MODULE.main_exit(trace, Path('/capagent')))
         self.assertEqual(MODULE.main_exit(trace + '17 +++ exited with 2 +++\n', Path('/capagent')), 2)
 
+    def test_custom_requirements_can_fail_despite_complete_inspection(self):
+        for code, state in enumerate(('SATISFIED', 'UNSATISFIED', 'INDETERMINATE')):
+            report = {"context": {"uid": 1000}, "evaluation": {"collection": "active", "mode": "live",
+                      "requirement": {"state": state}}, "capabilities": {
+                          "runtime.podman": {"state": "supported"}, "runtime.podman.info": {"state": "supported"}}}
+            MODULE.verify_report(report, 1000, code, require_inspection=True)
+            report['capabilities']['runtime.podman.info']['state'] = 'unknown'
+            with self.assertRaises(RuntimeError):
+                MODULE.verify_report(report, 1000, code, require_inspection=True)
+
     def test_info_success_requires_both_predicates_and_identity(self):
         report = {"context": {"uid": 1000}, "evaluation": {"collection": "active", "mode": "live",
                   "requirement": {"state": "SATISFIED"}}, "capabilities": {

@@ -18,6 +18,7 @@ func TestCLIFlags(t *testing.T) {
 		{"help", []string{"--help"}, 0}, {"version", []string{"-v"}, 0},
 		{"unknown command", []string{"inspect"}, app.ExitUsage},
 		{"unknown flag", []string{"--invalid"}, app.ExitUsage},
+		{"missing requirement", []string{"--runtime", "podman", "--requirement", "missing-requirement.json"}, app.ExitExecution},
 		{"fixture", []string{"--fixture", "../../testdata/fixtures/v1/supported", "--json", "--pretty"}, 0},
 	}
 	for _, tt := range tests {

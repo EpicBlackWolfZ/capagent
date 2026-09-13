@@ -34,9 +34,11 @@ func run(args []string, stdout, stderr io.Writer) int {
 	flags.StringVar(&opts.Runtime, "runtime", "", "Discover local runtime (podman)")
 	flags.StringVar(&opts.Context, "context", "", "Evaluation identity (current, user:NAME, uid:ID)")
 	flags.StringVar(&opts.PodmanPath, "podman-path", "", "Select an absolute Podman executable path")
+	flags.StringVar(&opts.Requirement, "requirement", "", "Evaluate FILE's bounded JSON requirement for the selected live Podman target")
 	flags.BoolVar(&asJSON, "json", false, "Print JSON (the default output format)")
 	flags.BoolVar(&opts.Pretty, "pretty", false, "Indent JSON output")
 	flags.BoolVar(&opts.Debug, "debug", false, "Print diagnostic codes on stderr")
+	flags.BoolVar(&opts.Explain, "explain", false, "Explain the selected target, requirement and evidence on stderr; retain JSON on stdout")
 	flags.BoolVar(&opts.Active, "active", false, "Permit user-manager queries and local runtime inspection (including Podman startup writes)")
 	flags.Usage = func() { flags.PrintDefaults() }
 	if err := flags.Parse(args); err != nil {

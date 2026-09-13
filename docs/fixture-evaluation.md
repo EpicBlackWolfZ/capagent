@@ -9,7 +9,9 @@ go build -o bin/capagent ./cmd/capagent
 ./bin/capagent --fixture testdata/fixtures/v1/supported --json --pretty
 ```
 
-`--json` is the default format. `--pretty` adds indentation and a trailing newline. `--debug` writes diagnostic codes to stderr; stdout contains only the report. `--help` and `--version` remain available. A missing fixture, unknown command or mixed `--fixture`/`--active` invocation fails visibly. [Local discovery and opt-in inspection](podman-discovery.md) are available separately; no command from a fixture can reach an OS command runner.
+`--json` is the default format. `--pretty` adds indentation and a trailing newline. `--debug` writes diagnostic codes to stderr; stdout contains only the report. `--explain` adds bounded evidence and configuration explanations on stderr,
+using the fixture's embedded requirement; `--requirement FILE` is reserved for
+live Podman evaluation. `--help` and `--version` remain available. A missing fixture, unknown command or mixed `--fixture`/`--active` invocation fails visibly. [Local discovery and opt-in inspection](podman-discovery.md) are available separately; no command from a fixture can reach an OS command runner.
 
 | Exit code | Meaning |
 |---|---|

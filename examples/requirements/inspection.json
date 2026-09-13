@@ -1,0 +1,10 @@
+{
+  "all": [
+    {
+      "capability": "runtime.podman"
+    },
+    {
+      "capability": "runtime.podman.info"
+    }
+  ]
+}

@@ -16,6 +16,9 @@ import (
 )
 
 func validOptions(opts Options) bool {
+	if opts.Requirement != "" && (opts.Fixture != "" || opts.Runtime != "podman") {
+		return false
+	}
 	if opts.Fixture != "" {
 		return !opts.Active && opts.Runtime == "" && opts.Context == "" && opts.PodmanPath == ""
 	}
@@ -99,18 +102,10 @@ func evaluateCurrentServices(ctx context.Context, opts Options, services current
 		AssessPodman: opts.Runtime == "podman",
 		Requirement:  &requirement.Node{Capability: capability.PodmanID}, Observations: []model.Observation{identity},
 		Definitions: []capability.Definition{capability.PodmanDefinition()}}
-	if opts.Runtime == "" {
-		input.Requirement = nil
-		input.Definitions = []capability.Definition{}
-	}
 	if opts.Active {
 		input.Collection = "active"
 	}
-	if opts.Active && opts.Runtime != "" {
-		input.Collection = "active"
-		input.Requirement = &requirement.Node{All: []*requirement.Node{{Capability: capability.PodmanID}, {Capability: capability.PodmanInfoID}}}
-		input.Definitions = append(input.Definitions, capability.PodmanInfoDefinition(), capability.NetavarkDefinition())
-	}
+	applyLiveRequirement(&input, opts)
 	env := platform.NewEnvironment(nil, nil, nil, nil).WithFiles(services.files).WithScope(scope).
 		WithHost(services.host, services.metadata).WithUserManager(services.manager)
 	services, captured, captureErr := captureAssessmentEnvironment(opts, services, current)

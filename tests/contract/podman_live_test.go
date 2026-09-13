@@ -52,8 +52,8 @@ func TestLiveSchemaModeAndProvenance(t *testing.T) {
 	if err := validateJSON(t, schema, stdout.Bytes()); err != nil {
 		t.Fatal(err)
 	}
-	for _, mode := range []string{"fixture", "live"} {
-		for _, provenance := range []string{"captured", "synthetic", "live", testInvalid} {
+	for _, mode := range []string{"fixture", liveRequirementMode} {
+		for _, provenance := range []string{"captured", "synthetic", liveRequirementMode, testInvalid} {
 			r, err := output.Unmarshal(stdout.Bytes())
 			if err != nil {
 				t.Fatal(err)
@@ -64,7 +64,8 @@ func TestLiveSchemaModeAndProvenance(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			valid := mode == "live" && provenance == "live" || mode == "fixture" && (provenance == "captured" || provenance == "synthetic")
+			valid := mode == liveRequirementMode && provenance == liveRequirementMode ||
+				mode == "fixture" && (provenance == "captured" || provenance == "synthetic")
 			if (r.Validate() == nil) != valid || (validateJSON(t, schema, data) == nil) != valid {
 				t.Fatal("schema/DTO mode disagreement", mode, provenance)
 			}
