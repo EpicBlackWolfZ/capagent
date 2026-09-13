@@ -85,7 +85,10 @@ def trace_case(binary, executable, tracer, destination, account, environment, sc
     argv = [str(binary), "--runtime", "podman", "--active", "--podman-path", str(executable), "--json"]
     # A root tracer with -u preserves the real account's credentials, groups and
     # setuid newuidmap semantics. Namespace UID 0 is not host-root evidence.
-    command = [str(tracer), "-f", "-q", "-s", "256", "-u", account.pw_name, "-o", str(trace), "-e", "trace=" + TRACE_CALLS]
+    # With -o, strace defaults to ignoring fatal signals. Permit SIGINT so the
+    # owned tracer can detach after capagent exits while a pause process remains.
+    command = [str(tracer), "-f", "-q", "-I", "2", "-s", "256", "-u", account.pw_name,
+               "-o", str(trace), "-e", "trace=" + TRACE_CALLS]
     if cancelled:
         # Deterministically exceed the 5s version budget in the real runner.
         # Delay only exec entry; no fake output or replacement executable.
