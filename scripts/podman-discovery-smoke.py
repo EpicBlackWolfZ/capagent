@@ -8,7 +8,7 @@ import re
 import subprocess
 
 
-def joined_trace(text):
+def _join_syscalls(text):
     pending, lines = {}, []
     for line in text.splitlines():
         match = re.match(r"(\d+) (.*) <unfinished \.\.\.>", line)
@@ -24,6 +24,32 @@ def joined_trace(text):
     if pending:
         raise RuntimeError("incomplete passive trace")
     return "\n".join(lines)
+
+
+def joined_trace(text):
+    # strace can print ??? for threads interrupted by a sibling's exit_group.
+    # Accept only terminal records tied to a known thread group and observed exit;
+    # real incomplete syscalls and unknown processes still fail closed.
+    interrupted = re.findall(r'^(\d+) \?\?\?\( <unfinished \.\.\.>$', text, re.M)
+    filtered = re.sub(r'^\d+ \?\?\?\( <unfinished \.\.\.>\n', '', text, flags=re.M)
+    joined = _join_syscalls(filtered)
+    parents = dict((child, parent) for parent, child in re.findall(
+        r'^(\d+)\s+clone3?\(.*CLONE_THREAD.*\)\s+= (\d+)$', joined, re.M))
+    def group(pid):
+        seen = set()
+        while pid in parents:
+            if pid in seen:
+                raise ValueError('cyclic thread trace')
+            seen.add(pid)
+            pid = parents[pid]
+        return pid
+    exits = re.findall(r'^(\d+) exit_group\((\d+)\)', joined, re.M)
+    for pid in interrupted:
+        terminal = re.search(r'^' + pid + r' \+\+\+ exited with (\d+) \+\+\+$', joined, re.M)
+        if pid not in parents or terminal is None or not any(
+                group(owner) == group(pid) and code == terminal[1] for owner, code in exits):
+            raise ValueError('unexplained interrupted syscall trace')
+    return joined
 
 
 def verify_trace(text, binary):
@@ -84,7 +110,7 @@ def main():
         ("invalid", ["--podman-path", "relative"], 64),
     ):
         trace = destination / f"{name}.trace"
-        command = [str(tracer), "-f", "-qq", "-s", "256", "-o", str(trace), "-e",
+        command = [str(tracer), "-f", "-q", "-s", "256", "-o", str(trace), "-e",
                    "trace=%file,%process,%network,fchmod,fchown,ftruncate,mount,umount2,setns,unshare",
                    str(binary), "--runtime", "podman", "--json", *extra]
         if args.sudo:

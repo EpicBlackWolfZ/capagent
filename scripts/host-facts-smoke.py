@@ -55,7 +55,7 @@ def main():
     destination.mkdir(parents=True, exist_ok=True)
     environment = {"PATH": "/nonexistent", "LC_ALL": "C", "HOME": "/nonexistent",
                    "CONTAINER_HOST": "ssh://SECRET.invalid/ignored"}
-    command = [str(tracer), "-f", "-qq", "-s", "256", "-o", str(destination / "host.trace"), "-e",
+    command = [str(tracer), "-f", "-q", "-s", "256", "-o", str(destination / "host.trace"), "-e",
                "trace=%file,%process,%network,fchmod,fchown,ftruncate,mount,umount2,setns,unshare,prctl",
                str(binary), "--json"]
     if args.sudo:

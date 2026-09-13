@@ -42,10 +42,12 @@ type MappingHelper struct {
 	Usable           *bool                `json:"usable"`
 }
 type MappingCapabilities struct {
-	Present   bool    `json:"present"`
-	Revision  uint32  `json:"revision"`
-	Effective bool    `json:"effective"`
-	SetUID    bool    `json:"setuid"`
-	SetGID    bool    `json:"setgid"`
-	RootID    *uint32 `json:"root_id,omitempty"`
+	InheritableSetUID bool    `json:"inheritable_setuid"`
+	InheritableSetGID bool    `json:"inheritable_setgid"`
+	Present           bool    `json:"present"`
+	Revision          uint32  `json:"revision"`
+	Effective         bool    `json:"effective"`
+	SetUID            bool    `json:"setuid"`
+	SetGID            bool    `json:"setgid"`
+	RootID            *uint32 `json:"root_id,omitempty"`
 }

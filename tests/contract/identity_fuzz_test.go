@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/EpicBlackWolfZ/capagent/internal/host"
 	"github.com/EpicBlackWolfZ/capagent/internal/model"
+	"github.com/EpicBlackWolfZ/capagent/internal/platform"
 	"github.com/EpicBlackWolfZ/capagent/tests/fuzzutil"
 	"reflect"
 	"testing"
@@ -33,6 +34,7 @@ func FuzzSubIDs(f *testing.F) {
 	f.Fuzz(func(t *testing.T, input []byte) {
 		fuzzutil.Default(fuzzutil.ParserInput).Run(t, input, func() {
 			before := bytes.Clone(input)
+			_, _ = host.ParseMappingCapabilities(platform.CapabilityAttribute{Present: true, Bytes: input})
 			target := model.UserIdentity{UID: 1000, Username: "alice"}
 			a, ae := host.ParseSubIDs(input, target)
 			b, be := host.ParseSubIDs(input, target)

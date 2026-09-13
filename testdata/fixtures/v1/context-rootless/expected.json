@@ -127,6 +127,8 @@
               "setgid": false,
               "executable": true,
               "capabilities": {
+                "inheritable_setuid": false,
+                "inheritable_setgid": false,
                 "present": false,
                 "revision": 0,
                 "effective": false,
@@ -151,6 +153,8 @@
               "setgid": false,
               "executable": true,
               "capabilities": {
+                "inheritable_setuid": false,
+                "inheritable_setgid": false,
                 "present": false,
                 "revision": 0,
                 "effective": false,

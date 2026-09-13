@@ -191,3 +191,18 @@ func TestMappingExecutionRestrictions(t *testing.T) {
 		}
 	}
 }
+
+func TestMappingCapabilitiesPreserveInheritableAndRejectReservedRoot(t *testing.T) {
+	t.Parallel()
+	data := make([]byte, 24)
+	binary.LittleEndian.PutUint32(data, 3<<24|1)
+	binary.LittleEndian.PutUint32(data[8:], 1<<7|1<<6)
+	caps, err := ParseMappingCapabilities(platform.CapabilityAttribute{Present: true, Bytes: data})
+	if err != nil || !caps.InheritableSetUID || !caps.InheritableSetGID || caps.SetUID || caps.SetGID {
+		t.Fatal(caps, err)
+	}
+	binary.LittleEndian.PutUint32(data[20:], ^uint32(0))
+	if _, err := ParseMappingCapabilities(platform.CapabilityAttribute{Present: true, Bytes: data}); err == nil {
+		t.Fatal("reserved root ID accepted")
+	}
+}

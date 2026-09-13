@@ -1445,6 +1445,12 @@
           ],
           "minimum": 0,
           "maximum": 4294967294
+        },
+        "inheritable_setuid": {
+          "type": "boolean"
+        },
+        "inheritable_setgid": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -1452,7 +1458,9 @@
         "revision",
         "effective",
         "setuid",
-        "setgid"
+        "setgid",
+        "inheritable_setuid",
+        "inheritable_setgid"
       ]
     },
     "mappingHelper": {
