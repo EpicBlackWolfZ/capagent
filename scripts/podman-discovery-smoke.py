@@ -11,15 +11,20 @@ import subprocess
 def _join_syscalls(text):
     pending, lines = {}, []
     for line in text.splitlines():
-        match = re.match(r"(\d+) (.*) <unfinished \.\.\.>", line)
+        match = re.fullmatch(r"(\d+) (.*) <unfinished \.\.\.>", line)
         if match:
+            if match[1] in pending:
+                raise RuntimeError("overlapping unfinished syscall")
             pending[match[1]] = match[2]
             continue
-        resumed = re.match(r"(\d+) <\.\.\. \w+ resumed>(.*)", line)
+        resumed = re.fullmatch(r"(\d+) <\.\.\. (\w+) resumed>(.*)", line)
         if resumed:
             if resumed[1] not in pending:
                 raise RuntimeError("unmatched syscall completion")
-            line = resumed[1] + " " + pending.pop(resumed[1]) + resumed[2]
+            prefix = pending.pop(resumed[1])
+            if not prefix.startswith(resumed[2] + "("):
+                raise RuntimeError("mismatched syscall completion")
+            line = resumed[1] + " " + prefix + resumed[3]
         lines.append(line)
     if pending:
         raise RuntimeError("incomplete passive trace")

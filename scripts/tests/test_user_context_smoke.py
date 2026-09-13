@@ -9,12 +9,13 @@ SPEC.loader.exec_module(SMOKE)
 
 class UserContextSmokeTests(unittest.TestCase):
     def test_active_trace_allows_only_query_client_abstract_bind(self):
-        trace = ('10 execve("/capagent", [], []) = 0\n20 execve("/proc/self/fd/3", [], []) = 0\n'
+        trace = ('10 execve("/capagent", ["/capagent", "--context=uid:1000", "--json", "--active"], []) = 0\n10 clone(flags=CLONE_VM|CLONE_VFORK|SIGCHLD) = 20\n20 execve("/proc/self/fd/3", ["/proc/self/fd/3", "--internal-target-worker"], []) = 0\n20 setgroups(1, [1000]) = 0\n20 setresgid(1000, 1000, 1000) = 0\n20 setresuid(1000, 1000, 1000) = 0\n20 clone(flags=CLONE_VM|CLONE_VFORK|SIGCHLD) = 30\n'
                  '30 execve("/usr/bin/systemctl", ["/usr/bin/systemctl", "--user", "--no-pager", "--no-ask-password", '
                  '"show", "--property=Version", "--value"], []) = 0\n'
                  '30 socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, 0) = 3\n'
                  '30 bind(3, {sa_family=AF_UNIX, sun_path=@"4accc3dfd8af342a/bus/systemctl/"}, 34) = 0\n'
-                 '30 connect(3, {sa_family=AF_UNIX, sun_path="/run/user/1000/systemd/private"}, 32) = 0\n')
+                 '30 connect(3, {sa_family=AF_UNIX, sun_path="/run/user/1000/systemd/private"}, 32) = 0\n30 exit_group(0) = ?\n30 +++ exited with 0 +++\n'
+                 '20 exit_group(0) = ?\n20 +++ exited with 0 +++\n10 exit_group(0) = ?\n10 +++ exited with 0 +++\n')
         SMOKE.verify_active_trace(trace, Path('/capagent'), 1000)
         for changed in (trace.replace('30 bind', '20 bind'), trace.replace('bind(3', 'bind(4'),
                         trace.replace('sun_path=@"', 'sun_path="'), trace.replace('/bus/systemctl/', '/other/'),
@@ -25,10 +26,11 @@ class UserContextSmokeTests(unittest.TestCase):
                 SMOKE.verify_active_trace(changed, Path('/capagent'), 1000)
 
     def test_active_trace_rejects_remote_and_mutating_queries(self):
-        trace = ('10 execve("/capagent", [], []) = 0\n20 execve("/proc/self/fd/3", [], []) = 0\n'
+        trace = ('10 execve("/capagent", ["/capagent", "--context=uid:1000", "--json", "--active"], []) = 0\n10 clone(flags=CLONE_VM|CLONE_VFORK|SIGCHLD) = 20\n20 execve("/proc/self/fd/3", ["/proc/self/fd/3", "--internal-target-worker"], []) = 0\n20 setgroups(1, [1000]) = 0\n20 setresgid(1000, 1000, 1000) = 0\n20 setresuid(1000, 1000, 1000) = 0\n20 clone(flags=CLONE_VM|CLONE_VFORK|SIGCHLD) = 30\n'
                  '30 execve("/usr/bin/systemctl", ["/usr/bin/systemctl", "--user", "--no-pager", "--no-ask-password", '
                  '"show", "--property=Version", "--value"], []) = 0\n'
-                 '30 connect(3, {sa_family=AF_UNIX, sun_path="/run/user/1000/systemd/private"}, 32) = 0\n')
+                 '30 connect(3, {sa_family=AF_UNIX, sun_path="/run/user/1000/systemd/private"}, 32) = 0\n30 exit_group(0) = ?\n30 +++ exited with 0 +++\n'
+                 '20 exit_group(0) = ?\n20 +++ exited with 0 +++\n10 exit_group(0) = ?\n10 +++ exited with 0 +++\n')
         SMOKE.verify_active_trace(trace, Path('/capagent'), 1000)
         for changed in (trace.replace('AF_UNIX', 'AF_INET'), trace.replace('"show"', '"start"'),
                         trace.replace('/run/user/1000/', '/run/user/0/')):

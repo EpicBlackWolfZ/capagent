@@ -226,3 +226,31 @@ namespace mutations, security-policy setters and unexpected child commands.
 Private Go runtime memory labels and the checked exit-only PIDFD probe are allowed.
 Missing or restricted measurements remain partial; a passing harness does not
 turn an unknown capability into a supported capability.
+
+
+## Delegated passive trace policy
+
+`scripts/context-smoke.py` traces the selected worker with the explicit inventory in
+`scripts/context_trace.py`. The inventory includes path and descriptor mutations,
+credential variants, network calls, namespace entry/creation, shared writable maps,
+positioned writes, descriptor control operations and asynchronous I/O submission.
+File contents are not collected with read/pread syscalls. FD annotations identify
+report/worker pipes and the Go runtime's local eventfd wakeups; ordinary file writes
+remain forbidden. Captured strings are bounded to 320 bytes, command execution to
+55 seconds, and validation input to 16 MiB. Truncated command arguments fail validation.
+
+Validation requires the exact launcher, pinned worker and `systemctl --version`
+arguments, connected process/thread lineage and matching terminal exit records.
+The Go runtime's exit-only PIDFD probes, ordinary threads and target credential drops
+are checked separately. Launcher credential changes, namespace clone flags, arbitrary
+executables, metadata writes, network sends/connections/listeners and unreviewed
+ioctls are rejected, including attempted operations that failed. Resumed records must
+match their pending syscall and cannot replace another unfinished record.
+
+The active user-manager harness shares these checks and adds only the exact query
+command and its declared local Unix connection, bounded socket buffer options and
+message exchange. Neither harness permits service starts or arbitrary systemctl
+arguments. The negative corpus covers syscall variants and resumed records; the
+positive delegated trace records its capture source and sanitization in
+`scripts/tests/fixtures/context-trace/provenance.json`. CI supplies fresh native
+root-to-target execution evidence; static architecture builds are a separate check.

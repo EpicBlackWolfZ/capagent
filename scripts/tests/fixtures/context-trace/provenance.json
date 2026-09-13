@@ -1,0 +1,23 @@
+{
+  "kind": "captured",
+  "source_run": "https://github.com/EpicBlackWolfZ/capagent/actions/runs/34759654670",
+  "commit": "d2601a7",
+  "source_sha256": "f61c6b1c5b3817e14c0fa94d360639563bdfdc24b0ddb29061fae7ef7ee03944",
+  "architecture": "amd64",
+  "target": {
+    "uid": 1001,
+    "gid": 1001,
+    "groups": [
+      4,
+      100,
+      118,
+      999,
+      1001
+    ]
+  },
+  "binary": "/capagent",
+  "redactions": [
+    "Workspace-specific binary path replaced with /capagent; executable argv and process/credential records preserved."
+  ],
+  "capture_inventory": "%process,%file,%network,%creds,%memory,prctl,capset,setns,unshare,memfd_create,open_by_handle_at,fchmod,fchown,fchown32,ftruncate,ftruncate64,fallocate,fsync,fdatasync,sync,syncfs,sync_file_range,fsetxattr,fremovexattr,ioctl,fcntl,fcntl64,flock,eventfd,eventfd2,write,writev,pwrite64,pwritev,pwritev2,sendfile,sendfile64,copy_file_range,splice,tee,vmsplice,io_uring_setup,io_uring_enter,io_uring_register"
+}
