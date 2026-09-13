@@ -40,3 +40,15 @@ class PrerequisiteCaptureTests(unittest.TestCase):
                 report['runtimes']['podman']['accessible'] = False if scenario == 'unavailable' else None
             with self.subTest(scenario=scenario), self.assertRaises(ValueError):
                 CAPTURE.project(report, 'invalid test')
+
+    def test_engine_capture_preserves_version_binding_and_redaction(self):
+        report = self.report()
+        report['evaluation']['target']['username'] = 'PRIVATE_USERNAME'
+        result = CAPTURE.project(report, 'engine capture test', configuration=True)
+        observations = result['observations']
+        source = next(item['configuration'] for item in observations if 'configuration' in item)
+        version = next(item for item in observations if item['id'] == source['version_source_id'])
+        self.assertEqual(version['version']['Version']['canonical'], '5.8.4')
+        self.assertIn('runtime.podman.config.engine.parsed', result['states'])
+        self.assertIn('runtime.podman.cgroup_manager.systemd', result['states'])
+        self.assertEqual(result['context']['identity']['target']['username'], 'captured-user')

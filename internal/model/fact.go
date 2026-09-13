@@ -33,23 +33,24 @@ type ObservationRef struct {
 // Completeness and diagnostics survive failure; no generic attribute bag or
 // capability evaluation is part of the model.
 type Observation struct {
-	Quadlet      *QuadletObservation       `json:"quadlet,omitempty"`
-	Executable   *ExecutableObservation    `json:"executable,omitempty"`
-	UserContext  *UserContextObservation   `json:"user_context,omitempty"`
-	SubIDs       *SubIDObservation         `json:"subids,omitempty"`
-	Authority    string                    `json:"authority,omitempty"`
-	Identity     *IdentityObservation      `json:"identity,omitempty"`
-	Host         *HostObservation          `json:"host,omitempty"`
-	PodmanHelper *PodmanHelper             `json:"podman_helper,omitempty"`
-	ID           string                    `json:"id"`
-	ProbeID      string                    `json:"probe_id"`
-	Timestamp    time.Time                 `json:"timestamp"`
-	Summary      string                    `json:"summary"`
-	Scope        EvaluationScope           `json:"scope"`
-	Completeness Completeness              `json:"completeness"`
-	Facts        []Fact                    `json:"facts,omitempty"`
-	Diagnostics  []Diagnostic              `json:"diagnostics,omitempty"`
-	Podman       *PodmanInfo               `json:"podman,omitempty"`
-	Discovery    *RuntimeDiscovery         `json:"discovery,omitempty"`
-	Version      *PodmanVersionObservation `json:"version,omitempty"`
+	Configuration *ConfigurationObservation `json:"configuration,omitempty"`
+	Quadlet       *QuadletObservation       `json:"quadlet,omitempty"`
+	Executable    *ExecutableObservation    `json:"executable,omitempty"`
+	UserContext   *UserContextObservation   `json:"user_context,omitempty"`
+	SubIDs        *SubIDObservation         `json:"subids,omitempty"`
+	Authority     string                    `json:"authority,omitempty"`
+	Identity      *IdentityObservation      `json:"identity,omitempty"`
+	Host          *HostObservation          `json:"host,omitempty"`
+	PodmanHelper  *PodmanHelper             `json:"podman_helper,omitempty"`
+	ID            string                    `json:"id"`
+	ProbeID       string                    `json:"probe_id"`
+	Timestamp     time.Time                 `json:"timestamp"`
+	Summary       string                    `json:"summary"`
+	Scope         EvaluationScope           `json:"scope"`
+	Completeness  Completeness              `json:"completeness"`
+	Facts         []Fact                    `json:"facts,omitempty"`
+	Diagnostics   []Diagnostic              `json:"diagnostics,omitempty"`
+	Podman        *PodmanInfo               `json:"podman,omitempty"`
+	Discovery     *RuntimeDiscovery         `json:"discovery,omitempty"`
+	Version       *PodmanVersionObservation `json:"version,omitempty"`
 }

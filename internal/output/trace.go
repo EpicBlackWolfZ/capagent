@@ -40,20 +40,21 @@ type FactRecord struct {
 type HostObservation model.HostObservation
 
 type ObservationRecord struct {
-	Executable   *model.ExecutableObservation  `json:"executable,omitempty"`
-	Quadlet      *model.QuadletObservation     `json:"quadlet,omitempty"`
-	UserContext  *model.UserContextObservation `json:"user_context,omitempty"`
-	SubIDs       *model.SubIDObservation       `json:"subids,omitempty"`
-	Authority    string                        `json:"authority,omitempty"`
-	Identity     *model.IdentityObservation    `json:"identity,omitempty"`
-	Host         *HostObservation              `json:"host,omitempty"`
-	ID           string                        `json:"id"`
-	ProbeID      string                        `json:"probe_id"`
-	Scope        Scope                         `json:"scope"`
-	Timestamp    time.Time                     `json:"timestamp"`
-	Completeness string                        `json:"completeness"`
-	Facts        []FactRecord                  `json:"facts"`
-	Diagnostics  []Diagnostic                  `json:"diagnostics"`
+	Configuration *model.ConfigurationObservation `json:"configuration,omitempty"`
+	Executable    *model.ExecutableObservation    `json:"executable,omitempty"`
+	Quadlet       *model.QuadletObservation       `json:"quadlet,omitempty"`
+	UserContext   *model.UserContextObservation   `json:"user_context,omitempty"`
+	SubIDs        *model.SubIDObservation         `json:"subids,omitempty"`
+	Authority     string                          `json:"authority,omitempty"`
+	Identity      *model.IdentityObservation      `json:"identity,omitempty"`
+	Host          *HostObservation                `json:"host,omitempty"`
+	ID            string                          `json:"id"`
+	ProbeID       string                          `json:"probe_id"`
+	Scope         Scope                           `json:"scope"`
+	Timestamp     time.Time                       `json:"timestamp"`
+	Completeness  string                          `json:"completeness"`
+	Facts         []FactRecord                    `json:"facts"`
+	Diagnostics   []Diagnostic                    `json:"diagnostics"`
 }
 type EvidenceRecord struct {
 	ID           string    `json:"id"`

@@ -620,6 +620,9 @@
         },
         "quadlet": {
           "$ref": "#/$defs/quadlet_observation"
+        },
+        "configuration": {
+          "$ref": "#/$defs/configuration_observation"
         }
       },
       "required": [
@@ -1919,6 +1922,269 @@
         "reference",
         "locations"
       ]
+    },
+    "config_string": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "maxLength": 65536,
+          "pattern": "^[^\\x00-\\x1f\\x7f]*$"
+        },
+        "source_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "source_id"
+      ],
+      "additionalProperties": false
+    },
+    "config_list": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096
+        },
+        "origins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "append": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "inherited_default": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "values",
+        "origins",
+        "source_id",
+        "append",
+        "inherited_default"
+      ],
+      "additionalProperties": false
+    },
+    "config_redacted_list": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "append": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "inherited_default": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "count",
+        "source_id",
+        "append",
+        "inherited_default"
+      ],
+      "additionalProperties": false
+    },
+    "engine_configuration": {
+      "type": "object",
+      "properties": {
+        "runtime": {
+          "$ref": "#/$defs/config_string"
+        },
+        "cgroup_manager": {
+          "$ref": "#/$defs/config_string"
+        },
+        "runtimes": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/config_list"
+          },
+          "maxProperties": 4096
+        },
+        "conmon_path": {
+          "$ref": "#/$defs/config_list"
+        },
+        "helper_binaries_dir": {
+          "$ref": "#/$defs/config_list"
+        },
+        "runtime_path": {
+          "$ref": "#/$defs/config_list"
+        },
+        "environment": {
+          "$ref": "#/$defs/config_redacted_list"
+        },
+        "selection_overrides": {
+          "type": "boolean"
+        },
+        "unprojected_field_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "runtimes",
+        "selection_overrides",
+        "unprojected_field_count"
+      ],
+      "additionalProperties": false
+    },
+    "configuration_source": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^/[^\\x00-\\x1f\\x7f]*$"
+        },
+        "kind": {
+          "enum": [
+            "file",
+            "directory"
+          ]
+        },
+        "status": {
+          "enum": [
+            "parsed",
+            "listed",
+            "absent",
+            "symlink_skipped",
+            "stat_denied",
+            "stat_incomplete",
+            "malformed",
+            "invalid",
+            "unsupported",
+            "limit",
+            "incomplete",
+            "denied"
+          ]
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "selected": {
+          "type": "boolean"
+        },
+        "applied": {
+          "type": "boolean"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "field": {
+          "enum": [
+            "engine",
+            "engine.runtime",
+            "engine.cgroup_manager",
+            "engine.runtimes",
+            "engine.conmon_path",
+            "engine.helper_binaries_dir",
+            "engine.runtime_path",
+            "engine.env"
+          ]
+        },
+        "engine": {
+          "$ref": "#/$defs/engine_configuration"
+        },
+        "problem": {
+          "enum": [
+            "config_malformed",
+            "config_limit",
+            "config_field_invalid",
+            "config_field_unsupported",
+            "config_toml_version_unsupported"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "kind",
+        "status",
+        "order",
+        "selected",
+        "applied"
+      ],
+      "additionalProperties": false
+    },
+    "configuration_observation": {
+      "type": "object",
+      "properties": {
+        "family": {
+          "const": "engine"
+        },
+        "runtime_path": {
+          "type": "string"
+        },
+        "version_source_id": {
+          "type": "string"
+        },
+        "profile": {
+          "enum": [
+            "podman-4.9.3",
+            "podman-5.8.4",
+            "unqualified"
+          ]
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096
+        },
+        "selection_complete": {
+          "type": "boolean"
+        },
+        "parse_complete": {
+          "type": "boolean"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/configuration_source"
+          },
+          "maxItems": 72
+        },
+        "engine": {
+          "$ref": "#/$defs/engine_configuration"
+        }
+      },
+      "required": [
+        "family",
+        "profile",
+        "references",
+        "selection_complete",
+        "parse_complete",
+        "sources"
+      ],
+      "additionalProperties": false
     }
   },
   "allOf": [

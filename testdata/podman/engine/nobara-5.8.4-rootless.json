@@ -1,0 +1,1851 @@
+{
+  "schema_version": 1,
+  "provenance": {
+    "kind": "captured",
+    "description": "Native Nobara amd64, Podman 5.8.4, selected rootless UID1000. Engine sources were read and parsed by the native collector; typed projections and original complete-read digests retained. Configuration contents are not included. Collection occurred during the engine batch; this capture does not prove workload operation.",
+    "conversion": "Typed native measurements; info JSON reconstructed from published fields; home and user names anonymized."
+  },
+  "scope": {
+    "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+    "context_id": "current",
+    "runtime": "podman",
+    "endpoint": "local"
+  },
+  "timestamp": "2026-09-13T17:19:25.62797058+02:00",
+  "runtime_path": "/usr/bin/podman",
+  "context": {
+    "id": "current",
+    "identity": {
+      "current": {
+        "uid": 1000,
+        "gid": 1000,
+        "supplementary_groups": [
+          10,
+          100,
+          970,
+          971,
+          982,
+          1000
+        ],
+        "groups_known": true
+      },
+      "target": {
+        "uid": 1000,
+        "gid": 1000,
+        "supplementary_groups": [
+          10,
+          100,
+          970,
+          971,
+          982,
+          1000
+        ],
+        "groups_known": true
+      },
+      "execution": {
+        "uid": 1000,
+        "gid": 1000,
+        "supplementary_groups": [
+          10,
+          100,
+          970,
+          971,
+          982,
+          1000
+        ],
+        "groups_known": true
+      }
+    }
+  },
+  "info": {
+    "version": {
+      "Version": "5.8.4"
+    },
+    "host": {
+      "security": {
+        "rootless": true
+      },
+      "serviceIsRemote": false,
+      "cgroupVersion": "v2",
+      "cgroupManager": "systemd",
+      "networkBackend": "netavark",
+      "networkBackendInfo": {
+        "path": "/usr/libexec/podman/netavark",
+        "dns": {
+          "path": "/usr/libexec/podman/aardvark-dns"
+        }
+      },
+      "conmon": {
+        "path": "/usr/bin/conmon"
+      },
+      "pasta": {
+        "executable": "/usr/bin/pasta"
+      },
+      "slirp4netns": {
+        "executable": ""
+      },
+      "ociRuntime": {
+        "name": "crun",
+        "path": "/usr/bin/crun"
+      }
+    },
+    "store": {
+      "graphDriverName": "overlay",
+      "graphRoot": "/home/captured-user/.local/share/containers/storage",
+      "runRoot": "/run/user/1000/containers"
+    }
+  },
+  "observations": [
+    {
+      "user_context": {
+        "runtime": {
+          "path": "/run/user/1000",
+          "source": "environment",
+          "present": true,
+          "directory": true,
+          "uid": 1000,
+          "mode": 448,
+          "private": true,
+          "valid": true
+        },
+        "socket_present": true,
+        "socket_valid": true,
+        "accessible": true,
+        "linger_enabled": false,
+        "query_attempted": true,
+        "manager_version": "259.8-1.fc44"
+      },
+      "authority": "execution",
+      "id": "context.user",
+      "probe_id": "context.user",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.515196676+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "context.user.0",
+          "source": "linger marker",
+          "timestamp": "2026-09-13T17:19:25.515196676+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "context.user.1",
+          "source": "runtime directory",
+          "timestamp": "2026-09-13T17:19:25.515196676+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "context.user.2",
+          "source": "user manager private socket",
+          "timestamp": "2026-09-13T17:19:25.515196676+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "context.user.3",
+          "source": "/usr/bin/systemctl",
+          "timestamp": "2026-09-13T17:19:25.515196676+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "context.user.4",
+          "source": "user manager query",
+          "timestamp": "2026-09-13T17:19:25.515196676+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "authority": "execution",
+      "host": {
+        "cgroups": {
+          "mode": "v2",
+          "memberships": [
+            {
+              "hierarchy": "0",
+              "controllers": [],
+              "path": "/user.slice/user-1000.slice/user@1000.service/app.slice/app-org.chromium.Chromium-214189.scope"
+            }
+          ],
+          "mounts": [
+            {
+              "path": "/sys/fs/cgroup",
+              "root": "/",
+              "type": "cgroup2",
+              "controller_path": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/app-org.chromium.Chromium-214189.scope",
+              "controllers": [
+                "cpu",
+                "io",
+                "memory",
+                "pids"
+              ],
+              "subtree_control": []
+            }
+          ]
+        }
+      },
+      "id": "host.cgroups",
+      "probe_id": "host.cgroups",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.514985737+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "host.cgroups.0",
+          "source": "proc/self/mountinfo",
+          "timestamp": "2026-09-13T17:19:25.514985737+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "host.cgroups.1",
+          "source": "proc/self/cgroup",
+          "timestamp": "2026-09-13T17:19:25.514985737+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "host.cgroups.2",
+          "source": "statfs.cgroup_mount",
+          "timestamp": "2026-09-13T17:19:25.514985737+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "host.cgroups.3",
+          "source": "sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/app-org.chromium.Chromium-214189.scope/cgroup.controllers",
+          "timestamp": "2026-09-13T17:19:25.514985737+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "host.cgroups.4",
+          "source": "sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/app-org.chromium.Chromium-214189.scope/cgroup.subtree_control",
+          "timestamp": "2026-09-13T17:19:25.514985737+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "authority": "execution",
+      "host": {
+        "systemd": {
+          "installed": true,
+          "utility_installed": true,
+          "running": true,
+          "runtime_directory": true,
+          "accessible": null,
+          "version": "259",
+          "utility_path": "/usr/bin/systemctl"
+        }
+      },
+      "id": "host.systemd",
+      "probe_id": "host.systemd",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.514984727+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "host.systemd.0",
+          "source": "proc/1/comm",
+          "timestamp": "2026-09-13T17:19:25.514984727+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "host.systemd.1",
+          "source": "run/systemd/system",
+          "timestamp": "2026-09-13T17:19:25.514984727+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "host.systemd.2",
+          "source": "usr/lib/systemd/systemd",
+          "timestamp": "2026-09-13T17:19:25.514984727+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "host.systemd.3",
+          "source": "usr/bin/systemctl",
+          "timestamp": "2026-09-13T17:19:25.514984727+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        },
+        {
+          "id": "host.systemd.4",
+          "source": "command.systemctl_version",
+          "timestamp": "2026-09-13T17:19:25.514984727+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "configuration": {
+        "family": "engine",
+        "runtime_path": "/usr/bin/podman",
+        "version_source_id": "podman.version",
+        "profile": "podman-5.8.4",
+        "references": [
+          "https://github.com/containers/podman/blob/v4.9.3/vendor/github.com/containers/common/pkg/config/new.go",
+          "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/pkg/config/new.go"
+        ],
+        "selection_complete": true,
+        "parse_complete": true,
+        "sources": [
+          {
+            "id": "podman.configuration.engine.source.0",
+            "path": "/usr/share/containers/containers.conf",
+            "kind": "file",
+            "status": "parsed",
+            "order": 0,
+            "selected": true,
+            "applied": true,
+            "sha256": "6b1069352180459572e458cd778961cc22ab144dd2f63605d3bbdd16099f6c85",
+            "engine": {
+              "runtime": {
+                "value": "crun",
+                "source_id": "podman.configuration.engine.source.0"
+              },
+              "runtimes": {},
+              "selection_overrides": false,
+              "unprojected_field_count": 2
+            }
+          },
+          {
+            "id": "podman.configuration.engine.source.1",
+            "path": "/etc/containers/containers.conf",
+            "kind": "file",
+            "status": "absent",
+            "order": 1,
+            "selected": true,
+            "applied": false
+          },
+          {
+            "id": "podman.configuration.engine.source.2",
+            "path": "/etc/containers/containers.conf.d",
+            "kind": "directory",
+            "status": "absent",
+            "order": 2,
+            "selected": true,
+            "applied": false
+          },
+          {
+            "id": "podman.configuration.engine.source.3",
+            "path": "/etc/containers/containers.rootless.conf",
+            "kind": "file",
+            "status": "absent",
+            "order": 3,
+            "selected": true,
+            "applied": false
+          },
+          {
+            "id": "podman.configuration.engine.source.4",
+            "path": "/etc/containers/containers.rootless.conf.d",
+            "kind": "directory",
+            "status": "absent",
+            "order": 4,
+            "selected": true,
+            "applied": false
+          },
+          {
+            "id": "podman.configuration.engine.source.5",
+            "path": "/etc/containers/containers.rootless.conf.d/1000",
+            "kind": "directory",
+            "status": "absent",
+            "order": 5,
+            "selected": true,
+            "applied": false
+          },
+          {
+            "id": "podman.configuration.engine.source.6",
+            "path": "/home/captured-user/.config/containers/containers.conf",
+            "kind": "file",
+            "status": "absent",
+            "order": 6,
+            "selected": true,
+            "applied": false
+          },
+          {
+            "id": "podman.configuration.engine.source.7",
+            "path": "/home/captured-user/.config/containers/containers.conf.d",
+            "kind": "directory",
+            "status": "absent",
+            "order": 7,
+            "selected": true,
+            "applied": false
+          }
+        ],
+        "engine": {
+          "runtime": {
+            "value": "crun",
+            "source_id": "podman.configuration.engine.source.0"
+          },
+          "runtimes": {},
+          "selection_overrides": false,
+          "unprojected_field_count": 2
+        }
+      },
+      "authority": "execution",
+      "id": "podman.configuration.engine",
+      "probe_id": "podman.configuration.engine",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.62780949+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.configuration.engine.measurement",
+          "source": "podman.configuration.engine",
+          "timestamp": "2026-09-13T17:19:25.62780949+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "conmon",
+        "source": "configuration",
+        "source_id": "podman.configuration.engine",
+        "runtime_path": "/usr/bin/podman",
+        "candidates": []
+      },
+      "authority": "execution",
+      "id": "podman.executable.configuration.conmon",
+      "probe_id": "podman.executable.configuration.conmon",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.62796858+02:00",
+      "completeness": "partial",
+      "facts": [
+        {
+          "id": "podman.executable.configuration.conmon.measurement",
+          "source": "podman.executable.configuration.conmon",
+          "timestamp": "2026-09-13T17:19:25.62796858+02:00",
+          "completeness": "partial",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "configured_default_unobserved",
+          "message": "runtime observation is incomplete"
+        }
+      ]
+    },
+    {
+      "executable": {
+        "role": "oci_runtime",
+        "source": "configuration",
+        "source_id": "podman.configuration.engine",
+        "runtime_path": "/usr/bin/podman",
+        "candidates": []
+      },
+      "authority": "execution",
+      "id": "podman.executable.configuration.oci_runtime",
+      "probe_id": "podman.executable.configuration.oci_runtime",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.62796746+02:00",
+      "completeness": "partial",
+      "facts": [
+        {
+          "id": "podman.executable.configuration.oci_runtime.measurement",
+          "source": "podman.executable.configuration.oci_runtime",
+          "timestamp": "2026-09-13T17:19:25.62796746+02:00",
+          "completeness": "partial",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "configured_default_unobserved",
+          "message": "runtime observation is incomplete"
+        }
+      ]
+    },
+    {
+      "executable": {
+        "role": "aardvark_dns",
+        "source": "runtime",
+        "source_id": "podman.info",
+        "runtime_path": "/usr/bin/podman",
+        "selected_path": "/usr/libexec/podman/aardvark-dns",
+        "candidates": [
+          {
+            "path": "/usr/libexec/podman/aardvark-dns",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 2794319,
+            "executable": true,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.runtime.aardvark_dns",
+      "probe_id": "podman.executable.runtime.aardvark_dns",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.62779792+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.runtime.aardvark_dns.measurement",
+          "source": "podman.executable.runtime.aardvark_dns",
+          "timestamp": "2026-09-13T17:19:25.62779792+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "conmon",
+        "source": "runtime",
+        "source_id": "podman.info",
+        "runtime_path": "/usr/bin/podman",
+        "selected_path": "/usr/bin/conmon",
+        "candidates": [
+          {
+            "path": "/usr/bin/conmon",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 2780125,
+            "executable": true,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.runtime.conmon",
+      "probe_id": "podman.executable.runtime.conmon",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.62778904+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.runtime.conmon.measurement",
+          "source": "podman.executable.runtime.conmon",
+          "timestamp": "2026-09-13T17:19:25.62778904+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "netavark",
+        "source": "runtime",
+        "source_id": "podman.info",
+        "runtime_path": "/usr/bin/podman",
+        "selected_path": "/usr/libexec/podman/netavark",
+        "candidates": [
+          {
+            "path": "/usr/libexec/podman/netavark",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 2796635,
+            "executable": true,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.runtime.netavark",
+      "probe_id": "podman.executable.runtime.netavark",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.62779324+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.runtime.netavark.measurement",
+          "source": "podman.executable.runtime.netavark",
+          "timestamp": "2026-09-13T17:19:25.62779324+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "oci_runtime",
+        "source": "runtime",
+        "source_id": "podman.info",
+        "runtime_path": "/usr/bin/podman",
+        "selected_path": "/usr/bin/crun",
+        "candidates": [
+          {
+            "path": "/usr/bin/crun",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 2779645,
+            "executable": true,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.runtime.oci_runtime",
+      "probe_id": "podman.executable.runtime.oci_runtime",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.62777525+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.runtime.oci_runtime.measurement",
+          "source": "podman.executable.runtime.oci_runtime",
+          "timestamp": "2026-09-13T17:19:25.62777525+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "pasta",
+        "source": "runtime",
+        "source_id": "podman.info",
+        "runtime_path": "/usr/bin/podman",
+        "selected_path": "/usr/bin/pasta",
+        "candidates": [
+          {
+            "path": "/usr/bin/pasta",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 4000939,
+            "executable": true,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.runtime.pasta",
+      "probe_id": "podman.executable.runtime.pasta",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.62780168+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.runtime.pasta.measurement",
+          "source": "podman.executable.runtime.pasta",
+          "timestamp": "2026-09-13T17:19:25.62780168+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "quadlet",
+        "source": "systemd_user_generators",
+        "selected_path": "/usr/lib/systemd/user-generators/podman-user-generator",
+        "candidates": [
+          {
+            "path": "/run/systemd/user-generators/podman-user-generator",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/etc/systemd/user-generators/podman-user-generator",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/lib/systemd/user-generators/podman-user-generator",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/lib/systemd/user-generators/podman-user-generator",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 3428673,
+            "executable": true,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.systemd_user_generators.quadlet",
+      "probe_id": "podman.executable.systemd_user_generators.quadlet",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.515206666+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.systemd_user_generators.quadlet.measurement",
+          "source": "podman.executable.systemd_user_generators.quadlet",
+          "timestamp": "2026-09-13T17:19:25.515206666+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "aardvark_dns",
+        "source": "trusted_candidates",
+        "candidates": [
+          {
+            "path": "/usr/local/bin/aardvark-dns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/bin/aardvark-dns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/bin/aardvark-dns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/libexec/podman/aardvark-dns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/libexec/podman/aardvark-dns",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 2794319,
+            "executable": true,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/lib/podman/aardvark-dns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/lib/podman/aardvark-dns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.trusted_candidates.aardvark_dns",
+      "probe_id": "podman.executable.trusted_candidates.aardvark_dns",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.515293946+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.trusted_candidates.aardvark_dns.measurement",
+          "source": "podman.executable.trusted_candidates.aardvark_dns",
+          "timestamp": "2026-09-13T17:19:25.515293946+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "conmon",
+        "source": "trusted_candidates",
+        "candidates": [
+          {
+            "path": "/usr/local/bin/conmon",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/bin/conmon",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 2780125,
+            "executable": true,
+            "masked": false
+          },
+          {
+            "path": "/bin/conmon",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 2780125,
+            "executable": true,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/libexec/podman/conmon",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/libexec/podman/conmon",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/lib/podman/conmon",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/lib/podman/conmon",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.trusted_candidates.conmon",
+      "probe_id": "podman.executable.trusted_candidates.conmon",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.515275146+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.trusted_candidates.conmon.measurement",
+          "source": "podman.executable.trusted_candidates.conmon",
+          "timestamp": "2026-09-13T17:19:25.515275146+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "crun",
+        "source": "trusted_candidates",
+        "candidates": [
+          {
+            "path": "/usr/local/bin/crun",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/bin/crun",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 2779645,
+            "executable": true,
+            "masked": false
+          },
+          {
+            "path": "/bin/crun",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 2779645,
+            "executable": true,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/libexec/podman/crun",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/libexec/podman/crun",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/lib/podman/crun",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/lib/podman/crun",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.trusted_candidates.crun",
+      "probe_id": "podman.executable.trusted_candidates.crun",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.515250656+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.trusted_candidates.crun.measurement",
+          "source": "podman.executable.trusted_candidates.crun",
+          "timestamp": "2026-09-13T17:19:25.515250656+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "fuse_overlayfs",
+        "source": "trusted_candidates",
+        "candidates": [
+          {
+            "path": "/usr/local/bin/fuse-overlayfs",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/bin/fuse-overlayfs",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 4022025,
+            "executable": true,
+            "masked": false
+          },
+          {
+            "path": "/bin/fuse-overlayfs",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 4022025,
+            "executable": true,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/libexec/podman/fuse-overlayfs",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/libexec/podman/fuse-overlayfs",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/lib/podman/fuse-overlayfs",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/lib/podman/fuse-overlayfs",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.trusted_candidates.fuse_overlayfs",
+      "probe_id": "podman.executable.trusted_candidates.fuse_overlayfs",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.515312406+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.trusted_candidates.fuse_overlayfs.measurement",
+          "source": "podman.executable.trusted_candidates.fuse_overlayfs",
+          "timestamp": "2026-09-13T17:19:25.515312406+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "netavark",
+        "source": "trusted_candidates",
+        "candidates": [
+          {
+            "path": "/usr/local/bin/netavark",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/bin/netavark",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/bin/netavark",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/libexec/podman/netavark",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/libexec/podman/netavark",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 2796635,
+            "executable": true,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/lib/podman/netavark",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/lib/podman/netavark",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.trusted_candidates.netavark",
+      "probe_id": "podman.executable.trusted_candidates.netavark",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.515286276+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.trusted_candidates.netavark.measurement",
+          "source": "podman.executable.trusted_candidates.netavark",
+          "timestamp": "2026-09-13T17:19:25.515286276+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "pasta",
+        "source": "trusted_candidates",
+        "candidates": [
+          {
+            "path": "/usr/local/bin/pasta",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/bin/pasta",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 4000939,
+            "executable": true,
+            "masked": false
+          },
+          {
+            "path": "/bin/pasta",
+            "present": true,
+            "file": {
+              "regular": true,
+              "executable_bits": true,
+              "mode": 493,
+              "uid": 0,
+              "gid": 0
+            },
+            "device": 37,
+            "inode": 4000939,
+            "executable": true,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/libexec/podman/pasta",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/libexec/podman/pasta",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/lib/podman/pasta",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/lib/podman/pasta",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.trusted_candidates.pasta",
+      "probe_id": "podman.executable.trusted_candidates.pasta",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.515309296+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.trusted_candidates.pasta.measurement",
+          "source": "podman.executable.trusted_candidates.pasta",
+          "timestamp": "2026-09-13T17:19:25.515309296+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "runc",
+        "source": "trusted_candidates",
+        "candidates": [
+          {
+            "path": "/usr/local/bin/runc",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/bin/runc",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/bin/runc",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/libexec/podman/runc",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/libexec/podman/runc",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/lib/podman/runc",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/lib/podman/runc",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.trusted_candidates.runc",
+      "probe_id": "podman.executable.trusted_candidates.runc",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.515266946+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.trusted_candidates.runc.measurement",
+          "source": "podman.executable.trusted_candidates.runc",
+          "timestamp": "2026-09-13T17:19:25.515266946+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "executable": {
+        "role": "slirp4netns",
+        "source": "trusted_candidates",
+        "candidates": [
+          {
+            "path": "/usr/local/bin/slirp4netns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/bin/slirp4netns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/bin/slirp4netns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/libexec/podman/slirp4netns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/libexec/podman/slirp4netns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/local/lib/podman/slirp4netns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          },
+          {
+            "path": "/usr/lib/podman/slirp4netns",
+            "present": false,
+            "device": null,
+            "inode": null,
+            "executable": null,
+            "masked": false
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.executable.trusted_candidates.slirp4netns",
+      "probe_id": "podman.executable.trusted_candidates.slirp4netns",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.515306156+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.executable.trusted_candidates.slirp4netns.measurement",
+          "source": "podman.executable.trusted_candidates.slirp4netns",
+          "timestamp": "2026-09-13T17:19:25.515306156+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "quadlet": {
+        "rootless": true,
+        "reference": "https://github.com/podman-container-tools/podman/blob/v5.8.4/pkg/systemd/quadlet/unitdirs.go",
+        "locations": [
+          {
+            "path": "/run/user/1000/containers/systemd",
+            "present": false,
+            "directory": null
+          },
+          {
+            "path": "/home/captured-user/.config/containers/systemd",
+            "present": false,
+            "directory": null
+          },
+          {
+            "path": "/etc/containers/systemd/users",
+            "present": false,
+            "directory": null
+          },
+          {
+            "path": "/etc/containers/systemd/users/1000",
+            "present": false,
+            "directory": null
+          }
+        ]
+      },
+      "authority": "execution",
+      "id": "podman.quadlet.locations",
+      "probe_id": "podman.quadlet.locations",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.515245856+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.quadlet.locations.measurement",
+          "source": "podman.quadlet.locations",
+          "timestamp": "2026-09-13T17:19:25.515245856+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": [
+        {
+          "code": "quadlet_generation_unverified",
+          "message": "documented candidate input locations only; generator execution and working deployment have not been verified",
+          "reference": "https://github.com/podman-container-tools/podman/blob/v5.8.4/pkg/systemd/quadlet/unitdirs.go"
+        }
+      ]
+    },
+    {
+      "authority": "execution",
+      "id": "podman.version",
+      "probe_id": "podman.version",
+      "scope": {
+        "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+        "context_id": "current",
+        "runtime": "podman",
+        "endpoint": "local"
+      },
+      "timestamp": "2026-09-13T17:19:25.529336898+02:00",
+      "completeness": "complete",
+      "facts": [
+        {
+          "id": "podman.version.measurement",
+          "source": "podman.version",
+          "timestamp": "2026-09-13T17:19:25.529336898+02:00",
+          "completeness": "complete",
+          "scope": {
+            "run_id": "SWIAWN5MLN6QT5IF2TKPA5HU2V",
+            "context_id": "current",
+            "runtime": "podman",
+            "endpoint": "local"
+          }
+        }
+      ],
+      "diagnostics": [],
+      "version": {
+        "Path": "/usr/bin/podman",
+        "Runnable": true,
+        "Version": {
+          "major": 5,
+          "minor": 8,
+          "patch": 4,
+          "canonical": "5.8.4",
+          "raw": "podman version 5.8.4"
+        }
+      }
+    }
+  ],
+  "states": {
+    "runtime.podman.aardvark_dns.executable": "supported",
+    "runtime.podman.cgroup_v2": "supported",
+    "runtime.podman.conmon.executable": "supported",
+    "runtime.podman.helper.aardvark_dns.executable": "supported",
+    "runtime.podman.helper.aardvark_dns.installed": "supported",
+    "runtime.podman.helper.conmon.executable": "supported",
+    "runtime.podman.helper.conmon.installed": "supported",
+    "runtime.podman.helper.crun.executable": "supported",
+    "runtime.podman.helper.crun.installed": "supported",
+    "runtime.podman.helper.fuse_overlayfs.executable": "supported",
+    "runtime.podman.helper.fuse_overlayfs.installed": "supported",
+    "runtime.podman.helper.netavark.executable": "supported",
+    "runtime.podman.helper.netavark.installed": "supported",
+    "runtime.podman.helper.pasta.executable": "supported",
+    "runtime.podman.helper.pasta.installed": "supported",
+    "runtime.podman.helper.runc.executable": "unsupported",
+    "runtime.podman.helper.runc.installed": "unsupported",
+    "runtime.podman.helper.slirp4netns.executable": "unsupported",
+    "runtime.podman.helper.slirp4netns.installed": "unsupported",
+    "runtime.podman.netavark.executable": "supported",
+    "runtime.podman.oci_runtime.executable": "supported",
+    "runtime.podman.pasta.executable": "supported",
+    "runtime.podman.quadlet.generator": "supported",
+    "runtime.podman.quadlet.linger": "unsupported",
+    "runtime.podman.quadlet.manager": "supported",
+    "runtime.podman.quadlet.runtime_directory": "supported",
+    "runtime.podman.slirp4netns.executable": "unknown",
+    "runtime.podman.config.engine.parsed": "supported",
+    "runtime.podman.cgroup_manager.systemd": "supported"
+  }
+}

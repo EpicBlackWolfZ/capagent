@@ -67,6 +67,17 @@
       "reason": "no complete evidence for this candidate",
       "evidence": []
     },
+    "runtime.podman.cgroup_manager.systemd": {
+      "superseded": [
+        "podman.configuration.engine.runtime.podman.cgroup_manager.systemd"
+      ],
+      "state": "unsupported",
+      "confidence": "derived",
+      "reason": "selected complete runtime evidence",
+      "evidence": [
+        "podman.info.runtime.podman.cgroup_manager.systemd"
+      ]
+    },
     "runtime.podman.cgroup_v2": {
       "superseded": [
         "podman.info.runtime.podman.cgroup_v2"
@@ -76,6 +87,14 @@
       "reason": "selected complete live evidence",
       "evidence": [
         "host.cgroups.runtime.podman.cgroup_v2"
+      ]
+    },
+    "runtime.podman.config.engine.parsed": {
+      "state": "supported",
+      "confidence": "derived",
+      "reason": "selected complete config evidence",
+      "evidence": [
+        "podman.configuration.engine.runtime.podman.config.engine.parsed"
       ]
     },
     "runtime.podman.conmon.executable": {
@@ -1093,6 +1112,118 @@
         "diagnostics": []
       },
       {
+        "configuration": {
+          "family": "engine",
+          "runtime_path": "/usr/bin/podman",
+          "version_source_id": "podman.version",
+          "profile": "podman-5.8.4",
+          "references": [
+            "https://github.com/containers/podman/blob/v4.9.3/vendor/github.com/containers/common/pkg/config/new.go",
+            "https://github.com/containers/podman/blob/v5.8.4/vendor/go.podman.io/common/pkg/config/new.go"
+          ],
+          "selection_complete": true,
+          "parse_complete": true,
+          "sources": [
+            {
+              "id": "podman.configuration.engine.source.0",
+              "path": "/usr/share/containers/containers.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 0,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.1",
+              "path": "/etc/containers/containers.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 1,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.2",
+              "path": "/etc/containers/containers.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 2,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.3",
+              "path": "/etc/containers/containers.rootless.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 3,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.4",
+              "path": "/etc/containers/containers.rootless.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 4,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.5",
+              "path": "/etc/containers/containers.rootless.conf.d/1000",
+              "kind": "directory",
+              "status": "absent",
+              "order": 5,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.6",
+              "path": "/home/alice/.config/containers/containers.conf",
+              "kind": "file",
+              "status": "absent",
+              "order": 6,
+              "selected": true,
+              "applied": false
+            },
+            {
+              "id": "podman.configuration.engine.source.7",
+              "path": "/home/alice/.config/containers/containers.conf.d",
+              "kind": "directory",
+              "status": "absent",
+              "order": 7,
+              "selected": true,
+              "applied": false
+            }
+          ],
+          "engine": {
+            "runtimes": {},
+            "selection_overrides": false,
+            "unprojected_field_count": 0
+          }
+        },
+        "id": "podman.configuration.engine",
+        "probe_id": "podman.configuration.engine",
+        "scope": {
+          "run_id": "assessment-manager-deferred",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "facts": [
+          {
+            "id": "podman.configuration.engine.measurement",
+            "source": "podman.configuration.engine",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "complete"
+          }
+        ],
+        "diagnostics": []
+      },
+      {
         "id": "podman.discovery",
         "probe_id": "podman.discovery",
         "scope": {
@@ -1118,6 +1249,72 @@
           }
         ],
         "diagnostics": []
+      },
+      {
+        "executable": {
+          "role": "conmon",
+          "source": "configuration",
+          "source_id": "podman.configuration.engine",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.conmon",
+        "probe_id": "podman.executable.configuration.conmon",
+        "scope": {
+          "run_id": "assessment-manager-deferred",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.conmon.measurement",
+            "source": "podman.executable.configuration.conmon",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_default_unobserved",
+            "message": "runtime observation is incomplete"
+          }
+        ]
+      },
+      {
+        "executable": {
+          "role": "oci_runtime",
+          "source": "configuration",
+          "source_id": "podman.configuration.engine",
+          "runtime_path": "/usr/bin/podman",
+          "candidates": []
+        },
+        "id": "podman.executable.configuration.oci_runtime",
+        "probe_id": "podman.executable.configuration.oci_runtime",
+        "scope": {
+          "run_id": "assessment-manager-deferred",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "facts": [
+          {
+            "id": "podman.executable.configuration.oci_runtime.measurement",
+            "source": "podman.executable.configuration.oci_runtime",
+            "timestamp": "2026-09-13T12:00:00Z",
+            "completeness": "partial"
+          }
+        ],
+        "diagnostics": [
+          {
+            "code": "configured_default_unobserved",
+            "message": "runtime observation is incomplete"
+          }
+        ]
       },
       {
         "executable": {
@@ -2205,6 +2402,92 @@
         "depends_on": []
       },
       {
+        "id": "podman.configuration.engine.runtime.podman.cgroup_manager.systemd",
+        "source": "configured cgroup-manager choice; systemd/user-manager access and cgroup delegation remain separate",
+        "claim": "runtime.podman.cgroup_manager.systemd",
+        "scope": {
+          "run_id": "assessment-manager-deferred",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.configuration.engine.runtime.podman.config.engine.parsed",
+        "source": "selected source order and recognized engine fields; absence retains unmeasured built-in defaults",
+        "claim": "runtime.podman.config.engine.parsed",
+        "scope": {
+          "run_id": "assessment-manager-deferred",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "config",
+        "state": "supported",
+        "confidence": "derived",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.configuration.conmon.runtime.podman.conmon.executable",
+        "source": "configured helper selection and target metadata; execution and built-in default selection remain unverified",
+        "claim": "runtime.podman.conmon.executable",
+        "scope": {
+          "run_id": "assessment-manager-deferred",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.executable.configuration.conmon",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
+        "id": "podman.executable.configuration.oci_runtime.runtime.podman.oci_runtime.executable",
+        "source": "configured helper selection and target metadata; execution and built-in default selection remain unverified",
+        "claim": "runtime.podman.oci_runtime.executable",
+        "scope": {
+          "run_id": "assessment-manager-deferred",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "partial",
+        "precedence": "config",
+        "state": "unknown",
+        "confidence": "unknown",
+        "observations": [
+          "podman.configuration.engine",
+          "podman.executable.configuration.oci_runtime",
+          "podman.version"
+        ],
+        "depends_on": []
+      },
+      {
         "id": "podman.executable.runtime.conmon.runtime.podman.conmon.executable",
         "source": "runtime-selected path and target executable metadata; execution unverified",
         "claim": "runtime.podman.conmon.executable",
@@ -2608,6 +2891,26 @@
         "depends_on": []
       },
       {
+        "id": "podman.info.runtime.podman.cgroup_manager.systemd",
+        "source": "Podman effective runtime observation",
+        "claim": "runtime.podman.cgroup_manager.systemd",
+        "scope": {
+          "run_id": "assessment-manager-deferred",
+          "context_id": "user:alice",
+          "runtime": "podman",
+          "endpoint": "local"
+        },
+        "timestamp": "2026-09-13T12:00:00Z",
+        "completeness": "complete",
+        "precedence": "runtime",
+        "state": "unsupported",
+        "confidence": "derived",
+        "observations": [
+          "podman.info"
+        ],
+        "depends_on": []
+      },
+      {
         "id": "podman.info.runtime.podman.cgroup_v2",
         "source": "Podman effective runtime observation",
         "claim": "runtime.podman.cgroup_v2",
@@ -2793,6 +3096,24 @@
         "code": "quadlet_generation_unverified",
         "message": "documented candidate input locations only; generator execution and working deployment have not been verified",
         "reference": "https://github.com/podman-container-tools/podman/blob/v5.8.4/pkg/systemd/quadlet/unitdirs.go"
+      },
+      {
+        "code": "configured_default_unobserved",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "configured_default_unobserved",
+        "message": "runtime observation is incomplete"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.conmon.runtime.podman.conmon.executable"
+      },
+      {
+        "code": "incomplete_evidence",
+        "message": "evidence excluded from resolution",
+        "reference": "podman.executable.configuration.oci_runtime.runtime.podman.oci_runtime.executable"
       },
       {
         "code": "indeterminate_capability",

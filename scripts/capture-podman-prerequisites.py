@@ -20,11 +20,12 @@ def redact(value):
     if isinstance(value, list):
         return [redact(item) for item in value]
     if isinstance(value, dict):
-        return {key: redact(item) for key, item in value.items()}
+        return {key: ('captured-user' if key == 'username' and item not in ('', 'root') else redact(item))
+                for key, item in value.items()}
     return value
 
 
-def project(report, description):
+def project(report, description, configuration=False):
     trace, runtime = report['evaluation'], report['runtimes']['podman']
     if trace['mode'] != 'live' or trace['collection'] != 'active' or runtime['accessible'] is not True:
         raise ValueError('capture requires completed native local inspection')
@@ -34,13 +35,17 @@ def project(report, description):
             executable = original['executable']
             if executable['source'] == 'runtime':
                 selected[executable['role']] = executable['selected_path']
-        if not any(key in original for key in ('executable', 'quadlet', 'user_context')) and not any(
+        engine = configuration and ('configuration' in original or original['probe_id'] == 'podman.version')
+        if not engine and not any(key in original for key in ('executable', 'quadlet', 'user_context')) and not any(
                 key in original.get('host', {}) for key in ('cgroups', 'systemd')):
             continue
         # Wire fact references omit raw values and their shared scope. Restore
         # the owning observation's scope without manufacturing file contents.
         observation = dict(original)
         observation['facts'] = [dict(fact, scope=original['scope']) for fact in original['facts']]
+        if configuration and original['probe_id'] == 'podman.version':
+            observation['version'] = {'Path': runtime['path'], 'Runnable': runtime['cli_runnable'],
+                                      'Version': runtime['version_details']}
         observations.append(observation)
     info = {'version': {'Version': runtime['version']}, 'host': {
         'security': {'rootless': runtime['rootless']}, 'serviceIsRemote': False,
@@ -55,8 +60,11 @@ def project(report, description):
     states = {key: value['state'] for key, value in report['capabilities'].items()
               if key.startswith(('runtime.podman.helper.', 'runtime.podman.quadlet.'))
               or key.endswith('.executable') or key == 'runtime.podman.cgroup_v2'}
+    if configuration:
+        for key in ('runtime.podman.config.engine.parsed', 'runtime.podman.cgroup_manager.systemd'):
+            states[key] = report['capabilities'][key]['state']
     result = redact({'schema_version': 1, 'provenance': {'kind': 'captured', 'description': description,
-                     'conversion': 'Typed native measurements; info JSON reconstructed from published fields; home names anonymized.'},
+                     'conversion': 'Typed native measurements; info JSON reconstructed from published fields; home and user names anonymized.'},
                      'scope': trace['scope'], 'timestamp': trace['timestamp'], 'runtime_path': runtime['path'],
                      'context': {'id': trace['scope']['context_id'], 'identity': {
                          'current': trace['current'], 'target': trace['target'], 'execution': trace['execution']}},
@@ -69,11 +77,12 @@ def main():
     parser.add_argument('--report', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--description', required=True)
+    parser.add_argument('--configuration', action='store_true', help='include typed engine sources and their version evidence')
     args = parser.parse_args()
     data = args.report.read_bytes()
     if len(data) > MAX_REPORT_BYTES:
         raise ValueError('report exceeds capture bound')
-    result = project(json.loads(data), args.description)
+    result = project(json.loads(data), args.description, configuration=args.configuration)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2) + '\n')
 

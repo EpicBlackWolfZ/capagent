@@ -25,6 +25,8 @@ func addPrerequisites(input *Input, probes []probe.Probe, current model.Evaluati
 		return probes
 	}
 	input.Definitions = append(input.Definitions, capability.HelperDefinitions()...)
+	input.Definitions = append(input.Definitions, capability.EngineDefinitions()...)
+	input.PodmanEnvironment, input.PodmanEnvironmentError = policy, policyErr
 	rootless := current.Identity.Target != nil && current.Identity.Target.UID != 0
 	input.Definitions = append(input.Definitions, capability.QuadletDefinitions(rootless)...)
 	if current.Identity.Execution != nil {

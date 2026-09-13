@@ -106,10 +106,10 @@ make fuzz-stress       # Every target, 60 seconds each
 python3 -B scripts/fuzzing.py stress --target FuzzRegistryDAG
 ```
 
-There are 16 required targets: mountinfo, cgroups, filesystems, sysfs state,
+There are 20 required targets: mountinfo, cgroups, filesystems, sysfs state,
 cgroup names, subpaths, scoped symlink graphs, command specifications,
 environment policy, bounded buffers, registry DAGs, orchestrator outcomes,
-report JSON, Podman version/info, os-release and host resolver/protocol inputs.
+report JSON, Podman version/info, bounded TOML/engine merging, os-release, host resolver/protocol inputs, target requests, local identity and subordinate ID ranges.
 JSON fuzzing tests the shipped DTO/serialization and schema contracts; it does
 not assume the partial DTO validator implements the entire schema (#64).
 

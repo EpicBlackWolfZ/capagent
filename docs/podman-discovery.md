@@ -57,6 +57,8 @@ Both commands use an immutable policy: `PATH=/usr/bin:/bin`, `LC_ALL=C`, directo
 
 The policy excludes ambient endpoint, proxy, authentication, configuration-selection, storage-override, loader, D-Bus-address and Podman-internal environment variables. Podman reads normal configuration under the declared HOME/XDG policy, so the result describes that policy rather than every shell-specific override. Local D-Bus discovery can fail or fall back according to Podman's configuration; diagnostics never fabricate a universal missing-socket explanation for daemonless local Podman.
 
+[Engine configuration](podman-engine-config.md) uses the same target and HOME/XDG policy. Passive runs read candidate sources without running Podman; qualified source selection requires a successfully collected supported version. Configuration parsing, source digests and helper metadata do not establish working deployment.
+
 Version has a 5-second budget, info 30 seconds, and overall collection 40 seconds. The runner caps each output stream at 1 MiB; the version parser additionally caps input at 4 KiB. Version failure skips info. Timeout, cancellation, malformed output, unknown flag, nonzero exit and truncation remain visible through fixed diagnostic codes without raw stdout/stderr or environment contents, including under `--debug`.
 
 Active reports add:
