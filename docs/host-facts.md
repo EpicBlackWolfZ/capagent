@@ -6,8 +6,9 @@ PID, user and network namespaces. Bare invocation uses the same JSON mode.
 Alternate target identities remain outside this mode.
 
 The initial host slice reports OS identity, kernel release and architecture,
-and systemd installation, PID-1 state, utility presence and version. Later M2
-slices add topology, security and network/filesystem prerequisites.
+systemd installation, PID-1 state, utility presence and version, cgroup topology,
+namespace identities and Linux security state. Network/filesystem prerequisites
+follow in the final M2 slice.
 
 Host-only reports have empty runtime/capability maps and no
 `evaluation.requirement`. Exit 0 means collection completed; exit 2 means required
@@ -51,3 +52,20 @@ systemctl command responses. Replay performs no native host-query or command cal
 Corpus provenance distinguishes synthetic distributions from captured userland
 files. Linux 5.6+ and functioning openat2 confinement remain mandatory, including
 when parsing fixtures representing older distributions.
+
+## Cgroups and security
+
+Cgroup mode combines mountinfo, confined filesystem magic and process membership.
+Both cgroup generations produce `mixed`; inaccessible or contradictory topology
+produces `unknown`. Controller lists are tied to the observed current membership
+within a visible mount. Paths outside a mounted subtree are retained as metadata
+without following traversal components. Controller visibility does not establish
+delegation or Quadlet readiness.
+
+Namespace links identify user, PID, network, mount, IPC, UTS and cgroup namespaces.
+They do not prove permission to create new namespaces. Security observations retain
+SELinux enforcement, active LSMs, AppArmor enablement/profiles, seccomp actions,
+process-leader seccomp/NoNewPrivs state and user-namespace sysctl constraints.
+Missing optional vendor sysctls remain unobserved. Unmounted or restricted
+securityfs remains unknown unless another complete live source establishes a
+negative state. No unshare, setns, namespace creation or mutating prctl is used.

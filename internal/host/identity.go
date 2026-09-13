@@ -19,7 +19,7 @@ const accountFields = 7
 const accountUIDField, accountHomeField = 2, 5
 const identityNumberBits = 32
 
-var namespacePattern = regexp.MustCompile(`^(user|mnt|net):\[[0-9]+\]$`)
+var namespacePattern = regexp.MustCompile(`^(user|pid|net|mnt|ipc|uts|cgroup):\[[0-9]+\]$`)
 var accountNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_.-]{1,256}$`)
 
 // ObserveCurrent bootstraps one immutable current=target context before runtime
@@ -49,7 +49,7 @@ func ObserveCurrent(ctx context.Context, scope model.EvaluationScope, files plat
 	addIdentityFact(&obs, "account", obs.Completeness)
 	obs.Facts[len(obs.Facts)-1].Text = user.Username + ":" + user.HomeDir
 	c := model.EvaluationContext{ID: scope.ContextID}
-	for _, kind := range []string{"user", "mnt", "net"} {
+	for _, kind := range namespaceKinds {
 		link, err := files.Readlink("proc/self/ns/" + kind)
 		if err != nil || !namespacePattern.MatchString(link) || !strings.HasPrefix(link, kind+":") {
 			identityDiagnostic(&obs, "namespace_unavailable")

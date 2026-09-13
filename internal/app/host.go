@@ -18,6 +18,9 @@ func projectHost(context model.HostContext, observations []model.Observation) (m
 		if obs.Completeness != model.Complete {
 			completeness = model.Partial
 		}
+		if h.Cgroups != nil {
+			context.CgroupVersion = h.Cgroups.Mode
+		}
 		if h.OS != nil {
 			context.OS = h.OS.ID
 			context.OSVersion = h.OS.VersionID

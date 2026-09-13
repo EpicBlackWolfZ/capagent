@@ -62,7 +62,8 @@ func hostTestEnvironment(t *testing.T, files map[string]string) platform.Environ
 	}
 	scoped := platform.NewScopedMemReader("/", mem)
 	t.Cleanup(func() { scoped.Close() })
-	return platform.NewEnvironment(nil, nil, nil, nil).WithFiles(scoped).WithScope(model.EvaluationScope{RunID: "test", ContextID: "current"})
+	return platform.NewEnvironment(nil, nil, nil, nil).WithFiles(scoped).
+		WithScope(model.EvaluationScope{RunID: "test", ContextID: hostTestContext})
 }
 func testClock() time.Time { return time.Unix(1, 0) }
 

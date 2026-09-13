@@ -95,7 +95,8 @@ func (e CgroupEntry) IsUnified() bool {
 // Path containment is delegated to the supplied ScopedReader. The reader
 // is the security boundary; adapters also reject malformed input before I/O.
 type ProcfsReader struct {
-	reader ScopedReader
+	reader ScopedView
+	prefix string
 	limits ParserLimits
 }
 
@@ -118,7 +119,7 @@ func (p *ProcfsReader) ReadProcFile(ctx context.Context, subpath string) ([]byte
 	if err := ValidateSubpath(subpath); err != nil {
 		return nil, err
 	}
-	return p.reader.ReadFile(ctx, subpath)
+	return p.reader.ReadFile(ctx, p.prefix+subpath)
 }
 
 // ReadSelf prefixes a validated subpath with self/ without cleaning it.
@@ -127,7 +128,7 @@ func (p *ProcfsReader) ReadSelf(ctx context.Context, subpath string) ([]byte, er
 	if err := ValidateSubpath(subpath); err != nil {
 		return nil, err
 	}
-	return p.reader.ReadFile(ctx, selfSubpath+"/"+subpath)
+	return p.reader.ReadFile(ctx, p.prefix+selfSubpath+"/"+subpath)
 }
 
 // NewProcfsReaderWithLimits validates explicit per-parser resource limits.

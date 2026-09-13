@@ -6,5 +6,6 @@ import (
 )
 
 func Probes(now func() time.Time) []probe.Probe {
-	return []probe.Probe{OSReleaseProbe{Now: now}, KernelProbe{Now: now}, SystemdProbe{Now: now}}
+	return []probe.Probe{OSReleaseProbe{Now: now}, KernelProbe{Now: now}, SystemdProbe{Now: now},
+		CgroupProbe{Now: now}, NamespaceProbe{Now: now}, SecurityProbe{Now: now}}
 }
