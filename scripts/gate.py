@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run and aggregate the permanent, non-publishing M1.1 verification gate."""
+"""Run and aggregate the permanent, non-publishing CI verification gate."""
 import argparse
 from collections import Counter, defaultdict
 import hashlib
@@ -259,7 +259,7 @@ def finish(root, expected, outcomes=None):
     if errors:
         report['status'] = 'fail'
     write_report(root/'summary.json', report)
-    text = f"M1.1 hardening gate: **{report['status']}**\n\nCommit: `{expected['commit']}`\n\n"
+    text = f"CI Gate: **{report['status']}**\n\nCommit: `{expected['commit']}`\n\n"
     text += '\n'.join(f"- {row['stage']}: {row['status']}" for row in records)+'\n'
     text += '\n'.join('- '+failure for failure in report['failures'])+'\n'
     if expected['dirty']:

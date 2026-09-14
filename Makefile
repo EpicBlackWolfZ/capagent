@@ -54,7 +54,7 @@ help:
 	@echo "  fuzz-smoke     Run every fuzz target for 5 seconds"
 	@echo "  fuzz-stress    Run every fuzz target for 60 seconds"
 	@echo "  benchmark-smoke Run the fixed benchmark inventory once"
-	@echo "  hardening-gate Run and report the complete non-publishing M1.1 gate"
+	@echo "  hardening-gate Run and report the complete non-publishing verification gate"
 	@echo "  tidy           Run go mod tidy and go mod verify"
 	@echo "  clean          Remove build artifacts, test outputs, and coverage files"
 

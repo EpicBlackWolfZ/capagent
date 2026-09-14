@@ -38,7 +38,7 @@ Explore the comprehensive design specifications:
 - 📖 **[Philosophy & Core Principles](docs/philosophy.md)**: The 20 engineering principles, evidence before inference, unknown is not false, TDD requirements, and Definition of Done.
 - 🏛️ **[Architecture & Contract](docs/architecture.md)**: Conceptual pipeline, package boundaries, 3-valued requirement logic truth tables, execution context, and JSON Schema v1 specification.
 - 🗺️ **[Milestone Roadmap & Catalog](docs/roadmap.md)**: Podman-first delivery order, milestone ownership, assessment checkpoint and planned capability catalog.
-- **[Foundation testing](docs/testing.md)**: Run the M1.1 gate, bounded fuzzing, deterministic faults, resource regressions, and nightly campaigns.
+- **[Foundation testing](docs/testing.md)**: Run the verification gate, bounded fuzzing, deterministic faults, resource regressions, and nightly campaigns.
 
 ---
 
