@@ -3,6 +3,7 @@ from copy import deepcopy
 import json
 import os
 from pathlib import Path
+import signal
 import sys
 import tempfile
 import unittest
@@ -227,7 +228,9 @@ class GateReportLifecycleTests(unittest.TestCase, GateFixtureMixin):
                 elif rec['stage'] in ('vulncheck', 'gitleaks'):
                     gate.write_report(root / rec['stage'] / 'summary.json', rec)
 
-            report = gate.finish(root, expected, outcomes)
+            step_summary = root / 'step_summary.md'
+            with patch.dict(os.environ, {'GITHUB_STEP_SUMMARY': str(step_summary)}):
+                report = gate.finish(root, expected, outcomes)
             self.assertEqual(report['status'], 'fail')
             self.assertEqual(report['kind'], 'm1.1-gate')
             self.assertEqual(report['schema_version'], 1)
@@ -242,6 +245,20 @@ class GateReportLifecycleTests(unittest.TestCase, GateFixtureMixin):
             md_text = (root / 'summary.md').read_text()
             self.assertTrue(md_text.startswith(f"CI Gate: **fail**\n\nCommit: `{expected['commit']}`\n\n"),
                             f"unexpected heading in markdown: {md_text[:60]}")
+            self.assertEqual(step_summary.read_text(), md_text)
+
+    def test_finish_lifecycle_preserves_ambient_step_summary_sentinel(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ambient_summary = Path(tmpdir) / 'ambient_step_summary.md'
+            sentinel = "<!-- sentinel: preserve ambient summary -->\n"
+            ambient_summary.write_text(sentinel)
+
+            with patch.dict(os.environ, {'GITHUB_STEP_SUMMARY': str(ambient_summary)}):
+                self.test_finish_passing_report_emission()
+                self.test_finish_staged_failure_missing_heavy_stage_files()
+
+            self.assertEqual(ambient_summary.read_text(), sentinel,
+                             'gate.finish() leaked summary output into ambient GITHUB_STEP_SUMMARY')
 
     def test_main_report_mode_exit_codes(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -254,10 +271,12 @@ class GateReportLifecycleTests(unittest.TestCase, GateFixtureMixin):
 
             valid_outcomes = {name: 'success' for name in gate.STAGES}
             step_summary = root / 'step_summary.md'
+            original_sigterm = signal.getsignal(signal.SIGTERM)
 
             # Test 1: Passing report mode exits 0
             with patch.object(sys, 'argv', ['gate.py', 'report', '--output', str(root)]), \
                  patch('gate.identity', return_value=expected), \
+                 patch.object(gate, 'install_signals'), \
                  patch.dict(os.environ, {'CAPAGENT_JOB_RESULTS': json.dumps(valid_outcomes),
                                          'GITHUB_STEP_SUMMARY': str(step_summary)}):
                 code = gate.main()
@@ -267,10 +286,14 @@ class GateReportLifecycleTests(unittest.TestCase, GateFixtureMixin):
             failing_outcomes = dict(valid_outcomes, lint='failure')
             with patch.object(sys, 'argv', ['gate.py', 'report', '--output', str(root)]), \
                  patch('gate.identity', return_value=expected), \
+                 patch.object(gate, 'install_signals'), \
                  patch.dict(os.environ, {'CAPAGENT_JOB_RESULTS': json.dumps(failing_outcomes),
                                          'GITHUB_STEP_SUMMARY': str(step_summary)}):
                 code = gate.main()
                 self.assertEqual(code, 1)
+
+            self.assertEqual(signal.getsignal(signal.SIGTERM), original_sigterm,
+                             'gate.main() leaked process-wide SIGTERM handler')
 
 
 if __name__ == '__main__':
