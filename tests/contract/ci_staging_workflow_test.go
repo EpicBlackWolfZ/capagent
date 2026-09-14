@@ -132,6 +132,67 @@ func TestWorkflow_NormalizeNeedsHelper(t *testing.T) {
 	}
 }
 
+func verifyJobPrerequisites(t *testing.T, jobs map[string]any, jobID string, wantPrereqs []string) {
+	t.Helper()
+	rawJob, exists := jobs[jobID]
+	if !exists {
+		t.Fatalf("required job %q does not exist in ci.yml", jobID)
+	}
+	jobMap, ok := rawJob.(map[string]any)
+	if !ok {
+		t.Fatalf("job %q is not a map", jobID)
+	}
+
+	gotNeeds, err := normalizeNeeds(jobMap["needs"])
+	if err != nil {
+		t.Fatalf("job %q has invalid needs: %v", jobID, err)
+	}
+
+	for _, dep := range gotNeeds {
+		if _, depExists := jobs[dep]; !depExists {
+			t.Errorf("job %q references non-existent job %q in needs", jobID, dep)
+		}
+	}
+
+	if slices.Contains(gotNeeds, "pr-lint") {
+		t.Errorf("job %q must not depend on pr-lint", jobID)
+	}
+
+	gotSorted := slices.Clone(gotNeeds)
+	wantSorted := slices.Clone(wantPrereqs)
+	slices.Sort(gotSorted)
+	slices.Sort(wantSorted)
+
+	if !slices.Equal(gotSorted, wantSorted) {
+		t.Errorf("job %q needs = %v, want exact set %v", jobID, gotNeeds, wantPrereqs)
+	}
+}
+
+func verifyHeavyJobsIsolation(t *testing.T, jobs map[string]any) {
+	t.Helper()
+	heavyJobs := []string{stageTest, stageBuild, stageFuzz}
+	for _, id := range heavyJobs {
+		jobMap := jobs[id].(map[string]any)
+		needs, _ := normalizeNeeds(jobMap["needs"])
+		for _, other := range heavyJobs {
+			if slices.Contains(needs, other) {
+				t.Errorf("heavy job %q must not depend on other heavy job %q", id, other)
+			}
+		}
+	}
+}
+
+func verifyVerificationJobConditions(t *testing.T, jobs map[string]any) {
+	t.Helper()
+	verificationJobs := []string{stageLint, stageVulncheck, stageGitleaks, stageTest, stageBuild, stageFuzz}
+	for _, id := range verificationJobs {
+		jobMap := jobs[id].(map[string]any)
+		if cond, exists := jobMap["if"]; exists && cond != nil {
+			t.Errorf("verification job %q must not have job-level condition: %v", id, cond)
+		}
+	}
+}
+
 func TestWorkflow_CIStagingDependencies(t *testing.T) {
 	t.Parallel()
 
@@ -153,74 +214,19 @@ func TestWorkflow_CIStagingDependencies(t *testing.T) {
 	}
 
 	for jobID, wantPrereqs := range expectedPrereqs {
-		rawJob, exists := jobs[jobID]
-		if !exists {
-			t.Fatalf("required job %q does not exist in ci.yml", jobID)
-		}
-		jobMap, ok := rawJob.(map[string]any)
-		if !ok {
-			t.Fatalf("job %q is not a map", jobID)
-		}
-
-		gotNeeds, err := normalizeNeeds(jobMap["needs"])
-		if err != nil {
-			t.Fatalf("job %q has invalid needs: %v", jobID, err)
-		}
-
-		// Verify all referenced jobs in needs actually exist
-		for _, dep := range gotNeeds {
-			if _, exists := jobs[dep]; !exists {
-				t.Errorf("job %q references non-existent job %q in needs", jobID, dep)
-			}
-		}
-
-		// Verify no pr-lint dependency anywhere
-		if slices.Contains(gotNeeds, "pr-lint") {
-			t.Errorf("job %q must not depend on pr-lint", jobID)
-		}
-
-		// Sort both for unordered set comparison
-		gotSorted := slices.Clone(gotNeeds)
-		wantSorted := slices.Clone(wantPrereqs)
-		slices.Sort(gotSorted)
-		slices.Sort(wantSorted)
-
-		if !slices.Equal(gotSorted, wantSorted) {
-			t.Errorf("job %q needs = %v, want exact set %v", jobID, gotNeeds, wantPrereqs)
-		}
+		verifyJobPrerequisites(t, jobs, jobID, wantPrereqs)
 	}
 
-	// Verify heavy jobs have no dependencies on each other
-	heavyJobs := []string{stageTest, stageBuild, stageFuzz}
-	for _, id := range heavyJobs {
-		jobMap := jobs[id].(map[string]any)
-		needs, _ := normalizeNeeds(jobMap["needs"])
-		for _, other := range heavyJobs {
-			if slices.Contains(needs, other) {
-				t.Errorf("heavy job %q must not depend on other heavy job %q", id, other)
-			}
-		}
-	}
-
-	// Verify none of the six verification jobs has a job-level condition
-	verificationJobs := []string{stageLint, stageVulncheck, stageGitleaks, stageTest, stageBuild, stageFuzz}
-	for _, id := range verificationJobs {
-		jobMap := jobs[id].(map[string]any)
-		if cond, exists := jobMap["if"]; exists && cond != nil {
-			t.Errorf("verification job %q must not have job-level condition: %v", id, cond)
-		}
-	}
+	verifyHeavyJobsIsolation(t, jobs)
+	verifyVerificationJobConditions(t, jobs)
 }
 
-func TestWorkflow_CIGateIdentityAndOutcomes(t *testing.T) {
-	t.Parallel()
-
-	ci := readWorkflow(t, ".github/workflows/ci.yml")
+func extractGateJob(t *testing.T, ci map[string]any) map[string]any {
+	t.Helper()
 	jobs, ok := ci["jobs"].(map[string]any)
 	if !ok {
 		t.Fatal("ci.yml missing jobs map")
 	}
-
 	gateRaw, exists := jobs["hardening-gate"]
 	if !exists {
 		t.Fatal("ci.yml missing hardening-gate job")
@@ -229,37 +235,41 @@ func TestWorkflow_CIGateIdentityAndOutcomes(t *testing.T) {
 	if !ok {
 		t.Fatal("hardening-gate job is not a map")
 	}
+	return gate
+}
 
+func verifyGateIdentity(t *testing.T, gate map[string]any) {
+	t.Helper()
 	const expectedGateName = "CI Gate"
 	if name, _ := gate["name"].(string); name != expectedGateName {
 		t.Errorf("hardening-gate name = %q, want %q", name, expectedGateName)
 	}
-
 	if cond, _ := gate["if"].(string); cond != condAlways {
 		t.Errorf("hardening-gate job-level if = %q, want %q", cond, condAlways)
 	}
+}
 
+func findReportStep(t *testing.T, gate map[string]any) map[string]any {
+	t.Helper()
 	steps, ok := gate["steps"].([]any)
 	if !ok {
 		t.Fatal("hardening-gate missing steps slice")
 	}
-
-	var reportStep map[string]any
 	for _, stepRaw := range steps {
 		step, ok := stepRaw.(map[string]any)
 		if !ok {
 			continue
 		}
 		if runCmd, _ := step["run"].(string); strings.Contains(runCmd, "scripts/gate.py report") {
-			reportStep = step
-			break
+			return step
 		}
 	}
+	t.Fatal("hardening-gate missing step that runs scripts/gate.py report")
+	return nil
+}
 
-	if reportStep == nil {
-		t.Fatal("hardening-gate missing step that runs scripts/gate.py report")
-	}
-
+func verifyReportStepOutcomes(t *testing.T, reportStep map[string]any) {
+	t.Helper()
 	if cond, _ := reportStep["if"].(string); cond != condAlways {
 		t.Errorf("report step if = %q, want %q", cond, condAlways)
 	}
@@ -302,23 +312,23 @@ func TestWorkflow_CIGateIdentityAndOutcomes(t *testing.T) {
 	}
 }
 
-func TestWorkflow_CIStagingPreservesTriggers(t *testing.T) {
+func TestWorkflow_CIGateIdentityAndOutcomes(t *testing.T) {
 	t.Parallel()
 
 	ci := readWorkflow(t, ".github/workflows/ci.yml")
+	gate := extractGateJob(t, ci)
+	verifyGateIdentity(t, gate)
+	reportStep := findReportStep(t, gate)
+	verifyReportStepOutcomes(t, reportStep)
+}
 
-	// Verify top-level triggers
-	triggers, ok := ci["on"].(map[string]any)
-	if !ok {
-		t.Fatal("ci.yml missing on triggers")
-	}
-
+func verifyPullRequestTrigger(t *testing.T, triggers map[string]any) {
+	t.Helper()
 	pr, ok := triggers["pull_request"].(map[string]any)
 	if !ok {
 		t.Fatal("ci.yml missing pull_request trigger")
 	}
 
-	// PR path filters must remain absent
 	if paths, exists := pr["paths"]; exists && paths != nil {
 		t.Errorf("pull_request must not define paths: %v", paths)
 	}
@@ -326,7 +336,6 @@ func TestWorkflow_CIStagingPreservesTriggers(t *testing.T) {
 		t.Errorf("pull_request must not define paths-ignore: %v", pathsIgnore)
 	}
 
-	// PR activity types must remain opened, synchronize, reopened, edited
 	typesRaw, ok := pr["types"].([]any)
 	if !ok {
 		t.Fatal("pull_request missing types slice")
@@ -343,8 +352,10 @@ func TestWorkflow_CIStagingPreservesTriggers(t *testing.T) {
 	if !slices.Equal(types, expectedTypes) {
 		t.Errorf("pull_request types = %v, want %v", types, expectedTypes)
 	}
+}
 
-	// Push trigger must be preserved
+func verifyPushTrigger(t *testing.T, triggers map[string]any) {
+	t.Helper()
 	push, ok := triggers["push"].(map[string]any)
 	if !ok {
 		t.Fatal("ci.yml missing push trigger")
@@ -373,13 +384,14 @@ func TestWorkflow_CIStagingPreservesTriggers(t *testing.T) {
 	if !slices.Equal(pathsIgnore, expectedPathsIgnore) {
 		t.Errorf("push paths-ignore = %v, want %v", pathsIgnore, expectedPathsIgnore)
 	}
+}
 
-	// workflow_dispatch must remain present
+func verifyDispatchAndConcurrency(t *testing.T, ci map[string]any, triggers map[string]any) {
+	t.Helper()
 	if _, exists := triggers["workflow_dispatch"]; !exists {
 		t.Error("ci.yml missing workflow_dispatch trigger")
 	}
 
-	// Concurrency must be preserved
 	concurrency, ok := ci["concurrency"].(map[string]any)
 	if !ok {
 		t.Fatal("ci.yml missing concurrency")
@@ -390,4 +402,18 @@ func TestWorkflow_CIStagingPreservesTriggers(t *testing.T) {
 	if cancel, _ := concurrency["cancel-in-progress"].(bool); !cancel {
 		t.Errorf("concurrency cancel-in-progress = %v, want true", cancel)
 	}
+}
+
+func TestWorkflow_CIStagingPreservesTriggers(t *testing.T) {
+	t.Parallel()
+
+	ci := readWorkflow(t, ".github/workflows/ci.yml")
+	triggers, ok := ci["on"].(map[string]any)
+	if !ok {
+		t.Fatal("ci.yml missing on triggers")
+	}
+
+	verifyPullRequestTrigger(t, triggers)
+	verifyPushTrigger(t, triggers)
+	verifyDispatchAndConcurrency(t, ci, triggers)
 }
