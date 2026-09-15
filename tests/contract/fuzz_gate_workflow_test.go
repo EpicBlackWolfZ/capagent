@@ -12,12 +12,15 @@ func TestWorkflow_FinalHardeningGate(t *testing.T) {
 	jobs := ci["jobs"].(map[string]any)
 	gate, ok := jobs["hardening-gate"].(map[string]any)
 	if !ok {
-		t.Fatal("missing final M1.1 aggregate check")
+		t.Fatal("missing final verification gate check")
 	}
-	if gate["if"] != "always()" {
+	if gate["name"] != "CI Gate" {
+		t.Errorf("hardening gate display name = %v, want %q", gate["name"], "CI Gate")
+	}
+	if gate["if"] != condAlways {
 		t.Fatal("aggregate must diagnose failed/missing prerequisites")
 	}
-	for _, name := range []string{"lint", "test", "vulncheck", "gitleaks", "build", "fuzz"} {
+	for _, name := range []string{stageLint, stageTest, stageVulncheck, stageGitleaks, stageBuild, stageFuzz} {
 		if !strings.Contains(fmt.Sprint(gate["needs"]), name) {
 			t.Errorf("aggregate does not require %s", name)
 		}

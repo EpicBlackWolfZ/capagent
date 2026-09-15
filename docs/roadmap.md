@@ -92,7 +92,7 @@ Existing milestone URLs and numbers are preserved. The table describes delivery 
 
 ## Validation and stable release scope
 
-The [permanent hardening gate](testing.md#complete-m11-gate) applies to every extension: confinement, explicit command authority, bounded I/O, retained partial observations, race/lint/contracts and artifact validation. Model and requirement coverage remain independently above 95%. Small deterministic checks accompany changes; deeper stochastic, matrix and benchmark campaigns remain separately replayable.
+The [permanent hardening gate](testing.md#complete-verification-gate) applies to every extension: confinement, explicit command authority, bounded I/O, retained partial observations, race/lint/contracts and artifact validation. Model and requirement coverage remain independently above 95%. Small deterministic checks accompany changes; deeper stochastic, matrix and benchmark campaigns remain separately replayable.
 
 The stable v1.0 scope remains supported Linux host evaluation, explicit target contexts, Podman/Docker/containerd baseline, canonical capabilities, requirements, diagnostics, Ansible integration and a stable machine-readable contract. CRI-O, nerdctl and workload experiments may remain experimental. Every shipped capability follows the [Definition of Done](philosophy.md#4-definitions-of-done).
 

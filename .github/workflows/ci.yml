@@ -61,6 +61,7 @@ jobs:
           retention-days: 14
   test:
     name: Unit Tests & Coverage Gate (>= 95%)
+    needs: [lint, vulncheck, gitleaks]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -172,6 +173,7 @@ jobs:
           retention-days: 14
   build:
     name: Build, GoReleaser Snapshot & Self-Bundling Verification
+    needs: [lint, vulncheck, gitleaks]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -209,6 +211,7 @@ jobs:
           retention-days: 14
   fuzz:
     name: Bounded Fuzz Smoke
+    needs: [lint, vulncheck, gitleaks]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -230,7 +233,7 @@ jobs:
           path: .work/gate/
           retention-days: 14
   hardening-gate:
-    name: M1.1 Hardening Gate
+    name: CI Gate
     needs: [lint, test, vulncheck, gitleaks, build, fuzz]
     if: always()
     runs-on: ubuntu-latest

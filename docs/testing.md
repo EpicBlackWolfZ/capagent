@@ -154,7 +154,7 @@ skipped targets, missing exploration evidence and incomplete executions fail.
 Nightly fuzzing is a separate 30-minute job alongside the existing 20-minute
 fault/resource job, with optional exact-target selection for manual replay.
 
-## Complete M1.1 gate
+## Complete verification gate
 
 ```bash
 make hardening-gate   # Requires the pinned verification/build tools
@@ -181,11 +181,28 @@ redacted. A passing scanner is not a security certification; known P1/high/criti
 foundation defects must be resolved before milestone closure.
 
 Each stage writes a versioned report with commit, source-content digest, Go/tool
-versions, workflow run/attempt, command outcomes and detailed evidence. The final
-`M1.1 Hardening Gate` CI check requires every dependency and complete matching
-reports. Missing, skipped, failed, duplicated or stale evidence fails. CI uploads
-available stage reports/logs and the final JSON/Markdown summary for 14 days.
-A local dirty-tree report explicitly identifies development evidence and cannot
+versions, workflow run/attempt, command outcomes and detailed evidence. In CI,
+prerequisite static and security checks (`lint`, `vulncheck`, and `gitleaks`) run
+independently in parallel. Heavy execution (`test`, `build`, and `fuzz`) depends on
+all three prerequisite checks succeeding, preventing unnecessary container setup,
+compilation, and fuzzing execution when an early check fails. The separate
+`Validate Conventional PR Title` (`pr-lint`) check remains pull-request-scoped and
+does not gate the verification stages or aggregate check; skipping it on pushes or
+manual dispatch does not impede verification.
+
+The final aggregate CI check, displayed as `CI Gate` (job ID `hardening-gate`),
+directly requires all six verification stages and uses `if: always()` to fail-closed
+if any prerequisite or heavy job fails or is skipped. This staging design optimizes
+wasted execution on early failure rather than successful-run latency: heavy jobs wait
+for prerequisite checks to finish before starting, introducing a small green-run
+latency trade-off (illustratively ~4m25s vs ~3m04s) in exchange for saving compute
+and runner slots on broken commits.
+
+Legacy machine-readable identifiers—including the `hardening-gate` job ID and Make
+target, `m1.1-gate` JSON report kind, `gate-stage` stage kind, and `m1.1-*` artifact
+names—are intentionally retained unchanged for tooling and contract compatibility.
+CI uploads available stage reports/logs and the final JSON/Markdown summary for 14
+days. A local dirty-tree report explicitly identifies development evidence and cannot
 be substituted for clean-commit completion evidence.
 
 The release workflow runs the same stages and final aggregation before handing
